@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 import os
 
 try:
-    import siteconf #pylint: disable=unused-import
+    #pylint: disable=import-error
+    import siteconf
 
     # Email settings are stored in a site.py which is listed in .gitignore.
     # This avoids to inadvertently expose username and password used while
