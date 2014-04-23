@@ -1,0 +1,18 @@
+{% block subject %}
+Sign in {{ site.name }}
+{% endblock %}
+
+{% block plain_content %}
+This email is in plain text.
+
+Please sign in here:
+http://{{ site.domain }}{% url 'login' %}{% if next %}?next={{next}}{% endif %}
+{% endblock %}
+
+{% block html_content %}
+<h1>Hello</h1>
+<p>
+You should get this email in HTML format.
+Please <a href="http://{{ site.domain }}{% url 'login' %}{% if next %}?next={{next}}{% endif %}">Sign in</a>.
+</p>
+{% endblock %}
