@@ -74,8 +74,13 @@ class EmlTemplate(Template):
                 "Template %s is missing a subject." % self.origin.name)
         if not plain_content:
             # Defaults to content stripped of html tags
+            if not html_content:
+                raise EmlTemplateError(
+                    "Template %s does not contain PLAIN nor HTML content."
+                    % self.origin.name)
             plain_content = strip_tags(html_content)
         msg = EmailMultiAlternatives(
             subject, plain_content, from_email, recipients)
-        msg.attach_alternative(html_content, "text/html")
+        if html_content:
+            msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=True)
