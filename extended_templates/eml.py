@@ -27,11 +27,14 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context
-from django.template.loader import get_template
 from django.template.loader_tags import BlockNode
 from django.utils.html import strip_tags
-from django.template import Template, loader
-from django.template.loader import find_template, LoaderOrigin
+from django.template import Template
+
+
+class EmlTemplateError(Exception):
+    pass
+
 
 class EmlTemplate(Template):
     """
@@ -67,11 +70,11 @@ class EmlTemplate(Template):
 
         # Create the email, attach the HTML version.
         if not subject:
-            raise TemplateDoesNotExist(
+            raise EmlTemplateError(
                 "Template %s is missing a subject." % self.origin.name)
         if not plain_content:
             # Defaults to content stripped of html tags
-            text_content = strip_tags(html_content)
+            plain_content = strip_tags(html_content)
         msg = EmailMultiAlternatives(
             subject, plain_content, from_email, recipients)
         msg.attach_alternative(html_content, "text/html")

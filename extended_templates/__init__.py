@@ -30,9 +30,7 @@ from django.template.loader import find_template, LoaderOrigin
 from extended_templates.pdf import PdfTemplate
 from extended_templates.eml import EmlTemplate
 
-"""
-PEP 386-compliant version number for the extended_templates django app.
-"""
+# PEP 386-compliant version number for the extended_templates django app.
 __version__ = '0.1dev'
 
 
