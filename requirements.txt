@@ -1,3 +1,4 @@
 Django>=1.6
+fdfgen==0.11.0
 reportlab==2.7
 xhtml2pdf==0.0.5

@@ -11,13 +11,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
+try:
 import siteconf
-
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # Email settings are stored in a site.py which is listed in .gitignore.
 # This avoids to inadvertently expose username and password used while
@@ -33,6 +28,15 @@ DEFAULT_FROM_EMAIL = siteconf.DEFAULT_FROM_EMAIL
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = siteconf.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = siteconf.EMAIL_HOST_PASSWORD
+
+except ImportError: # The module with sensitive credentials is not found.
+    pass
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
