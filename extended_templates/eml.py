@@ -44,9 +44,9 @@ class EmlTemplate(Template):
         super(EmlTemplate, self).__init__(template_string, origin, name)
         self.origin = origin
 
-    def send(self, recipients, context):
+    def send(self, recipients, context,
+             from_email=settings.DEFAULT_FROM_EMAIL):
         from django.contrib.sites.models import Site # permits setup.py install
-        from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
         html_content = None
         plain_content = None
