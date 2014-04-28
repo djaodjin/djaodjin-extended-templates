@@ -56,7 +56,7 @@ class TemplateEmailBackend(object):
 
     @staticmethod
     def send(recipients, template_name, context=None, from_email=None):
-        if not from_mail:
+        if not from_email:
             from extended_templates import settings # permits setup.py install
             from_email = settings.DEFAULT_FROM_EMAIL
         tmpl = get_template(template_name)
