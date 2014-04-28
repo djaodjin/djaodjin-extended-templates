@@ -23,7 +23,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from bs4 import BeautifulSoup
-from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context
 from django.template.loader_tags import BlockNode
@@ -44,9 +43,11 @@ class EmlTemplate(Template):
         super(EmlTemplate, self).__init__(template_string, origin, name)
         self.origin = origin
 
-    def send(self, recipients, context,
-             from_email=settings.DEFAULT_FROM_EMAIL):
+    def send(self, recipients, context, from_email=None):
         from django.contrib.sites.models import Site # permits setup.py install
+        if not from_email:
+            from extended_templates import settings  # permits setup.py install
+            from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
         html_content = None
         plain_content = None
