@@ -34,6 +34,7 @@ setup(
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
     download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
 '/tarball/%s' % extended_templates.__version__,
+    install_requires=['Django'],
     license='BSD',
     description="DjaoDjin's Template wrappers for HTML email and PDF templates",
     long_description=open('README.md').read(),

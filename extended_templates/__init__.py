@@ -31,7 +31,7 @@ from extended_templates.pdf import PdfTemplate
 from extended_templates.eml import EmlTemplate
 
 # PEP 386-compliant version number for the extended_templates django app.
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 # The following was derived from code originally posted
