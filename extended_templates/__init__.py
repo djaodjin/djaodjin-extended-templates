@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2014, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ from extended_templates.pdf import PdfTemplate
 from extended_templates.eml import EmlTemplate
 
 # PEP 386-compliant version number for the extended_templates django app.
-__version__ = '0.1dev'
+__version__ = '0.1'
 
 
 # The following was derived from code originally posted

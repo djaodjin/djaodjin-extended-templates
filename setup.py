@@ -26,12 +26,14 @@ from distutils.core import setup
 import extended_templates
 
 setup(
-    name='extended_templates',
+    name='djaodjin-extended-templates',
     version=extended_templates.__version__,
     author='The DjaoDjin Team',
     author_email='support@djaodjin.com',
     packages=['extended_templates'],
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
+    download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
+'/tarball/%s' % extended_templates.__version__,
     license='BSD',
     description="DjaoDjin's Template wrappers for HTML email and PDF templates",
     long_description=open('README.md').read(),
