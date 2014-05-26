@@ -47,14 +47,12 @@ def get_template_from_string(source, origin=None, name=None):
     if name and name.endswith('.pdf'):
         return PdfTemplate('pdf', origin, name)
     return Template(source, origin, name)
-loader.get_template_from_string = get_template_from_string
 
 
 def make_origin(display_name, from_loader, name, dirs):
     # Always return an Origin object, because PdfTemplate need it to render
     # the PDF Form file.
     return LoaderOrigin(display_name, from_loader, name, dirs)
-loader.make_origin = make_origin
 
 
 def get_template(template_name):
@@ -62,6 +60,12 @@ def get_template(template_name):
     Returns a compiled Template object for the given template name,
     handling template inheritance recursively.
     """
+    # Implementation Note:
+    # If we do this earlier (i.e. when the module is imported), there
+    # is a chance our hook gets overwritten somewhere depending on the
+    # order in which the modules are imported.
+    loader.get_template_from_string = get_template_from_string
+    loader.make_origin = make_origin
 
     def fake_strict_errors(exception): #pylint: disable=unused-argument
         return (u'', -1)
