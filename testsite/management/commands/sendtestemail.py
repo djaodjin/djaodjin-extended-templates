@@ -27,7 +27,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.template.loader import get_template
 
-from extended_templates import get_template
+from extended_templates.utils import get_template
 
 LOGGER = logging.getLogger(__name__)
 

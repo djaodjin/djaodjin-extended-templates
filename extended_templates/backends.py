@@ -25,11 +25,10 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
-from extended_templates import get_template
-
+from extended_templates.utils import get_template
+from extended_templates import settings
 
 def get_email_backend():
-    from extended_templates import settings # permits setup.py install
     return _load_backend(settings.EMAILER_BACKEND)
 
 
@@ -57,7 +56,6 @@ class TemplateEmailBackend(object):
     @staticmethod
     def send(recipients, template_name, context=None, from_email=None):
         if not from_email:
-            from extended_templates import settings # permits setup.py install
             from_email = settings.DEFAULT_FROM_EMAIL
         tmpl = get_template(template_name)
         tmpl.send(recipients, context, from_email=from_email)

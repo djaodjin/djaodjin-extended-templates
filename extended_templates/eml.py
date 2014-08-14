@@ -24,10 +24,13 @@
 
 from bs4 import BeautifulSoup
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.sites.models import Site
 from django.template import Context
 from django.template.loader_tags import BlockNode
 from django.utils.html import strip_tags
 from django.template import Template
+
+from extended_templates import settings
 
 
 class EmlTemplateError(Exception):
@@ -44,9 +47,7 @@ class EmlTemplate(Template):
         self.origin = origin
 
     def send(self, recipients, context, from_email=None):
-        from django.contrib.sites.models import Site # permits setup.py install
         if not from_email:
-            from extended_templates import settings  # permits setup.py install
             from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
         html_content = None
