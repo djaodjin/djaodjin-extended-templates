@@ -46,7 +46,9 @@ class EmlTemplate(Template):
         super(EmlTemplate, self).__init__(template_string, origin, name)
         self.origin = origin
 
-    def send(self, recipients, context, from_email=None):
+    #pylint: disable=invalid-name,too-many-arguments
+    def send(self, recipients, context,
+             from_email=None, bcc=None, cc=None):
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
@@ -82,7 +84,7 @@ class EmlTemplate(Template):
                     % self.origin.name)
             plain_content = strip_tags(html_content)
         msg = EmailMultiAlternatives(
-            subject, plain_content, from_email, recipients)
+            subject, plain_content, from_email, recipients, bcc=bcc, cc=cc)
         if html_content:
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=True)
