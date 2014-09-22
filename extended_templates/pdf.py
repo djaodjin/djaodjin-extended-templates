@@ -102,11 +102,12 @@ class PdfTemplate(Template):
             'flatten',
         ]
         cmd = ' '.join(cmd)
-        try:
-            process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE, shell=True)
-            return process.communicate(input=fdf_stream)
-        except OSError:
-            return (None, None)
+        process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, shell=True)
+        stdout, stderr = process.communicate(input=fdf_stream)
+        process.wait()
+        if process.returncode != 0:
+            LOGGER.exception("Unable to generate PDF: %s", cmd)
+        return stdout, stderr
 
 

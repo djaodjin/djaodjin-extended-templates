@@ -48,7 +48,7 @@ class EmlTemplate(Template):
 
     #pylint: disable=invalid-name,too-many-arguments
     def send(self, recipients, context,
-             from_email=None, bcc=None, cc=None):
+             from_email=None, bcc=None, cc=None, attachments=None):
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
@@ -83,8 +83,11 @@ class EmlTemplate(Template):
                     "Template %s does not contain PLAIN nor HTML content."
                     % self.origin.name)
             plain_content = strip_tags(html_content)
+        # XXX implement inline attachments,
+        #     reference: https://djangosnippets.org/snippets/3001/
         msg = EmailMultiAlternatives(
-            subject, plain_content, from_email, recipients, bcc=bcc, cc=cc)
+            subject, plain_content, from_email, recipients, bcc=bcc, cc=cc,
+            attachments=attachments)
         if html_content:
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=True)

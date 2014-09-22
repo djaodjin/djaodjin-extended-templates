@@ -56,9 +56,10 @@ class TemplateEmailBackend(object):
     #pylint: disable=invalid-name,too-many-arguments
     @staticmethod
     def send(recipients, template_name, context=None,
-             from_email=None, bcc=None, cc=None):
+             from_email=None, bcc=None, cc=None, attachments=None):
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
         tmpl = get_template(template_name)
-        tmpl.send(recipients, context, from_email=from_email, bcc=bcc, cc=cc)
+        tmpl.send(recipients, context,
+            from_email=from_email, bcc=bcc, cc=cc, attachments=attachments)
 
