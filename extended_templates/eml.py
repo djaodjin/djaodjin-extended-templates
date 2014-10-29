@@ -50,6 +50,7 @@ class EmlTemplate(Template):
     def send(self, recipients, context,
              from_email=None, bcc=None, cc=None, reply_to=None,
              attachments=None):
+        #pylint: disable=too-many-locals
         if reply_to:
             headers = {'Reply-To': reply_to}
         else:
