@@ -48,7 +48,12 @@ class EmlTemplate(Template):
 
     #pylint: disable=invalid-name,too-many-arguments
     def send(self, recipients, context,
-             from_email=None, bcc=None, cc=None, attachments=None):
+             from_email=None, bcc=None, cc=None, reply_to=None,
+             attachments=None):
+        if reply_to:
+            headers = {'Reply-To': reply_to}
+        else:
+            headers = None
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
         subject = None
@@ -87,7 +92,7 @@ class EmlTemplate(Template):
         #     reference: https://djangosnippets.org/snippets/3001/
         msg = EmailMultiAlternatives(
             subject, plain_content, from_email, recipients, bcc=bcc, cc=cc,
-            attachments=attachments)
+            attachments=attachments, headers=headers)
         if html_content:
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=True)
