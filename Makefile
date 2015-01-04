@@ -9,4 +9,6 @@ binDir        ?= $(installTop)/bin
 PYTHON        := $(binDir)/python
 
 install::
-	cd $(srcDir) && $(PYTHON) ./setup.py install --quiet
+	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
+		build -b $(CURDIR)/build install
+
