@@ -27,9 +27,20 @@ Convenience module for access of extended_templates app settings, which enforces
 default settings when the main settings module does not contain
 the appropriate settings.
 """
+
+import os
+
 from django.conf import settings
 
-DEFAULT_FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL')
+_SETTINGS = {
+    'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL'),
+    'EMAILER_BACKEND': getattr(settings, 'EMAILER_BACKEND',
+                          'extended_templates.backends.TemplateEmailBackend'),
+    'PDF_FLATFORM_BIN': os.path.join(
+        os.getenv('VIRTUAL_ENV'), 'bin', 'podofo-flatform')
+}
+_SETTINGS.update(getattr(settings, 'EXTENDED_TEMPLATES', {}))
 
-EMAILER_BACKEND = getattr(settings, 'EMAILER_BACKEND',
-                          'extended_templates.backends.TemplateEmailBackend')
+DEFAULT_FROM_EMAIL = _SETTINGS.get('DEFAULT_FROM_EMAIL')
+EMAILER_BACKEND = _SETTINGS.get('EMAILER_BACKEND')
+PDF_FLATFORM_BIN = _SETTINGS.get('PDF_FLATFORM_BIN')

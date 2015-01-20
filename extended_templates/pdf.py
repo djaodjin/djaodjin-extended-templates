@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,9 @@ import logging, subprocess, StringIO
 
 from django.template import Template
 from django.template.response import TemplateResponse
-from fdfgen import forge_fdf
 from xhtml2pdf import pisa
+
+from . import settings
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,9 +62,6 @@ class PdfTemplateResponse(TemplateResponse):
         return cstr.getvalue()
 
 
-# The following was derived from code originally posted
-# at https://gist.github.com/zyegfryed/918403
-
 class PdfTemplateError(Exception):
     pass
 
@@ -75,39 +73,36 @@ class PdfTemplate(Template):
         self.origin = origin
 
     def render(self, context):
-        context = context.items()
         output, err = self.fill_form(context, self.origin.name)
         if err:
             raise PdfTemplateError(err)
         return output
 
     @staticmethod
-    def fill_form(fields, src, pdftk_bin=None):
-        if pdftk_bin is None:
-            from django.conf import settings
-            assert hasattr(settings, 'PDFTK_BIN'), "PDF generation requires"\
-" pdftk (http://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/). Edit your"\
-" PDFTK_BIN settings accordingly."
-            pdftk_bin = settings.PDFTK_BIN
+    def fill_form(fields, src, pdf_flatform_bin=None):
+        if pdf_flatform_bin is None:
+            assert hasattr(settings, 'PDF_FLATFORM_BIN'), "PDF generation "\
+" requires podofo-flatform (https://github.com/djaodjin/"\
+"djaodjin-extended-templates/src/podofo-flatform.cc). Edit your"\
+" PDF_FLATFORM_BIN settings accordingly."
+            pdf_flatform_bin = settings.PDF_FLATFORM_BIN
 
-        fdf_stream = forge_fdf(fdf_data_strings=fields)
+        cmd = [pdf_flatform_bin]
+        for key, value in fields.iteritems():
+            cmd += ['--fill', str('%s=%s' % (key, value))]
+        cmd += [src, '-']
 
-        cmd = [
-            pdftk_bin,
-            src,
-            'fill_form',
-            '-',
-            'output',
-            '-',
-            'flatten',
-        ]
-        cmd = ' '.join(cmd)
-        process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, shell=True)
-        stdout, stderr = process.communicate(input=fdf_stream)
-        process.wait()
-        if process.returncode != 0:
-            LOGGER.exception("Unable to generate PDF: %s", cmd)
-        return stdout, stderr
+        LOGGER.info('RUN: %s', ' '.join(cmd))
+        print "XXX RUN: %s" % str(cmd)
+        return subprocess.check_output(cmd), None
+
+#        cmd = ' '.join(cmd)
+#        process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+#                                   stdout=subprocess.PIPE, shell=True)
+#        stdout, stderr = process.communicate(input=fdf_stream)
+#        process.wait()
+#        if process.returncode != 0:
+#            LOGGER.exception("Unable to generate PDF: %s", cmd)
+#        return stdout, stderr
 
 
