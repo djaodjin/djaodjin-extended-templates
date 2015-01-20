@@ -28,7 +28,7 @@ default settings when the main settings module does not contain
 the appropriate settings.
 """
 
-import os
+import os, sys
 
 from django.conf import settings
 
@@ -37,7 +37,7 @@ _SETTINGS = {
     'EMAILER_BACKEND': getattr(settings, 'EMAILER_BACKEND',
                           'extended_templates.backends.TemplateEmailBackend'),
     'PDF_FLATFORM_BIN': os.path.join(
-        os.getenv('VIRTUAL_ENV'), 'bin', 'podofo-flatform')
+        os.path.dirname(sys.executable), 'podofo-flatform')
 }
 _SETTINGS.update(getattr(settings, 'EXTENDED_TEMPLATES', {}))
 
