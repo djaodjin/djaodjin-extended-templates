@@ -133,7 +133,7 @@ fill_text_field( PdfTextField& field,
         }
         // if field value is longer than maxlen, truncate it
         pdf_long nMax = field.GetMaxLen();
-        if( nMax != -1 && found->second.size() > nMax )
+        if( (nMax != -1) && (found->second.size() > nMax) )
             obj->GetDictionary().AddKey(
                 key, PdfString(found->second.c_str(), nMax));
         else
