@@ -39,6 +39,7 @@ class PdfTemplateResponse(TemplateResponse):
     Response as PDF content.
     """
 
+    #pylint: disable=too-many-arguments
     def __init__(self, request, template, context=None, content_type=None,
             status=None, current_app=None):
         super(PdfTemplateResponse, self).__init__(
