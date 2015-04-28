@@ -52,7 +52,7 @@ def make_origin(display_name, from_loader, name, dirs):
     return LoaderOrigin(display_name, from_loader, name, dirs)
 
 
-def get_template(template_name):
+def get_template(template_name, dirs=None):
     """
     Returns a compiled Template object for the given template name,
     handling template inheritance recursively.
@@ -71,7 +71,7 @@ def get_template(template_name):
         # HACK: Ignore UnicodeError, due to PDF file read
         codecs.register_error('strict', fake_strict_errors)
 
-    template, origin = find_template(template_name)
+    template, origin = find_template(template_name, dirs)
     if not hasattr(template, 'render'):
         # template needs to be compiled
         template = get_template_from_string(template, origin, template_name)

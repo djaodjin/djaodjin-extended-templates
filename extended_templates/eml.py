@@ -96,4 +96,4 @@ class EmlTemplate(Template):
             attachments=attachments, headers=headers)
         if html_content:
             msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=True)
+        msg.send(fail_silently=False)
