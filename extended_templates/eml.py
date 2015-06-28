@@ -26,9 +26,11 @@ from bs4 import BeautifulSoup
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.models import Site
 from django.template import Context
-from django.template.loader_tags import BlockNode
+from django.template.loader_tags import BlockNode, ExtendsNode
 from django.utils.html import strip_tags
 from django.template import Template
+
+from premailer import Premailer
 
 from extended_templates import settings
 
@@ -61,21 +63,40 @@ class EmlTemplate(Template):
         html_content = None
         plain_content = None
         context = Context(context)
-        for node in self:
+        extend = None
+        nodes = self
+
+        # Check if need to extend from base
+        if isinstance(self.nodelist[0], ExtendsNode):
+            extend = self.nodelist[0]
+            nodes = self.nodelist[0].nodelist
+
+        for node in nodes:
             if isinstance(node, BlockNode):
                 if node.name == 'subject':
                     # Email subject *must not* contain newlines
                     subject = ''.join(node.render(context).splitlines())
                 elif  node.name == 'html_content':
                     html_content = node.render(context)
-                    soup = BeautifulSoup(html_content)
+                    if extend:
+                        soup = BeautifulSoup(html_content, 'html.parser')
+                    else:
+                        soup = BeautifulSoup(html_content)
+
                     for lnk in soup.find_all('a'):
                         href = lnk.get('href')
                         if href and href.startswith('/'):
                             lnk['href'] = 'http://%s%s' % (
                                 Site.objects.get_current(), href)
-                    html_content = soup.prettify()
-                elif  node.name == 'plain_content':
+                    if extend:
+                        html_base_content = extend.render(context)
+                        soup_base = BeautifulSoup(html_base_content)
+                        content_section = soup_base.find(id='content')
+                        content_section.insert(0, soup)
+                        html_content = soup_base.prettify()
+                    else:
+                        html_content = soup.prettify()
+                elif node.name == 'plain_content':
                     plain_content = node.render(context)
 
         # Create the email, attach the HTML version.
@@ -95,5 +116,8 @@ class EmlTemplate(Template):
             subject, plain_content, from_email, recipients, bcc=bcc, cc=cc,
             attachments=attachments, headers=headers)
         if html_content:
+            html_content = Premailer(
+                html_content,
+                include_star_selectors=True).transform()
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=False)

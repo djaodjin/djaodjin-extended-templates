@@ -2,3 +2,4 @@ Django>=1.6
 reportlab==2.7
 xhtml2pdf==0.0.5
 beautifulsoup4>=4.3.2
+premailer==2.9.2
