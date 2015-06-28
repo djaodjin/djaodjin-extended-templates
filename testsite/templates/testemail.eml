@@ -1,3 +1,5 @@
+{% extends "base.eml" %}
+
 {% block subject %}
 Sign in {{ site.name }}
 {% endblock %}
