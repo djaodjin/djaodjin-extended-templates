@@ -1,4 +1,4 @@
-# Copyright (c) 2014, DjaoDjin inc.
+# Copyright (c) 2015, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
 import codecs
 
 from django.template import Template, loader
-from django.template.loader import find_template, LoaderOrigin
 
 from extended_templates.pdf import PdfTemplate
 from extended_templates.eml import EmlTemplate
@@ -49,7 +48,7 @@ def get_template_from_string(source, origin=None, name=None):
 def make_origin(display_name, from_loader, name, dirs):
     # Always return an Origin object, because PdfTemplate need it to render
     # the PDF Form file.
-    return LoaderOrigin(display_name, from_loader, name, dirs)
+    return loader.LoaderOrigin(display_name, from_loader, name, dirs)
 
 
 def get_template(template_name, dirs=None):
@@ -71,10 +70,7 @@ def get_template(template_name, dirs=None):
         # HACK: Ignore UnicodeError, due to PDF file read
         codecs.register_error('strict', fake_strict_errors)
 
-    template, origin = find_template(template_name, dirs)
-    if not hasattr(template, 'render'):
-        # template needs to be compiled
-        template = get_template_from_string(template, origin, template_name)
+    template = loader.get_template(template_name, dirs=dirs)
 
     if template_name.endswith('.pdf'):
         # HACK: Ignore UnicodeError, due to PDF file read
