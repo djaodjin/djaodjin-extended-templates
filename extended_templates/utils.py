@@ -22,12 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import codecs
+import codecs, warnings
 
 from django.template import Template, loader
 
-from extended_templates.pdf import PdfTemplate
-from extended_templates.eml import EmlTemplate
+from .compat import _dirs_undefined, RemovedInDjango110Warning
+from .backends.pdf import Template as PdfTemplate
+from .backends.eml import Template as EmlTemplate
 
 
 # The following was derived from code originally posted
@@ -38,6 +39,7 @@ def get_template_from_string(source, origin=None, name=None):
     Returns a compiled Template object for the given template code,
     handling template inheritance recursively.
     """
+    # This function is deprecated in Django 1.8+
     if name and name.endswith('.eml'):
         return EmlTemplate(source, origin, name)
     if name and name.endswith('.pdf'):
@@ -51,7 +53,7 @@ def make_origin(display_name, from_loader, name, dirs):
     return loader.LoaderOrigin(display_name, from_loader, name, dirs)
 
 
-def get_template(template_name, dirs=None):
+def get_template(template_name, dirs=_dirs_undefined):
     """
     Returns a compiled Template object for the given template name,
     handling template inheritance recursively.
@@ -69,6 +71,13 @@ def get_template(template_name, dirs=None):
     if template_name.endswith('.pdf'):
         # HACK: Ignore UnicodeError, due to PDF file read
         codecs.register_error('strict', fake_strict_errors)
+
+    if dirs is _dirs_undefined:
+        dirs = None
+    else:
+        warnings.warn(
+            "The dirs argument of get_template is deprecated.",
+            RemovedInDjango110Warning, stacklevel=2)
 
     template = loader.get_template(template_name, dirs=dirs)
 

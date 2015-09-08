@@ -24,11 +24,13 @@
 
 import logging, subprocess, StringIO
 
-from django.template import Template
+from django.conf import settings as django_settings
+from django.template import TemplateDoesNotExist, Template as BaseTemplate
 from django.template.response import TemplateResponse
 from xhtml2pdf import pisa
 
-from . import settings
+from .. import settings
+from ..compat import BaseEngine, _dirs_undefined
 
 
 LOGGER = logging.getLogger(__name__)
@@ -66,10 +68,49 @@ class PdfTemplateError(Exception):
     pass
 
 
-class PdfTemplate(Template):
+class PdfEngine(BaseEngine):
+    #pylint: disable=no-member
 
-    def __init__(self, template_string, origin=None, name='<Unknown Template>'):
-        super(PdfTemplate, self).__init__(template_string, origin, name)
+    app_dirname = 'pdf'
+
+    def __init__(self, params):
+        options = params.pop('OPTIONS').copy()
+        options.setdefault('debug', django_settings.DEBUG)
+        options.setdefault('file_charset', django_settings.FILE_CHARSET)
+        super(PdfEngine, self).__init__(params)
+        self.loaders = [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader']
+
+    def find_template(self, template_name, dirs=None):
+        for loader in self.template_loaders:
+            try:
+                source, display_name = loader.load_template_source(
+                    template_name, template_dirs=dirs)
+                origin = self.make_origin(
+                    display_name, loader.load_template_source,
+                template_name, dirs)
+                template = Template(source, origin, template_name, self)
+                return template, None
+            except TemplateDoesNotExist:
+                pass
+        raise TemplateDoesNotExist(template_name)
+
+    def get_template(self, template_name, dirs=_dirs_undefined):
+        if template_name and template_name.endswith('.pdf'):
+            return super(PdfEngine, self).get_template(template_name, dirs=dirs)
+        raise TemplateDoesNotExist()
+
+
+class Template(BaseTemplate):
+
+    def __init__(self, template_string, origin=None, name=None, engine=None):
+        if engine is not None:
+            kwargs = {'engine': engine}
+        else:
+            kwargs = {}
+        super(Template, self).__init__(template_string, origin=origin,
+            name=name, **kwargs)
         self.origin = origin
 
     def render(self, context):

@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,27 +23,68 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from bs4 import BeautifulSoup
+from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.models import Site
 from django.template import Context
 from django.template.loader_tags import BlockNode
 from django.utils.html import strip_tags
-from django.template import Template
+from django.template import TemplateDoesNotExist, Template as BaseTemplate
 
-from extended_templates import settings
+from .. import settings
+from ..compat import BaseEngine, _dirs_undefined
 
 
 class EmlTemplateError(Exception):
     pass
 
 
-class EmlTemplate(Template):
+class EmlEngine(BaseEngine):
+    #pylint: disable=no-member
+
+    app_dirname = 'eml'
+
+    def __init__(self, params):
+        options = params.pop('OPTIONS').copy()
+        options.setdefault('debug', django_settings.DEBUG)
+        options.setdefault('file_charset', django_settings.FILE_CHARSET)
+        super(EmlEngine, self).__init__(params)
+        self.loaders = [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader']
+
+    def find_template(self, template_name, dirs=None):
+        for loader in self.template_loaders:
+            try:
+                source, display_name = loader.load_template_source(
+                    template_name, template_dirs=dirs)
+                origin = self.make_origin(
+                    display_name, loader.load_template_source,
+                template_name, dirs)
+                template = Template(source, origin, template_name, self)
+                return template, None
+            except TemplateDoesNotExist:
+                pass
+        raise TemplateDoesNotExist(template_name)
+
+    def get_template(self, template_name, dirs=_dirs_undefined):
+        if template_name and template_name.endswith('.eml'):
+            return super(EmlEngine, self).get_template(template_name, dirs=dirs)
+        raise TemplateDoesNotExist()
+
+
+class Template(BaseTemplate):
     """
     Sends an email to a list of recipients (i.e. email addresses).
     """
 
-    def __init__(self, template_string, origin=None, name='<Unknown Template>'):
-        super(EmlTemplate, self).__init__(template_string, origin, name)
+    def __init__(self, template_string, origin=None, name=None, engine=None):
+        if engine is not None:
+            kwargs = {'engine': engine}
+        else:
+            kwargs = {}
+        super(Template, self).__init__(template_string, origin=origin,
+            name=name, **kwargs)
         self.origin = origin
 
     #pylint: disable=invalid-name,too-many-arguments
@@ -97,3 +138,4 @@ class EmlTemplate(Template):
         if html_content:
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=False)
+

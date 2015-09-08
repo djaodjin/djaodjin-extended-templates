@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,17 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from distutils.core import setup
-import extended_templates
+#pylint:disable=unused-import,no-name-in-module
 
-setup(
-    name='djaodjin-extended-templates',
-    version=extended_templates.__version__,
-    author='The DjaoDjin Team',
-    author_email='support@djaodjin.com',
-    packages=['extended_templates',
-              'extended_templates.backends'],
-    url='https://github.com/djaodjin/djaodjin-extended-templates/',
-    download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
-'/tarball/%s' % extended_templates.__version__,
-    install_requires=['Django'],
-    license='BSD',
-    description="DjaoDjin's Template wrappers for HTML email and PDF templates",
-    long_description=open('README.md').read(),
-)
+try:
+    from django.template.engine import Engine as BaseEngine, _dirs_undefined
+except ImportError: # django < 1.8
+    _dirs_undefined = object()
+    class BaseEngine(object):
+        pass
+
+try:
+    from django.utils.deprecation import RemovedInDjango110Warning
+except ImportError: # django < 1.8
+    class RemovedInDjango110Warning(PendingDeprecationWarning):
+        pass
