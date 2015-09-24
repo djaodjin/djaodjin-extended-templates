@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.models import Site
-from django.template import Context
+from django.template import RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
 from django.utils.html import strip_tags
 from django.template import TemplateDoesNotExist, Template as BaseTemplate
@@ -51,9 +51,7 @@ class EmlEngine(BaseEngine):
         options.setdefault('debug', django_settings.DEBUG)
         options.setdefault('file_charset', django_settings.FILE_CHARSET)
         super(EmlEngine, self).__init__(params)
-        self.loaders = [
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader']
+        self.engine = BaseEngine(self.dirs, self.app_dirs, **options)
 
     def find_template(self, template_name, dirs=None):
         for loader in self.template_loaders:
@@ -103,7 +101,7 @@ class Template(BaseTemplate):
         subject = None
         html_content = None
         plain_content = None
-        context = Context(context)
+        context = RequestContext(None, context)
         extend = None
         nodes = self
 
