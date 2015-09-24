@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>djaodjin-extended-templates</title>
+<style>
+*{
+    font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+    font-size: 100%;
+    line-height: 1.6;
+}
+
+.test-box {
+    border: 1px solid #AAA;
+    border-radius: 4px;
+    padding:10px;
+}
+
+.btn{
+    background-color: blue;
+    padding:7px 10px;
+    color:white;
+}
+
+</style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>Header in Base</h1>
+
+        <h3>The email content is below:</h3>
+
+        <div id="content"></div>
+    </div>
+</body>
+</html>
