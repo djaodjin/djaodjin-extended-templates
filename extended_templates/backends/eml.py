@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.models import Site
-from django.template import RequestContext, Context
+from django.template import RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
 from django.utils.html import strip_tags
 from django.template import TemplateDoesNotExist, Template as BaseTemplate
