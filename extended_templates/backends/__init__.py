@@ -56,7 +56,7 @@ class TemplateEmailBackend(object):
     @staticmethod
     def send(recipients, template_name, context=None,
              from_email=None, bcc=None, cc=None, reply_to=None,
-             attachments=None):
+             attachments=None, debug=False):
         # avoid import loop in utils.py
         from extended_templates.utils import get_template
         if not from_email:
@@ -64,5 +64,5 @@ class TemplateEmailBackend(object):
         tmpl = get_template(template_name)
         tmpl.send(recipients, context,
             from_email=from_email, bcc=bcc, cc=cc, reply_to=reply_to,
-            attachments=attachments)
+            attachments=attachments, debug=debug)
 
