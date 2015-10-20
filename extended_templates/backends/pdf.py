@@ -128,13 +128,13 @@ class Template(BaseTemplate):
 " PDF_FLATFORM_BIN settings accordingly."
             pdf_flatform_bin = settings.PDF_FLATFORM_BIN
 
-        cmd = [pdf_flatform_bin]
+        cmd = [unicode(pdf_flatform_bin)]
         for key, value in fields.iteritems():
-            cmd += ['--fill', str('%s=%s' % (key, value))]
-        cmd += [src, '-']
+            cmd += [u'--fill', (u'%s=%s' % (key, value))]
+        cmd += [unicode(src), u'-']
 
-        LOGGER.info('RUN: %s', ' '.join(cmd))
-        print "XXX RUN: %s" % str(cmd)
+        cmdline = u' '.join(cmd)
+        LOGGER.info((u'RUN: %s' % cmdline).encode('utf-8'))
         return subprocess.check_output(cmd), None
 
 #        cmd = ' '.join(cmd)
