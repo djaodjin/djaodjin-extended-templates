@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.models import Site
-from django.template import RequestContext
+from django.template import Context, RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
 from django.utils.html import strip_tags
 from django.template import TemplateDoesNotExist, Template as BaseTemplate
@@ -98,12 +98,14 @@ class Template(BaseTemplate):
             headers = None
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
+        if not isinstance(context, Context):
+            context = RequestContext(None, context)
+
+        nodes = self
+        extend = None
         subject = None
         html_content = None
         plain_content = None
-        context = RequestContext(None, context)
-        extend = None
-        nodes = self
 
         # Check if need to extend from base
         if isinstance(self.nodelist[0], ExtendsNode):
