@@ -70,7 +70,7 @@ class EmlEngine(BaseEngine):
     def get_template(self, template_name, dirs=_dirs_undefined):
         if template_name and template_name.endswith('.eml'):
             return super(EmlEngine, self).get_template(template_name, dirs=dirs)
-        raise TemplateDoesNotExist()
+        raise TemplateDoesNotExist(template_name)
 
 
 class Template(BaseTemplate):

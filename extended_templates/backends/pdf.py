@@ -99,7 +99,7 @@ class PdfEngine(BaseEngine):
     def get_template(self, template_name, dirs=_dirs_undefined):
         if template_name and template_name.endswith('.pdf'):
             return super(PdfEngine, self).get_template(template_name, dirs=dirs)
-        raise TemplateDoesNotExist()
+        raise TemplateDoesNotExist(template_name)
 
 
 class Template(BaseTemplate):
