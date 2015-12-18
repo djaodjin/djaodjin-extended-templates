@@ -24,6 +24,7 @@
 
 import codecs, warnings
 
+import django
 from django.template import Template, loader
 
 from .compat import _dirs_undefined, RemovedInDjango110Warning
@@ -72,12 +73,13 @@ def get_template(template_name, dirs=_dirs_undefined):
         # HACK: Ignore UnicodeError, due to PDF file read
         codecs.register_error('strict', fake_strict_errors)
 
-    if dirs is _dirs_undefined:
-        dirs = None
-    else:
-        warnings.warn(
-            "The dirs argument of get_template is deprecated.",
-            RemovedInDjango110Warning, stacklevel=2)
+    if django.VERSION[0] <= 1 and django.VERSION[1] < 8:
+        if dirs is _dirs_undefined:
+            dirs = None
+        else:
+            warnings.warn(
+                "The dirs argument of get_template is deprecated.",
+                RemovedInDjango110Warning, stacklevel=2)
 
     template = loader.get_template(template_name, dirs=dirs)
 

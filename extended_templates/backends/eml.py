@@ -25,7 +25,6 @@
 from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
-from django.contrib.sites.models import Site
 from django.template import Context, RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
 from django.utils.html import strip_tags
@@ -34,7 +33,13 @@ from django.template import TemplateDoesNotExist, Template as BaseTemplate
 from premailer import Premailer
 
 from .. import settings
-from ..compat import BaseEngine, _dirs_undefined
+from ..compat import BaseEngine, _dirs_undefined, import_string
+
+def build_absolute_uri(request, location='', site=None):
+    if settings.BUILD_ABSOLUTE_URI_CALLABLE:
+        return import_string(settings.BUILD_ABSOLUTE_URI_CALLABLE)(
+            request, location=location, site=site)
+    return request.build_absolute_uri(location=location)
 
 
 class EmlTemplateError(Exception):
@@ -47,30 +52,49 @@ class EmlEngine(BaseEngine):
     app_dirname = 'eml'
 
     def __init__(self, params):
-        options = params.pop('OPTIONS').copy()
-        options.setdefault('debug', django_settings.DEBUG)
-        options.setdefault('file_charset', django_settings.FILE_CHARSET)
-        super(EmlEngine, self).__init__(params)
-        self.engine = BaseEngine(self.dirs, self.app_dirs, **options)
+        self.name = params.get('NAME')
+        dirs = list(params.get('DIRS', []))
+        app_dirs = bool(params.get('APP_DIRS', False))
+        options = params.get('OPTIONS', {})
+        super(EmlEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
 
-    def find_template(self, template_name, dirs=None):
+    def find_template(self, template_name, dirs=None, skip=None):
+        tried = []
         for loader in self.template_loaders:
-            try:
-                source, display_name = loader.load_template_source(
-                    template_name, template_dirs=dirs)
-                origin = self.make_origin(
-                    display_name, loader.load_template_source,
-                template_name, dirs)
-                template = Template(source, origin, template_name, self)
-                return template, None
-            except TemplateDoesNotExist:
-                pass
-        raise TemplateDoesNotExist(template_name)
+            if hasattr(loader, 'get_contents'):
+                # From Django 1.9, this is the code that should be executed.
+                for origin in loader.get_template_sources(
+                        template_name, template_dirs=dirs):
+                    if skip is not None and origin in skip:
+                        tried.append((origin, 'Skipped'))
+                        continue
+                    try:
+                        contents = loader.get_contents(origin)
+                    except TemplateDoesNotExist:
+                        tried.append((origin, 'Source does not exist'))
+                        continue
+                    else:
+                        template = Template(
+                            contents, origin, origin.template_name, self)
+                        return template, template.origin
+            else:
+                # This code is there to support Django 1.8 only.
+                try:
+                    source, template_path = loader.load_template_source(
+                        template_name, template_dirs=dirs)
+                    origin = self.make_origin(
+                        template_path, loader.load_template_source,
+                        template_name, dirs)
+                    template = Template(source, origin, template_path, self)
+                    return template, template.origin
+                except TemplateDoesNotExist:
+                    pass
+        raise TemplateDoesNotExist(template_name, tried=tried)
 
     def get_template(self, template_name, dirs=_dirs_undefined):
         if template_name and template_name.endswith('.eml'):
             return super(EmlEngine, self).get_template(template_name, dirs=dirs)
-        raise TemplateDoesNotExist()
+        raise TemplateDoesNotExist(template_name)
 
 
 class Template(BaseTemplate):
@@ -87,19 +111,13 @@ class Template(BaseTemplate):
             name=name, **kwargs)
         self.origin = origin
 
-    #pylint: disable=invalid-name,too-many-arguments
-    def send(self, recipients, context,
-             from_email=None, bcc=None, cc=None, reply_to=None,
-             attachments=None):
+    def _send(self, recipients, context, from_email=None, bcc=None, cc=None,
+              reply_to=None, attachments=None):
         #pylint: disable=too-many-locals
         if reply_to:
             headers = {'Reply-To': reply_to}
         else:
             headers = None
-        if not from_email:
-            from_email = settings.DEFAULT_FROM_EMAIL
-        if not isinstance(context, Context):
-            context = RequestContext(None, context)
 
         nodes = self
         extend = None
@@ -127,8 +145,10 @@ class Template(BaseTemplate):
                     for lnk in soup.find_all('a'):
                         href = lnk.get('href')
                         if href and href.startswith('/'):
-                            lnk['href'] = 'http://%s%s' % (
-                                Site.objects.get_current(), href)
+                            # 'django.core.context_processors.request' must be
+                            # present in TEMPLATE_CONTEXT_PROCESSORS.
+                            lnk['href'] = build_absolute_uri(
+                                context['request'], href)
                     if extend:
                         html_base_content = extend.render(context)
                         soup_base = BeautifulSoup(html_base_content, 'lxml')
@@ -163,3 +183,21 @@ class Template(BaseTemplate):
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=False)
 
+
+    #pylint: disable=invalid-name,too-many-arguments
+    def send(self, recipients, context,
+             from_email=None, bcc=None, cc=None, reply_to=None,
+             attachments=None):
+        if not from_email:
+            from_email = settings.DEFAULT_FROM_EMAIL
+        if not isinstance(context, Context):
+            context = RequestContext(None, context)
+
+        if hasattr(context, 'template') and context.template is None:
+            with context.bind_template(self):
+                context.template_name = self.name
+                return self._send(recipients, context, from_email=from_email,
+                    bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments)
+        else:
+            return self._send(recipients, context, from_email=from_email,
+                bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments)
