@@ -23,7 +23,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from bs4 import BeautifulSoup
-from django.conf import settings as django_settings
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context, RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
@@ -60,11 +59,13 @@ class EmlEngine(BaseEngine):
         options['libraries'] = self.get_templatetag_libraries(libraries)
         super(EmlEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
 
-    def get_templatetag_libraries(self, custom_libraries):
+    @staticmethod
+    def get_templatetag_libraries(custom_libraries):
         """
         Return a collation of template tag libraries from installed
         applications and the supplied custom_libraries argument.
         """
+        #pylint: disable=no-name-in-module,import-error
         from django.template.backends.django import get_installed_libraries
         libraries = get_installed_libraries()
         libraries.update(custom_libraries)
@@ -123,6 +124,7 @@ class Template(BaseTemplate):
             name=name, **kwargs)
         self.origin = origin
 
+    #pylint: disable=invalid-name,too-many-arguments
     def _send(self, recipients, context, from_email=None, bcc=None, cc=None,
               reply_to=None, attachments=None):
         #pylint: disable=too-many-locals
@@ -200,6 +202,7 @@ class Template(BaseTemplate):
     def send(self, recipients, context,
              from_email=None, bcc=None, cc=None, reply_to=None,
              attachments=None):
+        #pylint: disable=no-member
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
         if not isinstance(context, Context):

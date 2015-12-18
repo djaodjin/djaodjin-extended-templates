@@ -40,12 +40,14 @@ class Command(BaseCommand):
     """
     missing_args_message = "Enter at least one receipient email."
 
-    def add_arguments(self, parser):
+    @staticmethod
+    def add_arguments(parser):
         parser.add_argument('args', nargs='+',
             help='One or more receipient email.')
 
-    def handle(self, *args, **options):
+    @staticmethod
+    def handle(*args, **options):
         request = HttpRequest()
         request.META['HTTP_HOST'] = 'localhost:8000'
         tmpl = get_template('testemail.eml')
-        tmpl.send(recipients=args, context= RequestContext(request, {}))
+        tmpl.send(recipients=args, context=RequestContext(request, {}))

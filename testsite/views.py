@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.views.generic import TemplateView
 
 from extended_templates.utils import get_template

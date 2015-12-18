@@ -24,7 +24,6 @@
 
 import logging, subprocess, StringIO
 
-from django.conf import settings as django_settings
 from django.template import TemplateDoesNotExist, Template as BaseTemplate
 from django.template.response import TemplateResponse
 from xhtml2pdf import pisa
