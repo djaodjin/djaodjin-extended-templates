@@ -55,8 +55,20 @@ class EmlEngine(BaseEngine):
         self.name = params.get('NAME')
         dirs = list(params.get('DIRS', []))
         app_dirs = bool(params.get('APP_DIRS', False))
-        options = params.get('OPTIONS', {})
+        options = params.get('OPTIONS', {}).copy()
+        libraries = options.get('libraries', {})
+        options['libraries'] = self.get_templatetag_libraries(libraries)
         super(EmlEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
+
+    def get_templatetag_libraries(self, custom_libraries):
+        """
+        Return a collation of template tag libraries from installed
+        applications and the supplied custom_libraries argument.
+        """
+        from django.template.backends.django import get_installed_libraries
+        libraries = get_installed_libraries()
+        libraries.update(custom_libraries)
+        return libraries
 
     def find_template(self, template_name, dirs=None, skip=None):
         tried = []
@@ -148,7 +160,7 @@ class Template(BaseTemplate):
                             # 'django.core.context_processors.request' must be
                             # present in TEMPLATE_CONTEXT_PROCESSORS.
                             lnk['href'] = build_absolute_uri(
-                                context['request'], href)
+                                context.get('request', None), href)
                     if extend:
                         html_base_content = extend.render(context)
                         soup_base = BeautifulSoup(html_base_content, 'lxml')
