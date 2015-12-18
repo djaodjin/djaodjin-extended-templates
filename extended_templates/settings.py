@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ from django.conf import settings
 
 _SETTINGS = {
     'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL'),
+    'BUILD_ABSOLUTE_URI_CALLABLE': None,
     'EMAILER_BACKEND': getattr(settings, 'EMAILER_BACKEND',
                           'extended_templates.backends.TemplateEmailBackend'),
     'PDF_FLATFORM_BIN': os.path.join(
@@ -44,3 +45,4 @@ _SETTINGS.update(getattr(settings, 'EXTENDED_TEMPLATES', {}))
 DEFAULT_FROM_EMAIL = _SETTINGS.get('DEFAULT_FROM_EMAIL')
 EMAILER_BACKEND = _SETTINGS.get('EMAILER_BACKEND')
 PDF_FLATFORM_BIN = _SETTINGS.get('PDF_FLATFORM_BIN')
+BUILD_ABSOLUTE_URI_CALLABLE = _SETTINGS.get('BUILD_ABSOLUTE_URI_CALLABLE')

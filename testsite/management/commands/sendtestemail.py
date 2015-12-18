@@ -25,6 +25,8 @@
 import logging
 
 from django.core.management.base import BaseCommand
+from django.http.request import HttpRequest
+from django.template import RequestContext
 from django.template.loader import get_template
 
 from extended_templates.utils import get_template
@@ -36,7 +38,14 @@ class Command(BaseCommand):
     """
     Send a test email to check everything works properly.
     """
+    missing_args_message = "Enter at least one receipient email."
+
+    def add_arguments(self, parser):
+        parser.add_argument('args', nargs='+',
+            help='One or more receipient email.')
 
     def handle(self, *args, **options):
+        request = HttpRequest()
+        request.META['HTTP_HOST'] = 'localhost:8000'
         tmpl = get_template('testemail.eml')
-        tmpl.send(recipients=args, context={})
+        tmpl.send(recipients=args, context= RequestContext(request, {}))
