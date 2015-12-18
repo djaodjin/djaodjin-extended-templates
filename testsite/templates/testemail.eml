@@ -1,18 +1,18 @@
 {% block subject %}
-Sign in {{ site.name }}
+Download extended-template PDF
 {% endblock %}
 
 {% block plain_content %}
 This email is in plain text.
 
-Please sign in here:
-http://{{ site.domain }}{% url 'login' %}{% if next %}?next={{next}}{% endif %}
+Download the PDF here:
+{% url 'pdf_view' %}
 {% endblock %}
 
 {% block html_content %}
 <h1>Hello</h1>
 <p>
 You should get this email in HTML format.
-Please <a href="http://{{ site.domain }}{% url 'login' %}{% if next %}?next={{next}}{% endif %}">Sign in</a>.
+Download the <a href="{% url 'pdf_view' %}">PDF</a>.
 </p>
 {% endblock %}

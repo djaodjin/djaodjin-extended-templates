@@ -74,27 +74,44 @@ class PdfEngine(BaseEngine):
     app_dirname = 'pdf'
 
     def __init__(self, params):
-        options = params.pop('OPTIONS').copy()
-        options.setdefault('debug', django_settings.DEBUG)
-        options.setdefault('file_charset', django_settings.FILE_CHARSET)
-        super(PdfEngine, self).__init__(params)
-        self.loaders = [
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader']
+        self.name = params.get('NAME')
+        dirs = list(params.get('DIRS', []))
+        app_dirs = bool(params.get('APP_DIRS', False))
+        options = params.get('OPTIONS', {})
+        super(PdfEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
 
-    def find_template(self, template_name, dirs=None):
+    def find_template(self, template_name, dirs=None, skip=None):
+        tried = []
         for loader in self.template_loaders:
-            try:
-                source, display_name = loader.load_template_source(
-                    template_name, template_dirs=dirs)
-                origin = self.make_origin(
-                    display_name, loader.load_template_source,
-                template_name, dirs)
-                template = Template(source, origin, template_name, self)
-                return template, None
-            except TemplateDoesNotExist:
-                pass
-        raise TemplateDoesNotExist(template_name)
+            if hasattr(loader, 'get_contents'):
+                # From Django 1.9, this is the code that should be executed.
+                for origin in loader.get_template_sources(
+                        template_name, template_dirs=dirs):
+                    if skip is not None and origin in skip:
+                        tried.append((origin, 'Skipped'))
+                        continue
+                    try:
+                        contents = loader.get_contents(origin)
+                    except TemplateDoesNotExist:
+                        tried.append((origin, 'Source does not exist'))
+                        continue
+                    else:
+                        template = Template(
+                            contents, origin, origin.template_name, self)
+                        return template, template.origin
+            else:
+                # This code is there to support Django 1.8 only.
+                try:
+                    source, template_path = loader.load_template_source(
+                        template_name, template_dirs=dirs)
+                    origin = self.make_origin(
+                        template_path, loader.load_template_source,
+                        template_name, dirs)
+                    template = Template(source, origin, template_path, self)
+                    return template, template.origin
+                except TemplateDoesNotExist:
+                    pass
+        raise TemplateDoesNotExist(template_name, tried=tried)
 
     def get_template(self, template_name, dirs=_dirs_undefined):
         if template_name and template_name.endswith('.pdf'):
@@ -114,7 +131,11 @@ class Template(BaseTemplate):
         self.origin = origin
 
     def render(self, context):
-        output, err = self.fill_form(context, self.origin.name)
+        if self.origin:
+            template_path = self.origin.name
+        else:
+            template_path = self.name
+        output, err = self.fill_form(context, template_path)
         if err:
             raise PdfTemplateError(err)
         return output
@@ -136,14 +157,3 @@ class Template(BaseTemplate):
         cmdline = u' '.join(cmd)
         LOGGER.info((u'RUN: %s' % cmdline).encode('utf-8'))
         return subprocess.check_output(cmd), None
-
-#        cmd = ' '.join(cmd)
-#        process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-#                                   stdout=subprocess.PIPE, shell=True)
-#        stdout, stderr = process.communicate(input=fdf_stream)
-#        process.wait()
-#        if process.returncode != 0:
-#            LOGGER.exception("Unable to generate PDF: %s", cmd)
-#        return stdout, stderr
-
-

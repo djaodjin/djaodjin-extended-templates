@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2015, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,25 +22,24 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint:disable=unused-import,no-name-in-module
+from django.http import Http404, HttpResponse
+from django.views.generic import TemplateView
 
-try:
-    #pylint: disable=no-name-in-module, unused-import
-    from django.utils.module_loading import import_string
-except ImportError: # django < 1.7
-    #pylint: disable=unused-import
-    from django.utils.module_loading import import_by_path as import_string
+from extended_templates.utils import get_template
 
 
-try:
-    from django.template.engine import Engine as BaseEngine, _dirs_undefined
-except ImportError: # django < 1.8
-    _dirs_undefined = object()
-    class BaseEngine(object):
-        pass
+class PdfView(TemplateView):
+    """
+    Page to deliver a certificate of completion for a course.
+    """
 
-try:
-    from django.utils.deprecation import RemovedInDjango110Warning
-except ImportError: # django < 1.8
-    class RemovedInDjango110Warning(PendingDeprecationWarning):
-        pass
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='application/pdf')
+        # This code will force download instead of presentation in browser:
+        # response['Content-Disposition'] = \
+        #     'attachment; filename=%s' % os.path.basename(template_name)
+        template = get_template('pdfview.pdf')
+        response.write(template.render(self.get_context_data(**kwargs)))
+        return response

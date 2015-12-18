@@ -23,8 +23,22 @@ run the sendtestemail command.
     $ virtualenv-2.7 _installTop_
     $ source _installTop_/bin/activate
     $ pip install -r requirements.txt
+    $ make initdb
 
-    # edit siteconf.py
+Here you will need to edit credentials and site.conf to use the appropriate
+settings to connect to your e-mail server.
+
+    credentials:
+      EMAIL_HOST_USER =
+      EMAIL_HOST_PASSWORD =
+    site.conf:
+      EMAIL_HOST    =
+      EMAIL_PORT    =
+      EMAIL_USE_TLS =
+      DEFAULT_FROM_EMAIL =
+
+Then run the ``sendtestemail`` command and look for an e-mail delivered to you
+in HTML format.
 
     $ python manage.py sendtestemail __your_email_address__
 
