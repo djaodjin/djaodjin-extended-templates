@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,19 +23,27 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from distutils.core import setup
+
 import extended_templates
+
+requirements = []
+with open('./requirements.txt') as requirements_txt:
+    for line in requirements_txt:
+        prerequisite = line.split('#')[0].strip()
+        if prerequisite:
+            requirements += [prerequisite]
 
 setup(
     name='djaodjin-extended-templates',
     version=extended_templates.__version__,
     author='The DjaoDjin Team',
     author_email='support@djaodjin.com',
+    install_requires=requirements,
     packages=['extended_templates',
               'extended_templates.backends'],
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
     download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
 '/tarball/%s' % extended_templates.__version__,
-    install_requires=['Django'],
     license='BSD',
     description="DjaoDjin's Template wrappers for HTML email and PDF templates",
     long_description=open('README.md').read(),
