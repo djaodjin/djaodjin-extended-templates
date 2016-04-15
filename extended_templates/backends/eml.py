@@ -126,7 +126,7 @@ class Template(BaseTemplate):
 
     #pylint: disable=invalid-name,too-many-arguments
     def _send(self, recipients, context, from_email=None, bcc=None, cc=None,
-              reply_to=None, attachments=None):
+              reply_to=None, attachments=None, fail_silently=False):
         #pylint: disable=too-many-locals
         if reply_to:
             headers = {'Reply-To': reply_to}
@@ -195,13 +195,12 @@ class Template(BaseTemplate):
                 html_content,
                 include_star_selectors=True).transform()
             msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=False)
-
+        msg.send(fail_silently=fail_silently)
 
     #pylint: disable=invalid-name,too-many-arguments
     def send(self, recipients, context,
              from_email=None, bcc=None, cc=None, reply_to=None,
-             attachments=None):
+             attachments=None, fail_silently=False):
         #pylint: disable=no-member
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
@@ -212,7 +211,9 @@ class Template(BaseTemplate):
             with context.bind_template(self):
                 context.template_name = self.name
                 return self._send(recipients, context, from_email=from_email,
-                    bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments)
+                    bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments,
+                    fail_silently=fail_silently)
         else:
             return self._send(recipients, context, from_email=from_email,
-                bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments)
+                bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments,
+                fail_silently=fail_silently)
