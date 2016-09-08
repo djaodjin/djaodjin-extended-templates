@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,16 @@ except ImportError: # django < 1.7
 
 
 try:
-    from django.template.engine import Engine as BaseEngine, _dirs_undefined
+    from django.template.engine import Engine as BaseEngine
+except ImportError: # django < 1.8
+    class BaseEngine(object):
+        def __init__(self, dirs=None, app_dirs=None, **options):
+            pass
+
+try:
+    from django.template.engine import _dirs_undefined
 except ImportError: # django < 1.8
     _dirs_undefined = object()
-    class BaseEngine(object):
-        pass
 
 try:
     from django.utils.deprecation import RemovedInDjango110Warning
