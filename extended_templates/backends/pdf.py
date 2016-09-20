@@ -40,16 +40,17 @@ class PdfTemplateResponse(TemplateResponse):
     Response as PDF content.
     """
 
-    #pylint: disable=too-many-arguments
+    #pylint:disable=too-many-arguments
     def __init__(self, request, template, context=None, content_type=None,
-            status=None, current_app=None, **kwargs):
+                 status=None, **kwargs):
         # Django 1.9 added (charset=None, using=None) to the prototype.
+        # Django 1.10 removed (current_app=None)  to the prototype.
         # We donot declare them explicitely but through **kwargs instead
-        # so that our prototype is compatible with both Django 1.7
-        # and Django 1.9.
+        # so that our prototype is compatible with from Django 1.7
+        # through to Django 1.10.
         super(PdfTemplateResponse, self).__init__(request, template,
             context=context, content_type='application/pdf', status=status,
-            current_app=current_app, **kwargs)
+            **kwargs)
 
     @property
     def rendered_content(self):

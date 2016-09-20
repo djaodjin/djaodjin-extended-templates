@@ -22,7 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
+
 from bs4 import BeautifulSoup
+import django
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context, RequestContext
 from django.template.loader_tags import BlockNode, ExtendsNode
@@ -32,7 +35,9 @@ from django.template import TemplateDoesNotExist, Template as BaseTemplate
 from premailer import Premailer
 
 from .. import settings
-from ..compat import BaseEngine, _dirs_undefined, import_string
+from ..compat import (BaseEngine, _dirs_undefined, import_string,
+    RemovedInDjango110Warning)
+
 
 def build_absolute_uri(request, location='', site=None):
     if settings.BUILD_ABSOLUTE_URI_CALLABLE:
@@ -106,7 +111,15 @@ class EmlEngine(BaseEngine):
 
     def get_template(self, template_name, dirs=_dirs_undefined):
         if template_name and template_name.endswith('.eml'):
-            return super(EmlEngine, self).get_template(template_name, dirs=dirs)
+            if dirs is _dirs_undefined:
+                return super(EmlEngine, self).get_template(template_name)
+            else:
+                if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
+                    warnings.warn(
+                        "The dirs argument of get_template is deprecated.",
+                        RemovedInDjango110Warning, stacklevel=2)
+                return super(EmlEngine, self).get_template(
+                    template_name, dirs=dirs)
         raise TemplateDoesNotExist(template_name)
 
 

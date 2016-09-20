@@ -73,15 +73,14 @@ def get_template(template_name, dirs=_dirs_undefined):
         # HACK: Ignore UnicodeError, due to PDF file read
         codecs.register_error('strict', fake_strict_errors)
 
-    if django.VERSION[0] <= 1 and django.VERSION[1] < 8:
-        if dirs is _dirs_undefined:
-            dirs = None
-        else:
+    if dirs is _dirs_undefined:
+        template = loader.get_template(template_name)
+    else:
+        if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
             warnings.warn(
                 "The dirs argument of get_template is deprecated.",
                 RemovedInDjango110Warning, stacklevel=2)
-
-    template = loader.get_template(template_name, dirs=dirs)
+        template = loader.get_template(template_name, dirs=dirs)
 
     if template_name.endswith('.pdf'):
         # HACK: Ignore UnicodeError, due to PDF file read
