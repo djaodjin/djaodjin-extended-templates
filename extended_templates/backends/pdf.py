@@ -157,6 +157,15 @@ class Template(BaseTemplate):
             cmd += [u'--fill', (u'%s=%s' % (key, value))]
         cmd += [unicode(src), u'-']
 
-        cmdline = u' '.join(cmd)
+        cmdline = cmd[0]
+        for param in cmd[1:]:
+            try:
+                key, value = param.split('=')
+                if any(char in str(value) for char in [' ', ';']):
+                    value = u'"%s"' % value
+                cmdline += u"%s=%s" % (key, value)
+            except ValueError:
+                cmdline += u" " + param
         LOGGER.info((u'RUN: %s' % cmdline).encode('utf-8'))
+
         return subprocess.check_output(cmd), None
