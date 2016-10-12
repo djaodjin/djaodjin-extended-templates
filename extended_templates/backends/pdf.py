@@ -154,7 +154,9 @@ class Template(BaseTemplate):
 
         cmd = [unicode(pdf_flatform_bin)]
         for key, value in fields.iteritems():
-            cmd += [u'--fill', (u'%s=%s' % (key, value))]
+            if len(str(value)) > 0:
+                # We don't want to end-up with ``--fill key=``
+                cmd += [u'--fill', (u'%s=%s' % (key, value))]
         cmd += [unicode(src), u'-']
 
         cmdline = cmd[0]
