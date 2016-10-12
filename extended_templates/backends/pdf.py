@@ -163,7 +163,7 @@ class Template(BaseTemplate):
                 key, value = param.split('=')
                 if any(char in str(value) for char in [' ', ';']):
                     value = u'"%s"' % value
-                cmdline += u"%s=%s" % (key, value)
+                cmdline += u" %s=%s" % (key, value)
             except ValueError:
                 cmdline += u" " + param
         LOGGER.info((u'RUN: %s' % cmdline).encode('utf-8'))
