@@ -175,7 +175,8 @@ class Template(BaseTemplate):
                             # 'django.core.context_processors.request' must be
                             # present in TEMPLATE_CONTEXT_PROCESSORS.
                             lnk['href'] = build_absolute_uri(
-                                context.get('request', None), href)
+                                getattr(context, 'request',
+                                    context.get('request', None)), href)
                     if extend:
                         html_base_content = extend.render(context)
                         soup_base = BeautifulSoup(html_base_content, 'lxml')
