@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,9 @@
 
 #pylint:disable=unused-import,no-name-in-module
 
+from django.core.exceptions import ImproperlyConfigured
+
+
 try:
     #pylint: disable=no-name-in-module, unused-import
     from django.utils.module_loading import import_string
@@ -33,11 +36,19 @@ except ImportError: # django < 1.7
 
 
 try:
-    from django.template.engine import Engine as BaseEngine
+    from django.template.backends.base import BaseEngine
 except ImportError: # django < 1.8
+    from django.template import Template as DjangoTemplate
     class BaseEngine(object):
-        def __init__(self, dirs=None, app_dirs=None, **options):
-            pass
+        def __init__(self, params):
+            params = params.copy()
+            self.name = params.pop('NAME')
+            self.dirs = list(params.pop('DIRS'))
+            self.app_dirs = bool(params.pop('APP_DIRS'))
+            if params:
+                raise ImproperlyConfigured(
+                    "Unknown parameters: {}".format(", ".join(params)))
+
 
 try:
     from django.template.engine import _dirs_undefined

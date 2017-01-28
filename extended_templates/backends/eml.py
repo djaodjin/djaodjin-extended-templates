@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,9 @@ import warnings
 from bs4 import BeautifulSoup
 import django
 from django.core.mail import EmailMultiAlternatives
-from django.template import Context, RequestContext
-from django.template.loader_tags import BlockNode, ExtendsNode
+from django.template import engines
 from django.utils.html import strip_tags
-from django.template import TemplateDoesNotExist, Template as BaseTemplate
-
+from django.template import TemplateDoesNotExist
 from premailer import Premailer
 
 from .. import settings
@@ -54,15 +52,13 @@ class EmlEngine(BaseEngine):
     #pylint: disable=no-member
 
     app_dirname = 'eml'
+    template_context_processors = tuple([])
 
     def __init__(self, params):
-        self.name = params.get('NAME')
-        dirs = list(params.get('DIRS', []))
-        app_dirs = bool(params.get('APP_DIRS', False))
-        options = params.get('OPTIONS', {}).copy()
-        libraries = options.get('libraries', {})
-        options['libraries'] = self.get_templatetag_libraries(libraries)
-        super(EmlEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
+        params = params.copy()
+        options = params.pop('OPTIONS').copy()
+        self.engine = engines[options.get('engine', 'html')]
+        super(EmlEngine, self).__init__(params)
 
     @staticmethod
     def get_templatetag_libraries(custom_libraries):
@@ -81,61 +77,63 @@ class EmlEngine(BaseEngine):
         for loader in self.template_loaders:
             if hasattr(loader, 'get_contents'):
                 # From Django 1.9, this is the code that should be executed.
-                for origin in loader.get_template_sources(
-                        template_name, template_dirs=dirs):
-                    if skip is not None and origin in skip:
-                        tried.append((origin, 'Skipped'))
-                        continue
-                    try:
-                        contents = loader.get_contents(origin)
-                    except TemplateDoesNotExist:
-                        tried.append((origin, 'Source does not exist'))
-                        continue
-                    else:
-                        template = Template(
-                            contents, origin, origin.template_name, self)
-                        return template, template.origin
+                try:
+                    template = Template(loader.get_template(
+                        template_name, template_dirs=dirs, skip=skip,
+                    ))
+                    return template, template.origin
+                except TemplateDoesNotExist as err:
+                    tried.extend(err.tried)
             else:
                 # This code is there to support Django 1.8 only.
+                from ..compat import DjangoTemplate
                 try:
                     source, template_path = loader.load_template_source(
                         template_name, template_dirs=dirs)
                     origin = self.make_origin(
                         template_path, loader.load_template_source,
                         template_name, dirs)
-                    template = Template(source, origin, template_path, self)
+                    template = Template(
+                        DjangoTemplate(source, origin, template_path, self))
                     return template, template.origin
                 except TemplateDoesNotExist:
                     pass
         raise TemplateDoesNotExist(template_name, tried=tried)
 
+    def from_string(self, template_code):
+        raise NotImplementedError(
+            "The from_string() method is not implemented")
+
     def get_template(self, template_name, dirs=_dirs_undefined):
+        #pylint:disable=arguments-differ
         if template_name and template_name.endswith('.eml'):
             if dirs is _dirs_undefined:
-                return super(EmlEngine, self).get_template(template_name)
+                return Template(self.engine.get_template(
+                    template_name), engine=self)
             else:
                 if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
                     warnings.warn(
                         "The dirs argument of get_template is deprecated.",
                         RemovedInDjango110Warning, stacklevel=2)
-                return super(EmlEngine, self).get_template(
-                    template_name, dirs=dirs)
+                return Template(self.engine.get_template(
+                    template_name, dirs=dirs), engine=self)
         raise TemplateDoesNotExist(template_name)
 
 
-class Template(BaseTemplate):
+class Template(object):
     """
     Sends an email to a list of recipients (i.e. email addresses).
     """
 
-    def __init__(self, template_string, origin=None, name=None, engine=None):
-        if engine is not None:
-            kwargs = {'engine': engine}
-        else:
-            kwargs = {}
-        super(Template, self).__init__(template_string, origin=origin,
-            name=name, **kwargs)
-        self.origin = origin
+    def __init__(self, template, engine=None):
+        self.engine = engine
+        self.template = template
+        self.origin = template.origin
+        if self.origin:
+            self.name = self.origin.name
+
+    def render(self, context=None, request=None):
+        return self.template.render(context=context, request=request)
 
     #pylint: disable=invalid-name,too-many-arguments
     def _send(self, recipients, context, from_email=None, bcc=None, cc=None,
@@ -146,47 +144,18 @@ class Template(BaseTemplate):
         else:
             headers = None
 
-        nodes = self
-        extend = None
         subject = None
-        html_content = None
         plain_content = None
+        request = getattr(context, 'request', context.get('request', None))
 
-        # Check if need to extend from base
-        if isinstance(self.nodelist[0], ExtendsNode):
-            extend = self.nodelist[0]
-            nodes = self.nodelist[0].nodelist
-
-        for node in nodes:
-            if isinstance(node, BlockNode):
-                if node.name == 'subject':
-                    # Email subject *must not* contain newlines
-                    subject = ''.join(node.render(context).splitlines())
-                elif node.name == 'html_content':
-                    html_content = node.render(context)
-                    if extend:
-                        soup = BeautifulSoup(html_content, 'html.parser')
-                    else:
-                        soup = BeautifulSoup(html_content, 'lxml')
-
-                    for lnk in soup.find_all('a'):
-                        href = lnk.get('href')
-                        if href and href.startswith('/'):
-                            # 'django.core.context_processors.request' must be
-                            # present in TEMPLATE_CONTEXT_PROCESSORS.
-                            lnk['href'] = build_absolute_uri(
-                                getattr(context, 'request',
-                                    context.get('request', None)), href)
-                    if extend:
-                        html_base_content = extend.render(context)
-                        soup_base = BeautifulSoup(html_base_content, 'lxml')
-                        content_section = soup_base.find(id='content')
-                        content_section.insert(0, soup)
-                        html_content = soup_base.prettify()
-                    else:
-                        html_content = soup.prettify()
-                elif node.name == 'plain_content':
-                    plain_content = node.render(context)
+        soup = BeautifulSoup(self.render(
+            context=context, request=request), 'html.parser')
+        for lnk in soup.find_all('a'):
+            href = lnk.get('href')
+            if href and href.startswith('/'):
+                lnk['href'] = build_absolute_uri(request, href)
+        html_content = soup.prettify()
+        subject = soup.find("title").contents[0].strip()
 
         # Create the email, attach the HTML version.
         if not subject:
@@ -218,8 +187,6 @@ class Template(BaseTemplate):
         #pylint: disable=no-member
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
-        if not isinstance(context, Context):
-            context = RequestContext(None, context)
 
         if hasattr(context, 'template') and context.template is None:
             with context.bind_template(self):

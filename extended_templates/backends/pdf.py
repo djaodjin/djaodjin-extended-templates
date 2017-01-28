@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,14 +22,19 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, subprocess, StringIO
+import logging, subprocess, StringIO, warnings
 
-from django.template import TemplateDoesNotExist, Template as BaseTemplate
+from django.conf import settings as django_settings
+from django.core.exceptions import ImproperlyConfigured
+from django.template import TemplateDoesNotExist
 from django.template.response import TemplateResponse
+from django.utils.module_loading import import_string
+from django.utils import six
+from django.utils.functional import cached_property
 from xhtml2pdf import pisa
 
 from .. import settings
-from ..compat import BaseEngine, _dirs_undefined
+from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
 
 
 LOGGER = logging.getLogger(__name__)
@@ -77,14 +82,44 @@ class PdfEngine(BaseEngine):
     app_dirname = 'pdf'
 
     def __init__(self, params):
-        self.name = params.get('NAME')
-        dirs = list(params.get('DIRS', []))
-        app_dirs = bool(params.get('APP_DIRS', False))
-        options = params.get('OPTIONS', {})
-        super(PdfEngine, self).__init__(dirs=dirs, app_dirs=app_dirs, **options)
+        params = params.copy()
+        options = params.pop('OPTIONS').copy()
+        super(PdfEngine, self).__init__(params)
+        self.file_charset = options.get(
+            'file_charset', django_settings.FILE_CHARSET)
+        self.loaders = options.get('loaders', [])
+
+    # This is an ugly way to add the search paths for .pdf template files.
+    @cached_property
+    def template_loaders(self):
+        return self.get_template_loaders(self.loaders)
+
+    def get_template_loaders(self, template_loaders):
+        loaders = []
+        for loader in template_loaders:
+            if isinstance(loader, (tuple, list)):
+                args = list(loader[1:])
+                loader = loader[0]
+            else:
+                args = []
+            if isinstance(loader, six.string_types):
+                loader_class = import_string(loader)
+                if getattr(loader_class, '_accepts_engine_in_init', False):
+                    args.insert(0, self)
+                loader = loader_class(*args)
+                if loader is not None:
+                    loaders.append(loader)
+            else:
+                raise ImproperlyConfigured(
+                 "Invalid value in template loaders configuration: %r" % loader)
+        return loaders
 
     def find_template(self, template_name, dirs=None, skip=None):
         tried = []
+#        if dirs is None:
+#            dirs = self.dirs
+#        for search_dir in dirs:
+
         for loader in self.template_loaders:
             if hasattr(loader, 'get_contents'):
                 # From Django 1.9, this is the code that should be executed.
@@ -100,7 +135,7 @@ class PdfEngine(BaseEngine):
                         continue
                     else:
                         template = Template(
-                            contents, origin, origin.template_name, self)
+                            contents, origin, origin.template_name)
                         return template, template.origin
             else:
                 # This code is there to support Django 1.8 only.
@@ -110,30 +145,46 @@ class PdfEngine(BaseEngine):
                     origin = self.make_origin(
                         template_path, loader.load_template_source,
                         template_name, dirs)
-                    template = Template(source, origin, template_path, self)
+                    template = Template(source, origin, template_path)
                     return template, template.origin
                 except TemplateDoesNotExist:
                     pass
         raise TemplateDoesNotExist(template_name, tried=tried)
 
+    def from_string(self, template_code):
+        raise NotImplementedError(
+            "The from_string() method is not implemented")
+
     def get_template(self, template_name, dirs=_dirs_undefined):
+        #pylint:disable=arguments-differ
         if template_name and template_name.endswith('.pdf'):
-            return super(PdfEngine, self).get_template(template_name, dirs=dirs)
+            if dirs is _dirs_undefined:
+                dirs = None
+            else:
+                warnings.warn(
+                    "The dirs argument of get_template is deprecated.",
+                    RemovedInDjango110Warning, stacklevel=2)
+
+            template, origin = self.find_template(template_name, dirs)
+            if not hasattr(template, 'render'):
+                # template needs to be compiled
+                template = Template(template, origin, template_name)
+            return template
         raise TemplateDoesNotExist(template_name)
 
 
-class Template(BaseTemplate):
+class Template(object):
+    """
+    Fills a PDF template
+    """
 
-    def __init__(self, template_string, origin=None, name=None, engine=None):
-        if engine is not None:
-            kwargs = {'engine': engine}
-        else:
-            kwargs = {}
-        super(Template, self).__init__(template_string, origin=origin,
-            name=name, **kwargs)
+    def __init__(self, template_string, origin=None, name=None):
+        #pylint:disable=unused-argument
+        self.name = name
         self.origin = origin
 
-    def render(self, context):
+    def render(self, context=None, request=None):
+        #pylint:disable=unused-argument
         if self.origin:
             template_path = self.origin.name
         else:
