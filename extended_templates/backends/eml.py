@@ -101,8 +101,7 @@ class EmlEngine(BaseEngine):
         raise TemplateDoesNotExist(template_name, tried=tried)
 
     def from_string(self, template_code):
-        raise NotImplementedError(
-            "The from_string() method is not implemented")
+        return Template(self.engine.from_string(template_code), engine=self)
 
     def get_template(self, template_name, dirs=_dirs_undefined):
         #pylint:disable=arguments-differ
