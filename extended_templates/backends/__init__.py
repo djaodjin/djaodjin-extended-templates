@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,11 @@
 from importlib import import_module
 
 from django.core.exceptions import ImproperlyConfigured
+from django.template.loader import select_template
+from django.utils import six
 
-from extended_templates import settings
+from .. import settings
+
 
 def get_email_backend():
     return _load_backend(settings.EMAILER_BACKEND)
@@ -55,14 +58,20 @@ class TemplateEmailBackend(object):
 
     #pylint: disable=invalid-name,too-many-arguments
     @staticmethod
-    def send(recipients, template_name, context=None,
+    def send(recipients, template, context=None,
              from_email=None, bcc=None, cc=None, reply_to=None,
              attachments=None, fail_silently=False):
         # avoid import loop in utils.py
         from extended_templates.utils import get_template
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
-        tmpl = get_template(template_name)
+
+        if isinstance(template, (list, tuple)):
+            tmpl = select_template(template)
+        elif isinstance(template, six.string_types):
+            tmpl = get_template(template)
+        else:
+            tmpl = template
         tmpl.send(recipients, context,
             from_email=from_email, bcc=bcc, cc=cc, reply_to=reply_to,
             attachments=attachments, fail_silently=fail_silently)
