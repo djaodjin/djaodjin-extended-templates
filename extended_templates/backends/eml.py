@@ -57,7 +57,7 @@ class EmlEngine(BaseEngine):
     def __init__(self, params):
         params = params.copy()
         options = params.pop('OPTIONS').copy()
-        self.engine = engines[options.get('engine', 'html')]
+        self.engine = engines[options.get('engine', 'django')]
         super(EmlEngine, self).__init__(params)
 
     @staticmethod
