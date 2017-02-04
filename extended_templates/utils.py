@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2017, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,6 +21,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import unicode_literals
 
 import codecs, warnings
 
@@ -67,7 +69,7 @@ def get_template(template_name, dirs=_dirs_undefined):
     loader.make_origin = make_origin
 
     def fake_strict_errors(exception): #pylint: disable=unused-argument
-        return (u'', -1)
+        return ("", -1)
 
     if template_name.endswith('.pdf'):
         # HACK: Ignore UnicodeError, due to PDF file read

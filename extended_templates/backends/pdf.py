@@ -22,7 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, subprocess, StringIO, warnings
+from __future__ import unicode_literals
+
+import logging, subprocess, io, warnings
 
 from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
@@ -64,9 +66,9 @@ class PdfTemplateResponse(TemplateResponse):
         as a Pdf document on the fly.
         """
         content = super(PdfTemplateResponse, self).rendered_content
-        cstr = StringIO.StringIO()
+        cstr = io.StringIO()
         pdf = pisa.pisaDocument(
-            StringIO.StringIO(content.encode('UTF-8')), cstr, encoding='UTF-8')
+            io.StringIO(content.encode('UTF-8')), cstr, encoding='UTF-8')
         if pdf.err:
             raise PdfTemplateError(pdf.err)
         return cstr.getvalue()
@@ -203,22 +205,22 @@ class Template(object):
 " PDF_FLATFORM_BIN settings accordingly."
             pdf_flatform_bin = settings.PDF_FLATFORM_BIN
 
-        cmd = [unicode(pdf_flatform_bin)]
-        for key, value in fields.iteritems():
+        cmd = [pdf_flatform_bin]
+        for key, value in six.iteritems(fields):
             if len(str(value)) > 0:
                 # We don't want to end-up with ``--fill key=``
-                cmd += [u'--fill', (u'%s=%s' % (key, value))]
-        cmd += [unicode(src), u'-']
+                cmd += ["--fill", ("%s=%s" % (key, value))]
+        cmd += [src, '-']
 
         cmdline = cmd[0]
         for param in cmd[1:]:
             try:
                 key, value = param.split('=')
                 if any(char in str(value) for char in [' ', ';']):
-                    value = u'"%s"' % value
-                cmdline += u" %s=%s" % (key, value)
+                    value = '"%s"' % value
+                cmdline += " %s=%s" % (key, value)
             except ValueError:
-                cmdline += u" " + param
-        LOGGER.info((u'RUN: %s' % cmdline).encode('utf-8'))
+                cmdline += " " + param
+        LOGGER.info(("RUN: %s" % cmdline).encode('utf-8'))
 
         return subprocess.check_output(cmd), None
