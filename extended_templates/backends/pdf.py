@@ -67,10 +67,11 @@ class PdfTemplateResponse(TemplateResponse):
         """
         content = super(PdfTemplateResponse, self).rendered_content
         cstr = io.BytesIO()
-        pdf = pisa.pisaDocument(io.StringIO(content), cstr)
+        pdf = pisa.pisaDocument(
+            io.BytesIO(content.encode('utf-8')), cstr, encoding='utf-8')
         if pdf.err:
             raise PdfTemplateError(pdf.err)
-        return cstr.getvalue().decode('utf-8')
+        return cstr.getvalue()
 
 
 class PdfTemplateError(Exception):
