@@ -66,11 +66,11 @@ class PdfTemplateResponse(TemplateResponse):
         as a Pdf document on the fly.
         """
         content = super(PdfTemplateResponse, self).rendered_content
-        cstr = io.StringIO()
+        cstr = io.BytesIO()
         pdf = pisa.pisaDocument(io.StringIO(content), cstr)
         if pdf.err:
             raise PdfTemplateError(pdf.err)
-        return cstr.getvalue()
+        return cstr.getvalue().decode('utf-8')
 
 
 class PdfTemplateError(Exception):
