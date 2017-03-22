@@ -136,7 +136,8 @@ class Template(object):
 
     #pylint: disable=invalid-name,too-many-arguments
     def _send(self, recipients, context, from_email=None, bcc=None, cc=None,
-              reply_to=None, attachments=None, fail_silently=False):
+              reply_to=None, attachments=None,
+              connection=None, fail_silently=False):
         #pylint: disable=too-many-locals
         if reply_to:
             headers = {'Reply-To': reply_to}
@@ -171,7 +172,7 @@ class Template(object):
         #     reference: https://djangosnippets.org/snippets/3001/
         msg = EmailMultiAlternatives(
             subject, plain_content, from_email, recipients, bcc=bcc, cc=cc,
-            attachments=attachments, headers=headers)
+            attachments=attachments, headers=headers, connection=connection)
         if html_content:
             html_content = Premailer(
                 html_content,
@@ -182,7 +183,7 @@ class Template(object):
     #pylint: disable=invalid-name,too-many-arguments
     def send(self, recipients, context,
              from_email=None, bcc=None, cc=None, reply_to=None,
-             attachments=None, fail_silently=False):
+             attachments=None, connection=None, fail_silently=False):
         #pylint: disable=no-member
         if not from_email:
             from_email = settings.DEFAULT_FROM_EMAIL
@@ -192,8 +193,8 @@ class Template(object):
                 context.template_name = self.name
                 return self._send(recipients, context, from_email=from_email,
                     bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments,
-                    fail_silently=fail_silently)
+                    connection=connection, fail_silently=fail_silently)
         else:
             return self._send(recipients, context, from_email=from_email,
                 bcc=bcc, cc=cc, reply_to=reply_to, attachments=attachments,
-                fail_silently=fail_silently)
+                connection=connection, fail_silently=fail_silently)

@@ -31,8 +31,8 @@ from django.utils import six
 from .. import settings
 
 
-def get_email_backend():
-    return _load_backend(settings.EMAILER_BACKEND)
+def get_email_backend(connection=None):
+    return _load_backend(settings.EMAILER_BACKEND)(connection=connection)
 
 
 def _load_backend(path):
@@ -51,14 +51,16 @@ def _load_backend(path):
     except AttributeError:
         raise ImproperlyConfigured('Module "%s" does not define a "%s" '\
 ' emailer backend' % (module, attr))
-    return cls()
+    return cls
 
 
 class TemplateEmailBackend(object):
 
+    def __init__(self, connection=None):
+        self.connection = connection
+
     #pylint: disable=invalid-name,too-many-arguments
-    @staticmethod
-    def send(recipients, template, context=None,
+    def send(self, recipients, template, context=None,
              from_email=None, bcc=None, cc=None, reply_to=None,
              attachments=None, fail_silently=False):
         # avoid import loop in utils.py
@@ -74,4 +76,5 @@ class TemplateEmailBackend(object):
             tmpl = template
         tmpl.send(recipients, context,
             from_email=from_email, bcc=bcc, cc=cc, reply_to=reply_to,
-            attachments=attachments, fail_silently=fail_silently)
+            attachments=attachments, connection=self.connection,
+            fail_silently=fail_silently)
