@@ -40,7 +40,8 @@ setup(
     author_email='support@djaodjin.com',
     install_requires=requirements,
     packages=['extended_templates',
-              'extended_templates.backends'],
+              'extended_templates.backends',
+              'extended_templates.templatetags'],
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
     download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
 '/tarball/%s' % extended_templates.__version__,
