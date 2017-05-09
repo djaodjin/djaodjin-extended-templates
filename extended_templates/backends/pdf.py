@@ -33,7 +33,6 @@ from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
 from django.utils import six
 from django.utils.functional import cached_property
-from xhtml2pdf import pisa
 
 from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
@@ -67,10 +66,14 @@ class PdfTemplateResponse(TemplateResponse):
         """
         content = super(PdfTemplateResponse, self).rendered_content
         cstr = io.BytesIO()
-        pdf = pisa.pisaDocument(
-            io.BytesIO(content.encode('utf-8')), cstr, encoding='utf-8')
-        if pdf.err:
-            raise PdfTemplateError(pdf.err)
+        try:
+            from xhtml2pdf import pisa
+            pdf = pisa.pisaDocument(
+                io.BytesIO(content.encode('utf-8')), cstr, encoding='utf-8')
+            if pdf.err:
+                raise PdfTemplateError(pdf.err)
+        except RuntimeError as _:
+            raise
         return cstr.getvalue()
 
 
