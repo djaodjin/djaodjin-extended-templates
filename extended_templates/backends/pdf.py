@@ -26,6 +26,7 @@ from __future__ import unicode_literals
 
 import logging, subprocess, io, warnings
 
+from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateDoesNotExist
@@ -33,7 +34,9 @@ from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
 from django.utils import six
 from django.utils.functional import cached_property
+import weasyprint
 
+from .eml import build_absolute_uri
 from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
 
@@ -64,14 +67,17 @@ class PdfTemplateResponse(TemplateResponse):
         Converts the HTML content generated from the template
         as a Pdf document on the fly.
         """
-        content = super(PdfTemplateResponse, self).rendered_content
+        html_content = super(PdfTemplateResponse, self).rendered_content
+        soup = BeautifulSoup(html_content.encode('utf-8'), 'html.parser')
+        for lnk in soup.find_all('a'):
+            href = lnk.get('href')
+            if href and href.startswith('/'):
+                lnk['href'] = build_absolute_uri(self._request, href)
+        html_content = soup.prettify()
         cstr = io.BytesIO()
         try:
-            from xhtml2pdf import pisa
-            pdf = pisa.pisaDocument(
-                io.BytesIO(content.encode('utf-8')), cstr, encoding='utf-8')
-            if pdf.err:
-                raise PdfTemplateError(pdf.err)
+            doc = weasyprint.HTML(string=html_content)
+            doc.write_pdf(cstr)
         except RuntimeError as _:
             raise
         return cstr.getvalue()
