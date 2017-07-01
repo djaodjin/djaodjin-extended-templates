@@ -24,7 +24,7 @@
 
 from __future__ import unicode_literals
 
-import logging, subprocess, io, warnings
+import logging, re, subprocess, io, warnings
 
 from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
@@ -208,28 +208,23 @@ class Template(object):
     @staticmethod
     def fill_form(fields, src, pdf_flatform_bin=None):
         if pdf_flatform_bin is None:
-            assert hasattr(settings, 'PDF_FLATFORM_BIN'), "PDF generation "\
-" requires podofo-flatform (https://github.com/djaodjin/"\
-"djaodjin-extended-templates/src/podofo-flatform.cc). Edit your"\
-" PDF_FLATFORM_BIN settings accordingly."
+            assert hasattr(settings, 'PDF_FLATFORM_BIN'), "PDF generation"\
+" requires podofo-flatform (https://github.com/djaodjin/podofo-flatform)."\
+" Edit your PDF_FLATFORM_BIN settings accordingly."
             pdf_flatform_bin = settings.PDF_FLATFORM_BIN
 
         cmd = [pdf_flatform_bin]
         for key, value in six.iteritems(fields):
-            if len(str(value)) > 0:
+            if not isinstance(value, six.string_types):
+                value = str(value)
+            # We substitute non-standard whitespaces here because
+            # they interact poorly with the Python utf-8 encoder.
+            value = re.sub(r"\s", ' ', value)
+            if len(value) > 0:
                 # We don't want to end-up with ``--fill key=``
-                cmd += ["--fill", ("%s=%s" % (key, value))]
+                cmd += ["--fill", '%s="%s"' % (key, value)]
         cmd += [src, '-']
 
-        cmdline = cmd[0]
-        for param in cmd[1:]:
-            try:
-                key, value = param.split('=')
-                if any(char in str(value) for char in [' ', ';']):
-                    value = '"%s"' % value
-                cmdline += " %s=%s" % (key, value)
-            except ValueError:
-                cmdline += " " + param
-        LOGGER.info(("RUN: %s" % cmdline).encode('utf-8'))
+        LOGGER.info("RUN: %s", ' '.join(cmd))
 
         return subprocess.check_output(cmd), None
