@@ -222,9 +222,18 @@ class Template(object):
             value = re.sub(r"\s", ' ', value)
             if len(value) > 0:
                 # We don't want to end-up with ``--fill key=``
-                cmd += ["--fill", '%s="%s"' % (key, value)]
+                cmd += ["--fill", '%s=%s' % (key, value)]
         cmd += [src, '-']
 
+        cmdline = cmd[0]
+        for param in cmd[1:]:
+            try:
+                key, value = param.split('=')
+                if any(char in value for char in [' ', ';']):
+                    value = '"%s"' % value
+                cmdline += " %s=%s" % (key, value)
+            except ValueError:
+                cmdline += " " + param
         LOGGER.info("RUN: %s", ' '.join(cmd))
 
         return subprocess.check_output(cmd), None
