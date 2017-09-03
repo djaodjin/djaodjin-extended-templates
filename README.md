@@ -47,3 +47,11 @@ Note that you will need to link ``podofo-flatform.cc`` with [podofo](http://podo
 version 0.9.3. Version 0.9.1 as shipped with Fedora 21 will link with no
 error but the outputed PDF will be blank.
 
+Release Notes
+=============
+
+0.1.9
+
+  * Switches HTML to PDF rendering dependency from xml2pdf to WeasyPrint
+  * Python 3.6 compatibility
+
