@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,29 +22,23 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-Convenience module for access of extended_templates app settings, which enforces
-default settings when the main settings module does not contain
-the appropriate settings.
-"""
+from __future__ import unicode_literals
 
-import os, sys
+from django.conf import settings as django_settings
 
-from django.conf import settings
+from . import settings
+from .compat import import_string
 
-_SETTINGS = {
-    'ASSETS_DIRS_CALLABLE': None,
-    'BUILD_ABSOLUTE_URI_CALLABLE': None,
-    'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL'),
-    'EMAILER_BACKEND': getattr(settings, 'EMAILER_BACKEND',
-        'extended_templates.backends.TemplateEmailBackend'),
-    'PDF_FLATFORM_BIN': os.path.join(
-        os.path.dirname(sys.executable), 'podofo-flatform')
-}
-_SETTINGS.update(getattr(settings, 'EXTENDED_TEMPLATES', {}))
 
-ASSETS_DIRS_CALLABLE = _SETTINGS.get('ASSETS_DIR_CALLABLE')
-BUILD_ABSOLUTE_URI_CALLABLE = _SETTINGS.get('BUILD_ABSOLUTE_URI_CALLABLE')
-DEFAULT_FROM_EMAIL = _SETTINGS.get('DEFAULT_FROM_EMAIL')
-EMAILER_BACKEND = _SETTINGS.get('EMAILER_BACKEND')
-PDF_FLATFORM_BIN = _SETTINGS.get('PDF_FLATFORM_BIN')
+def build_absolute_uri(request, location='', site=None):
+    if settings.BUILD_ABSOLUTE_URI_CALLABLE:
+        return import_string(settings.BUILD_ABSOLUTE_URI_CALLABLE)(
+            request, location=location, site=site)
+    return request.build_absolute_uri(location=location)
+
+
+def get_assets_dirs():
+    if settings.ASSETS_DIRS_CALLABLE:
+        return import_string(settings.ASSETS_DIRS_CALLABLE)()
+    return getattr(django_settings, 'STATICFILES_DIRS',
+        [getattr(django_settings, 'STATIC_ROOT')])

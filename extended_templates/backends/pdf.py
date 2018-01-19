@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,9 @@ from django.utils import six
 from django.utils.functional import cached_property
 import weasyprint
 
-from .eml import build_absolute_uri
 from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
+from ..helpers import build_absolute_uri
 
 
 LOGGER = logging.getLogger(__name__)

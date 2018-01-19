@@ -82,6 +82,7 @@ def get_template(template_name, dirs=_dirs_undefined):
             warnings.warn(
                 "The dirs argument of get_template is deprecated.",
                 RemovedInDjango110Warning, stacklevel=2)
+        #pylint:disable=unexpected-keyword-arg
         template = loader.get_template(template_name, dirs=dirs)
 
     if template_name.endswith('.pdf'):

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,26 +22,37 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
+import codecs, os, warnings
 
 from bs4 import BeautifulSoup
 import django
 from django.core.mail import EmailMultiAlternatives
 from django.template import engines
 from django.utils.html import strip_tags
+from django.utils._os import safe_join
 from django.template import TemplateDoesNotExist
-from premailer import Premailer
+from premailer.premailer import (Premailer as BasePremailer,
+    ExternalNotFoundError)
 
 from .. import settings
-from ..compat import (BaseEngine, _dirs_undefined, import_string,
-    RemovedInDjango110Warning)
+from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
+from ..helpers import build_absolute_uri, get_assets_dirs
 
 
-def build_absolute_uri(request, location='', site=None):
-    if settings.BUILD_ABSOLUTE_URI_CALLABLE:
-        return import_string(settings.BUILD_ABSOLUTE_URI_CALLABLE)(
-            request, location=location, site=site)
-    return request.build_absolute_uri(location=location)
+class Premailer(BasePremailer):
+    """
+    Special Premail that overrides _load_external in order to search multiple
+    paths as well as prevent loading http resources.
+    """
+
+    def _load_external(self, url):
+        for base_path in get_assets_dirs():
+            stylefile = safe_join(base_path, url)
+            if os.path.exists(stylefile):
+                with codecs.open(stylefile, encoding='utf-8') as css_file:
+                    css_body = css_file.read()
+                return css_body
+        raise ExternalNotFoundError(url)
 
 
 class EmlTemplateError(Exception):
@@ -139,44 +150,37 @@ class Template(object):
               reply_to=None, attachments=None,
               connection=None, fail_silently=False):
         #pylint: disable=too-many-locals
-        if reply_to:
-            headers = {'Reply-To': reply_to}
-        else:
-            headers = None
-
         subject = None
         plain_content = None
+        headers = {'Reply-To': reply_to} if reply_to else None
         request = getattr(context, 'request', context.get('request', None))
 
-        soup = BeautifulSoup(self.render(
-            context=context, request=request), 'html.parser')
-        for lnk in soup.find_all('a'):
-            href = lnk.get('href')
-            if href and href.startswith('/'):
-                lnk['href'] = build_absolute_uri(request, href)
-        html_content = soup.prettify()
-        subject = soup.find("title").contents[0].strip()
+        html_content = Premailer(
+            self.render(context=context, request=request),
+            base_url=build_absolute_uri(request),
+            include_star_selectors=True).transform()
 
-        # Create the email, attach the HTML version.
-        if not subject:
-            raise EmlTemplateError(
-                "Template %s is missing a subject." % self.origin.name)
         if not plain_content:
             # Defaults to content stripped of html tags
             if not html_content:
                 raise EmlTemplateError(
                     "Template %s does not contain PLAIN nor HTML content."
                     % self.origin.name)
-            plain_content = strip_tags(html_content)
+            soup = BeautifulSoup(html_content, 'html.parser')
+            plain_content = strip_tags(soup.find('body').prettify())
+            subject = soup.find("title").contents[0].strip()
+
+        # Create the email, attach the HTML version.
+        if not subject:
+            raise EmlTemplateError(
+                "Template %s is missing a subject." % self.origin.name)
+
         # XXX implement inline attachments,
         #     reference: https://djangosnippets.org/snippets/3001/
         msg = EmailMultiAlternatives(
             subject, plain_content, from_email, recipients, bcc=bcc, cc=cc,
             attachments=attachments, headers=headers, connection=connection)
         if html_content:
-            html_content = Premailer(
-                html_content,
-                include_star_selectors=True).transform()
             msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=fail_silently)
 
