@@ -31,6 +31,9 @@ from .compat import import_string
 
 
 def build_absolute_uri(request, location='', site=None):
+    if location.startswith('http://') or location.startswith('https://'):
+        # already an absolute url.
+        return location
     if settings.BUILD_ABSOLUTE_URI_CALLABLE:
         return import_string(settings.BUILD_ABSOLUTE_URI_CALLABLE)(
             request, location=location, site=site)

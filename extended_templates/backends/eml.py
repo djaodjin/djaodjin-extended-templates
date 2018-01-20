@@ -36,7 +36,7 @@ from premailer.premailer import (Premailer as BasePremailer,
 
 from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
-from ..helpers import build_absolute_uri, get_assets_dirs
+from ..helpers import get_assets_dirs
 
 
 class Premailer(BasePremailer):
@@ -157,7 +157,6 @@ class Template(object):
 
         html_content = Premailer(
             self.render(context=context, request=request),
-            base_url=build_absolute_uri(request),
             include_star_selectors=True).transform()
 
         if not plain_content:
