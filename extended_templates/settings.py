@@ -39,7 +39,8 @@ _SETTINGS = {
     'EMAILER_BACKEND': getattr(settings, 'EMAILER_BACKEND',
         'extended_templates.backends.TemplateEmailBackend'),
     'PDF_FLATFORM_BIN': os.path.join(
-        os.path.dirname(sys.executable), 'podofo-flatform')
+        os.path.dirname(sys.executable), 'podofo-flatform'),
+    'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/')
 }
 _SETTINGS.update(getattr(settings, 'EXTENDED_TEMPLATES', {}))
 
@@ -48,3 +49,4 @@ BUILD_ABSOLUTE_URI_CALLABLE = _SETTINGS.get('BUILD_ABSOLUTE_URI_CALLABLE')
 DEFAULT_FROM_EMAIL = _SETTINGS.get('DEFAULT_FROM_EMAIL')
 EMAILER_BACKEND = _SETTINGS.get('EMAILER_BACKEND')
 PDF_FLATFORM_BIN = _SETTINGS.get('PDF_FLATFORM_BIN')
+STATIC_URL = _SETTINGS.get('STATIC_URL')

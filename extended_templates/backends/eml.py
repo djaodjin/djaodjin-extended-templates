@@ -38,6 +38,9 @@ from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
 from ..helpers import get_assets_dirs
 
+#pylint:disable=no-name-in-module,import-error
+from django.utils.six.moves.urllib.parse import urlparse
+
 
 class Premailer(BasePremailer):
     """
@@ -46,8 +49,12 @@ class Premailer(BasePremailer):
     """
 
     def _load_external(self, url):
+        parts = urlparse(url)
+        rel_path = parts.path
+        if url.startswith(settings.STATIC_URL):
+            rel_path = rel_path[len(settings.STATIC_URL):]
         for base_path in get_assets_dirs():
-            stylefile = safe_join(base_path, url)
+            stylefile = safe_join(base_path, rel_path)
             if os.path.exists(stylefile):
                 with codecs.open(stylefile, encoding='utf-8') as css_file:
                     css_body = css_file.read()
