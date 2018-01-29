@@ -43,5 +43,9 @@ def build_absolute_uri(request, location='', site=None):
 def get_assets_dirs():
     if settings.ASSETS_DIRS_CALLABLE:
         return import_string(settings.ASSETS_DIRS_CALLABLE)()
-    return getattr(django_settings, 'STATICFILES_DIRS',
-        [getattr(django_settings, 'STATIC_ROOT')])
+    assets_dirs = getattr(django_settings, 'STATICFILES_DIRS', None)
+    if not assets_dirs:
+        static_root = getattr(django_settings, 'STATIC_ROOT', None)
+        if static_root:
+            assets_dirs = [static_root]
+    return assets_dirs

@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import codecs, os, warnings
+import codecs, logging, os, warnings
 
 from bs4 import BeautifulSoup
 import django
@@ -42,6 +42,9 @@ from ..helpers import get_assets_dirs
 from django.utils.six.moves.urllib.parse import urlparse
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class Premailer(BasePremailer):
     """
     Special Premail that overrides _load_external in order to search multiple
@@ -56,9 +59,12 @@ class Premailer(BasePremailer):
         for base_path in get_assets_dirs():
             stylefile = safe_join(base_path, rel_path)
             if os.path.exists(stylefile):
+                LOGGER.debug("looking for '%s' as '%s'... yes", url, stylefile)
                 with codecs.open(stylefile, encoding='utf-8') as css_file:
                     css_body = css_file.read()
                 return css_body
+            else:
+                LOGGER.debug("looking for '%s' as '%s'... no", url, stylefile)
         raise ExternalNotFoundError(url)
 
 
