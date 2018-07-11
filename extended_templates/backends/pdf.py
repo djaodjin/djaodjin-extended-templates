@@ -30,6 +30,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.template import TemplateDoesNotExist
+from django.template.exceptions import TemplateSyntaxError
 from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
 from django.utils import six
@@ -163,7 +164,7 @@ class PdfEngine(BaseEngine):
         raise TemplateDoesNotExist(template_name, tried=tried)
 
     def from_string(self, template_code):
-        raise NotImplementedError(
+        raise TemplateSyntaxError(
             "The from_string() method is not implemented")
 
     def get_template(self, template_name, dirs=_dirs_undefined):

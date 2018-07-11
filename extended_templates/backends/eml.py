@@ -180,7 +180,7 @@ class Template(object):
                     % self.origin.name)
             soup = BeautifulSoup(html_content, 'html.parser')
             plain_content = strip_tags(soup.find('body').prettify())
-            subject = soup.find("title").contents[0].strip()
+            subject = soup.title.string.strip()
 
         # Create the email, attach the HTML version.
         if not subject:
