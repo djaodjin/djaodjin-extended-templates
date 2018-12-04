@@ -118,7 +118,7 @@ class PdfEngine(BaseEngine):
                 loader_class = import_string(loader)
                 if getattr(loader_class, '_accepts_engine_in_init', False):
                     args.insert(0, self)
-                loader = loader_class(*args)
+                loader = loader_class(self, *args)
                 if loader is not None:
                     loaders.append(loader)
             else:
