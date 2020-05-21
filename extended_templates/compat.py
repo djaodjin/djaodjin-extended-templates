@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pylint:disable=unused-import,no-name-in-module
+import six
+
+#pylint:disable=no-name-in-module,import-error
+from six.moves.urllib.parse import urlparse, urlunparse
 
 from django.core.exceptions import ImproperlyConfigured
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,9 @@ from premailer.premailer import (Premailer as BasePremailer,
     ExternalNotFoundError)
 
 from .. import settings
-from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
+from ..compat import (BaseEngine, _dirs_undefined, RemovedInDjango110Warning,
+    urlparse)
 from ..helpers import get_assets_dirs
-
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urlparse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -63,8 +61,7 @@ class Premailer(BasePremailer):
                 with codecs.open(stylefile, encoding='utf-8') as css_file:
                     css_body = css_file.read()
                 return css_body
-            else:
-                LOGGER.debug("looking for '%s' as '%s'... no", url, stylefile)
+            LOGGER.debug("looking for '%s' as '%s'... no", url, stylefile)
         raise ExternalNotFoundError(url)
 
 
@@ -133,13 +130,12 @@ class EmlEngine(BaseEngine):
             if dirs is _dirs_undefined:
                 return Template(self.engine.get_template(
                     template_name), engine=self)
-            else:
-                if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
-                    warnings.warn(
-                        "The dirs argument of get_template is deprecated.",
-                        RemovedInDjango110Warning, stacklevel=2)
-                return Template(self.engine.get_template(
-                    template_name, dirs=dirs), engine=self)
+            if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
+                warnings.warn(
+                    "The dirs argument of get_template is deprecated.",
+                    RemovedInDjango110Warning, stacklevel=2)
+            return Template(self.engine.get_template(
+                template_name, dirs=dirs), engine=self)
         raise TemplateDoesNotExist(template_name)
 
 

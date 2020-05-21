@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,9 @@ from importlib import import_module
 
 from django.core.exceptions import ImproperlyConfigured
 from django.template.loader import select_template
-from django.utils import six
 
 from .. import settings
+from ..compat import six
 
 
 def get_email_backend(connection=None):

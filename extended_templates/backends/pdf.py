@@ -33,12 +33,11 @@ from django.template import TemplateDoesNotExist
 from django.template.exceptions import TemplateSyntaxError
 from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
-from django.utils import six
 from django.utils.functional import cached_property
 import weasyprint
 
 from .. import settings
-from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning
+from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning, six
 from ..helpers import build_absolute_uri
 
 
