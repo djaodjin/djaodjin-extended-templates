@@ -50,6 +50,10 @@ error but the outputed PDF will be blank.
 Release Notes
 =============
 
+0.2.5
+
+  * compatibles with Django3
+
 0.1.9
 
   * Switches HTML to PDF rendering dependency from xml2pdf to WeasyPrint
