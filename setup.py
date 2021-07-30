@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,8 @@ setup(
     install_requires=requirements,
     packages=['extended_templates',
               'extended_templates.backends',
-              'extended_templates.templatetags'],
+              'extended_templates.templatetags',
+              'extended_templates.views'],
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
     download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
 '/tarball/%s' % extended_templates.__version__,

@@ -51,9 +51,14 @@ class Premailer(BasePremailer):
 
     def _load_external(self, url):
         parts = urlparse(url)
-        rel_path = parts.path
-        if url.startswith(settings.STATIC_URL):
-            rel_path = rel_path[len(settings.STATIC_URL):]
+        path_parts = parts.path.strip('/').split('/')
+        static_url_parts = settings.STATIC_URL.strip('/').split('/')
+        rel_path = '/'.join(path_parts)
+        for idx, path_part in enumerate(reversed(path_parts)):
+            if path_part == static_url_parts[-1]:
+                # We found where STATIC_URL begins.
+                rel_path = '/'.join(path_parts[idx:])
+                break
         for base_path in get_assets_dirs():
             stylefile = safe_join(base_path, rel_path)
             if os.path.exists(stylefile):

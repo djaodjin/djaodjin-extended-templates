@@ -1,17 +1,6 @@
 This code was written to simplify the generation of HTML emails and PDF
 outputs from templates.
 
-Install
-=======
-
-Add the extended_templates to your INSTALLED_APPS.
-
-    settings.py:
-
-        INSTALLED_APPS = (
-            ...
-            'extended_templates',
-        )
 
 Development
 ===========
