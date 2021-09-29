@@ -59,6 +59,8 @@ class Premailer(BasePremailer):
                 # We found where STATIC_URL begins.
                 rel_path = '/'.join(path_parts[len(path_parts) - idx:])
                 break
+        LOGGER.debug("looking for '%s' in order into directories %s",
+            url, get_assets_dirs())
         for base_path in get_assets_dirs():
             stylefile = safe_join(base_path, rel_path)
             if os.path.exists(stylefile):
