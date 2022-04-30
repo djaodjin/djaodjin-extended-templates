@@ -24,9 +24,16 @@
 
 #pylint:disable=unused-import,no-name-in-module,import-outside-toplevel
 #pylint:disable=no-name-in-module,import-error
+from functools import WRAPPER_ASSIGNMENTS
 import six
 from six.moves.urllib.parse import urljoin, urlparse, urlsplit, urlunparse
 from django.core.exceptions import ImproperlyConfigured
+
+try:
+    from django.utils.decorators import available_attrs
+except ImportError: # django < 3.0
+    def available_attrs(func):      #pylint:disable=unused-argument
+        return WRAPPER_ASSIGNMENTS
 
 
 try:

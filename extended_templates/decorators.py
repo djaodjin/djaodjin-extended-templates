@@ -25,8 +25,8 @@
 from functools import wraps
 
 from django.template.response import TemplateResponse
-from django.utils.decorators import available_attrs
 
+from .compat import available_attrs
 from .thread_locals import (enable_instrumentation, disable_instrumentation,
     get_edition_tools_context_data)
 from .views.pages import inject_edition_tools as _inject_edition_tools
