@@ -90,16 +90,39 @@ LOGGING = {
     'loggers': {
         'extended_templates': {
             'handlers': ['logfile'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
+#        'django.db.backends': {
+#             'handlers': ['logfile'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
         },
+        # If we don't disable 'django' handlers here, we will get an extra
+        # copy on stderr.
+        'django': {
+            'handlers': [],
+        },
+        # This is the root logger.
+        # The level will only be taken into account if the record is not
+        # propagated from a child logger.
+        #https://docs.python.org/2/library/logging.html#logging.Logger.propagate
+        '': {
+            'handlers': ['logfile', 'mail_admins'],
+            'level': 'INFO'
+        }
     }
 }
+if logging.getLogger('gunicorn.error').handlers:
+    LOGGING['handlers']['logfile'].update({
+        'class':'logging.handlers.WatchedFileHandler',
+        'filename': os.path.join(RUN_DIR, 'testsite-app.log')
+    })
 
 FILE_UPLOAD_HANDLERS = (
     "pages.uploadhandler.ProgressBarUploadHandler",
