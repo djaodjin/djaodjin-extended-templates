@@ -9,9 +9,14 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+import re, os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 APP_NAME = os.path.basename(BASE_DIR)
+RUN_DIR = os.getcwd()
+
+DEBUG = True
+ALLOWED_HOSTS = ('*',)
+
 
 def load_config(confpath):
     '''
@@ -20,7 +25,6 @@ def load_config(confpath):
     '''
     # todo: consider using something like ConfigObj for this:
     # http://www.voidspace.org.uk/python/configobj.html
-    import re, sys
     if os.path.isfile(confpath):
         sys.stderr.write('config loaded from %s\n' % confpath)
         with open(confpath) as conffile:
@@ -31,34 +35,30 @@ def load_config(confpath):
                     if look:
                         value = look.group(2) \
                             % {'LOCALSTATEDIR': BASE_DIR + '/var'}
-                        try:
-                            # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
-                            # definitely in the site.conf set), we had no choice
-                            # other than using eval. The {} are here to restrict
-                            # the globals and locals context eval has access to.
-                            # pylint: disable=eval-used
-                            setattr(sys.modules[__name__],
-                                    look.group(1).upper(), eval(value, {}, {}))
-                        except StandardError:
-                            raise
+                        # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
+                        # definitely in the site.conf set), we had no choice
+                        # other than using eval. The {} are here to restrict
+                        # the globals and locals context eval has access to.
+                        # pylint: disable=eval-used
+                        setattr(sys.modules[__name__],
+                            look.group(1).upper(), eval(value, {}, {}))
                 line = conffile.readline()
     else:
         sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
 
-load_config(os.path.join(BASE_DIR, 'credentials'))
-load_config(os.path.join(BASE_DIR, 'site.conf'))
+load_config(os.path.join(
+    os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'credentials'))
+load_config(os.path.join(
+    os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'site.conf'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 if os.getenv('DEBUG'):
     # Enable override on command line.
-    DEBUG = True if int(os.getenv('DEBUG')) > 0 else False
+    DEBUG = bool(int(os.getenv('DEBUG')) > 0)
 
 # Applications
 # ------------
-
 INSTALLED_APPS = (
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -101,32 +101,51 @@ LOGGING = {
     }
 }
 
-MIDDLEWARE_CLASSES = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
+FILE_UPLOAD_HANDLERS = (
+    "pages.uploadhandler.ProgressBarUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+)
+
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 )
 
-ROOT_URLCONF = 'testsite.urls'
+MIDDLEWARE_CLASSES = MIDDLEWARE
 
+ROOT_URLCONF = 'testsite.urls'
 WSGI_APPLICATION = 'testsite.wsgi.application'
 
-ALLOWED_HOSTS = []
+# Static files (CSS, JavaScript, Images)
+HTDOCS = os.path.join(BASE_DIR, 'htdocs')
 
-#
+STATIC_URL = '/static/'
+APP_STATIC_ROOT = HTDOCS + '/static'
+if DEBUG:
+    STATIC_ROOT = ''
+    # Additional locations of static files
+    STATICFILES_DIRS = (APP_STATIC_ROOT, HTDOCS,)
+else:
+    STATIC_ROOT = APP_STATIC_ROOT
+
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+# Example: "/var/www/example.com/media/"
+MEDIA_ROOT = HTDOCS + '/media'
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://example.com/media/", "http://media.example.com/"
+MEDIA_URL = '/media/'
+
+
 # Templates
 # ---------
 TEMPLATE_DEBUG = True
-
-# Django 1.7 and below
-#TEMPLATE_LOADERS = (
-#    'multitier.template_loader.Loader',
-#    'django.template.loaders.filesystem.Loader',
-#    'django.template.loaders.app_directories.Loader',
-#)
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
@@ -137,6 +156,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
+    BASE_DIR + '/themes/djaodjin-extended-templates/templates',
     BASE_DIR + '/testsite/templates',
 )
 
@@ -170,7 +190,6 @@ TEMPLATES = [
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -180,19 +199,12 @@ DATABASES = {
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.6/howto/static-files/
-
-STATIC_URL = '/static/'
+# contrib.auth
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/app/'

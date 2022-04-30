@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,12 +22,26 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url
-from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls import include, url
+from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from extended_templates.views.pages import PageView, EditView
 
 from .views import PdfView
 
-urlpatterns = [
-    url(r'^pdf/', PdfView.as_view(), name='pdf_view'),
-    url(r'^$', TemplateView.as_view(template_name='index.html'), name='home')
+urlpatterns = staticfiles_urlpatterns() \
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += [
+    url(r'^app/$', PageView.as_view(template_name='index.html',
+body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
+    url(r'^', include('django.contrib.auth.urls')),
+    url(r'^', include('extended_templates.urls')),
+    url(r'^edit(?P<page>\S+)?',
+        EditView.as_view(), name='extended_templates_edit'),
+    url(r'^content/', PageView.as_view(template_name='index.html')),
+    url(r'pdf/', PdfView.as_view()),
+    url(r'^$', PageView.as_view(template_name='index.html',
+body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
 ]

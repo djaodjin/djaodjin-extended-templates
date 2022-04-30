@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,6 @@ import logging
 from django.core.management.base import BaseCommand
 from django.http.request import HttpRequest
 from django.template import RequestContext
-from django.template.loader import get_template
 
 from extended_templates.utils import get_template
 

@@ -3,4 +3,6 @@
 .DS_Store
 credentials
 site.conf
-
+gunicorn.conf
+db.sqlite
+htdocs

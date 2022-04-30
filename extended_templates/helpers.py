@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,16 +21,15 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 from __future__ import unicode_literals
 
 from django.conf import settings as django_settings
 
-from . import settings
-from .compat import import_string
+from .compat import import_string, six
 
 
 def build_absolute_uri(request, location='', site=None):
+    from . import settings
     if location.startswith('http://') or location.startswith('https://'):
         # already an absolute url.
         return location
@@ -41,6 +40,7 @@ def build_absolute_uri(request, location='', site=None):
 
 
 def get_assets_dirs():
+    from . import settings
     if settings.ASSETS_DIRS_CALLABLE:
         return import_string(settings.ASSETS_DIRS_CALLABLE)()
     assets_dirs = getattr(django_settings, 'STATICFILES_DIRS', None)
@@ -49,3 +49,20 @@ def get_assets_dirs():
         if static_root:
             assets_dirs = [static_root]
     return assets_dirs
+
+
+def update_context_urls(context, urls):
+    if 'urls' in context:
+        for key, val in six.iteritems(urls):
+            if key in context['urls']:
+                if isinstance(val, dict):
+                    context['urls'][key].update(val)
+                else:
+                    # Because organization_create url is added in this mixin
+                    # and in ``OrganizationRedirectView``.
+                    context['urls'][key] = val
+            else:
+                context['urls'].update({key: val})
+    else:
+        context.update({'urls': urls})
+    return context

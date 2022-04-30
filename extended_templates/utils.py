@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,14 +24,58 @@
 
 from __future__ import unicode_literals
 
-import codecs, warnings
+import codecs, logging, os, warnings
 
 import django
 from django.template import Template, loader
+from django.apps import apps as django_apps
+from django.core.exceptions import ImproperlyConfigured
+from django.core.validators import RegexValidator
+from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.utils.module_loading import import_string
+from django.utils.translation import ugettext_lazy as _
 
-from .compat import _dirs_undefined, RemovedInDjango110Warning
+from . import settings
+from .compat import (_dirs_undefined, RemovedInDjango110Warning, import_string,
+    urljoin)
 from .backends.pdf import Template as PdfTemplate
 from .backends.eml import Template as EmlTemplate
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+validate_title = RegexValidator(#pylint: disable=invalid-name
+    r'^[a-zA-Z0-9- ]+$',
+    _("Enter a valid title consisting of letters, "
+        "numbers, space, underscores or hyphens."),
+        'invalid'
+)
+
+
+def get_account_model():
+    """
+    Returns the ``Account`` model that is active in this project.
+    """
+    try:
+        return django_apps.get_model(settings.ACCOUNT_MODEL)
+    except ValueError:
+        raise ImproperlyConfigured(
+            "ACCOUNT_MODEL must be of the form 'app_label.model_name'")
+    except LookupError:
+        raise ImproperlyConfigured("ACCOUNT_MODEL refers to model '%s'"\
+" that has not been installed" % settings.ACCOUNT_MODEL)
+
+
+def get_current_account():
+    """
+    Returns the default account for a site.
+    """
+    account = None
+    if settings.DEFAULT_ACCOUNT_CALLABLE:
+        account = import_string(settings.DEFAULT_ACCOUNT_CALLABLE)()
+        LOGGER.debug("get_current_account: '%s'", account)
+    return account
 
 
 # The following was derived from code originally posted
@@ -43,6 +87,7 @@ def get_template_from_string(source, origin=None, name=None):
     handling template inheritance recursively.
     """
     # This function is deprecated in Django 1.8+
+    #pylint:disable=too-many-function-args
     if name and name.endswith('.eml'):
         return EmlTemplate(source, origin, name)
     if name and name.endswith('.pdf'):
@@ -90,3 +135,76 @@ def get_template(template_name, dirs=_dirs_undefined):
         codecs.register_error('strict', codecs.strict_errors)
 
     return template
+
+
+def get_default_storage(request, account=None, **kwargs):
+    """
+    Returns the default storage for an account.
+    """
+    account = None
+    if settings.DEFAULT_STORAGE_CALLABLE:
+        storage = import_string(settings.DEFAULT_STORAGE_CALLABLE)(
+            request, account=account, **kwargs)
+        LOGGER.debug("get_default_storage('%s')=%s", account, storage)
+        return storage
+    return get_default_storage_base(request, account=account, **kwargs)
+
+
+def get_default_storage_base(request, account=None, public=False, **kwargs):
+    # default implementation
+    storage_class = get_storage_class()
+    if 's3boto' in storage_class.__name__.lower():
+        storage_kwargs = {}
+        storage_kwargs.update(**kwargs)
+        if public:
+            storage_kwargs.update({'default_acl': 'public-read'})
+        for key in ['access_key', 'secret_key', 'security_token']:
+            if key in request.session:
+                storage_kwargs[key] = request.session[key]
+        bucket_name = _get_bucket_name(account)
+        location = _get_media_prefix(account)
+        LOGGER.debug("create %s(bucket_name='%s', location='%s', %s)",
+            storage_class.__name__, bucket_name, location, storage_kwargs)
+        return storage_class(bucket_name=bucket_name, location=location,
+            **storage_kwargs)
+    LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+        " field, default to FileSystemStorage.", storage_class)
+    return _get_file_system_storage(account)
+
+
+def _get_bucket_name(account=None):
+    if account:
+        for bucket_field in settings.BUCKET_NAME_FROM_FIELDS:
+            try:
+                bucket_name = getattr(account, bucket_field)
+                if bucket_name:
+                    return bucket_name
+            except AttributeError:
+                pass
+    return settings.AWS_STORAGE_BUCKET_NAME
+
+
+def _get_file_system_storage(account=None):
+    location = settings.MEDIA_ROOT
+    base_url = settings.MEDIA_URL
+    prefix = _get_media_prefix(account)
+    parts = location.split(os.sep)
+    if prefix and prefix != parts[-1]:
+        location = os.sep.join(parts[:-1] + [prefix, parts[-1]])
+        if base_url.startswith('/'):
+            base_url = base_url[1:]
+        base_url = urljoin("/%s/" % prefix, base_url)
+    return FileSystemStorage(location=location, base_url=base_url)
+
+
+def _get_media_prefix(account=None):
+    media_prefix = settings.MEDIA_PREFIX
+    if account:
+        try:
+            media_prefix = account.media_prefix
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
+                " field.", account.__class__)
+        if not media_prefix:
+            media_prefix = str(account)
+    return media_prefix
