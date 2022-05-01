@@ -9,13 +9,15 @@ CONFIG_DIR    ?= $(srcDir)
 # XXX CONFIG_DIR should really be $(installTop)/etc/testsite
 LOCALSTATEDIR ?= $(installTop)/var
 
-NPM           ?= npm
-PIP           := $(binDir)/pip
-PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
 installDirs   ?= install -d
-installFiles  := install -m 644
+installFiles  := install -p -m 644
+NPM           ?= npm
+PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
+SQLITE        ?= sqlite3
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
+RUN_DIR       ?= $(srcDir)
+DB_NAME       ?= $(RUN_DIR)/db.sqlite
 
 # Django 1.7,1.8 sync tables without migrations by default while Django 1.9
 # requires a --run-syncdb argument.
@@ -26,6 +28,7 @@ RUNSYNCDB     = $(if $(findstring --run-syncdb,$(shell cd $(srcDir) && $(PYTHON)
 install::
 	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
 		build -b $(CURDIR)/build install
+
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
                 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
@@ -47,7 +50,8 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
-	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
+	rm -rf $(DB_NAME)
+	-cd $(srcDir) && rm -rf testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 		testsite/fixtures/default-db.json
@@ -55,11 +59,11 @@ initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
 	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
 
 doc:
-	$(installDirs) docs
-	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/docs
+	$(installDirs) build/docs
+	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
 
 clean:
-	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log htdocs/media themes
+	-rm -rf credentials gunicorn.conf $(DB_NAME) testsite-app.log htdocs/media themes
 
 vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
 
