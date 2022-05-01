@@ -11,11 +11,13 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import logging, re, os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-APP_NAME = os.path.basename(BASE_DIR)
-RUN_DIR = os.getcwd()
+RUN_DIR = os.getenv('RUN_DIR', os.getcwd())
+DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
+LOG_FILE = os.path.join(RUN_DIR, 'testsite-app.log')
 
 DEBUG = True
 ALLOWED_HOSTS = ('*',)
+APP_NAME = os.path.basename(BASE_DIR)
 
 
 def load_config(confpath):
@@ -121,7 +123,7 @@ LOGGING = {
 if logging.getLogger('gunicorn.error').handlers:
     LOGGING['handlers']['logfile'].update({
         'class':'logging.handlers.WatchedFileHandler',
-        'filename': os.path.join(RUN_DIR, 'testsite-app.log')
+        'filename': LOG_FILE
     })
 
 FILE_UPLOAD_HANDLERS = (
