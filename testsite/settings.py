@@ -9,7 +9,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import logging, re, os, sys
+import logging, os, re, sys
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getenv('RUN_DIR', os.getcwd())
 DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
@@ -53,6 +54,14 @@ load_config(os.path.join(
 load_config(os.path.join(
     os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'site.conf'))
 
+if not hasattr(sys.modules[__name__], "SECRET_KEY"):
+    from random import choice
+    SECRET_KEY = "".join([choice(
+        "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)])
+
+JWT_SECRET_KEY = SECRET_KEY
+JWT_ALGORITHM = 'HS256'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 if os.getenv('DEBUG'):
     # Enable override on command line.
@@ -61,12 +70,15 @@ if os.getenv('DEBUG'):
 # Applications
 # ------------
 INSTALLED_APPS = (
+    'django_extensions',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'extended_templates',
+    'storages',
     'testsite',
 )
 
@@ -126,11 +138,6 @@ if logging.getLogger('gunicorn.error').handlers:
         'filename': LOG_FILE
     })
 
-FILE_UPLOAD_HANDLERS = (
-    "extended_templates.uploadhandler.ProgressBarUploadHandler",
-    "django.core.files.uploadhandler.MemoryFileUploadHandler",
-    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
-)
 
 MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
@@ -146,7 +153,22 @@ MIDDLEWARE_CLASSES = MIDDLEWARE
 ROOT_URLCONF = 'testsite.urls'
 WSGI_APPLICATION = 'testsite.wsgi.application'
 
-# Static files (CSS, JavaScript, Images)
+
+FILE_UPLOAD_HANDLERS = (
+    "extended_templates.uploadhandler.ProgressBarUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+)
+
+if 'AWS_STORAGE_BUCKET_NAME' in locals():
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# XXX - to define
+FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
+
+
+# Static assets (CSS, JavaScript, Images)
+# --------------------------------------
 HTDOCS = os.path.join(BASE_DIR, 'htdocs')
 
 STATIC_URL = '/static/'
@@ -167,7 +189,7 @@ MEDIA_ROOT = HTDOCS + '/media'
 # Examples: "http://example.com/media/", "http://media.example.com/"
 MEDIA_URL = '/media/'
 
-
+#
 # Templates
 # ---------
 TEMPLATE_DEBUG = True
@@ -180,31 +202,43 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.request'
 )
 
-TEMPLATE_DIRS = (
+TEMPLATES_DIRS = (
     BASE_DIR + '/themes/djaodjin-extended-templates/templates',
     BASE_DIR + '/testsite/templates',
+)
+
+TEMPLATES_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 
 # Django 1.8+
 TEMPLATES = [
     {
+        'NAME': 'eml',
         'BACKEND': 'extended_templates.backends.eml.EmlEngine',
         'APP_DIRS': True,
+        'DIRS': TEMPLATES_DIRS,
         'OPTIONS': {
-            'context_processors': [proc.replace(
-                'django.core.context_processors',
-                'django.template.context_processors')
-                for proc in TEMPLATE_CONTEXT_PROCESSORS]},
+            'engine': 'html',
+        }
     },
     {
+        'NAME': 'pdf',
         'BACKEND': 'extended_templates.backends.pdf.PdfEngine',
         'APP_DIRS': True,
+        'DIRS': TEMPLATES_DIRS,
+        'OPTIONS': {
+            'loaders': TEMPLATES_LOADERS,
+        }
     },
     {
+        'NAME': 'html',
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': TEMPLATE_DIRS,
+        'DIRS': TEMPLATES_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
+            'debug': TEMPLATE_DEBUG,
             'context_processors': [proc.replace(
                 'django.core.context_processors',
                 'django.template.context_processors')
@@ -214,22 +248,32 @@ TEMPLATES = [
 
 
 # Database
-# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
+# --------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite'),
+        'NAME': DB_NAME,
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # Internationalization
-# https://docs.djangoproject.com/en/1.6/topics/i18n/
+# --------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# contrib.auth
+# Extended templates App
+# ----------------------
+EXTENDED_TEMPLATES = {
+    'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
+    'UPLOADED_STATIC_DIR' : STATIC_ROOT
+}
+
+# Authentication
+# --------------
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/app/'
