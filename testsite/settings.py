@@ -217,7 +217,6 @@ TEMPLATES = [
     {
         'NAME': 'eml',
         'BACKEND': 'extended_templates.backends.eml.EmlEngine',
-        'APP_DIRS': True,
         'DIRS': TEMPLATES_DIRS,
         'OPTIONS': {
             'engine': 'html',
@@ -226,7 +225,6 @@ TEMPLATES = [
     {
         'NAME': 'pdf',
         'BACKEND': 'extended_templates.backends.pdf.PdfEngine',
-        'APP_DIRS': True,
         'DIRS': TEMPLATES_DIRS,
         'OPTIONS': {
             'loaders': TEMPLATES_LOADERS,
