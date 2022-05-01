@@ -52,10 +52,11 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
 	rm -rf $(DB_NAME)
-	-cd $(srcDir) && rm -rf testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
+	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata \
 		testsite/fixtures/default-db.json
+	-cd $(srcDir) && rm -rf testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
 	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/djaodjin-extended-templates
 	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
 
