@@ -50,26 +50,30 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
-	rm -rf $(DB_NAME)
+initdb: install-conf $(ASSETS_DIR)/vendor/bootstrap.css
+	rm -f $(RUN_DIR)/testsite-app.log
+	rm -rf $(RUN_DIR)/themes $(srcDir)/htdocs/media
+	rm -f $(DB_NAME)
 	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
-	cd $(srcDir) && $(MANAGE) loaddata \
-		testsite/fixtures/default-db.json
-	-cd $(srcDir) && rm -rf testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
-	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/djaodjin-extended-templates
-	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
+	cd $(srcDir) && $(MANAGE) loaddata testsite/fixtures/default-db.json
+	$(installDirs) $(RUN_DIR)/themes/djaodjin-extended-templates
+	$(installDirs) $(srcDir)/htdocs/media/vendor
+	$(installFiles) $(ASSETS_DIR)/vendor/bootstrap.css $(srcDir)/htdocs/media/vendor
 
 doc:
 	$(installDirs) build/docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
 
 clean:
-	-rm -rf credentials gunicorn.conf $(DB_NAME) testsite-app.log htdocs/media themes
+	rm -f $(RUN_DIR)/testsite-app.log
+	rm -f $(RUN_DIR)/themes $(srcDir)/htdocs/media
+	rm -f $(DB_NAME)
+	rm -f $(RUN_DIR)/credentials $(RUN_DIR)/gunicorn.conf
 
-vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
+vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/bootstrap.css
 
-$(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/testsite/package.json
+$(ASSETS_DIR)/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
 	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker

@@ -203,8 +203,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATES_DIRS = (
-    BASE_DIR + '/themes/djaodjin-extended-templates/templates',
-    BASE_DIR + '/testsite/templates',
+    os.path.join(RUN_DIR, 'themes/djaodjin-extended-templates/templates'),
+    os.path.join(BASE_DIR, 'testsite/templates'),
 )
 
 TEMPLATES_LOADERS = (
