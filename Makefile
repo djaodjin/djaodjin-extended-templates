@@ -12,18 +12,19 @@ LOCALSTATEDIR ?= $(installTop)/var
 installDirs   ?= install -d
 installFiles  := install -p -m 644
 NPM           ?= npm
-PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
-SQLITE        ?= sqlite3
+PYTHON        := python
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 RUN_DIR       ?= $(srcDir)
 DB_NAME       ?= $(RUN_DIR)/db.sqlite
 
+MANAGE        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) RUN_DIR=$(RUN_DIR) $(PYTHON) manage.py
+
 # Django 1.7,1.8 sync tables without migrations by default while Django 1.9
 # requires a --run-syncdb argument.
 # Implementation Note: We have to wait for the config files to be installed
 # before running the manage.py command (else missing SECRECT_KEY).
-RUNSYNCDB     = $(if $(findstring --run-syncdb,$(shell cd $(srcDir) && $(PYTHON) manage.py migrate --help 2>/dev/null)),--run-syncdb,)
+RUNSYNCDB     = $(if $(findstring --run-syncdb,$(shell cd $(srcDir) && $(MANAGE) migrate --help 2>/dev/null)),--run-syncdb,)
 
 install::
 	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
@@ -52,8 +53,8 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
 	rm -rf $(DB_NAME)
 	-cd $(srcDir) && rm -rf testsite-app.log htdocs/media/vendor/* themes/djaodjin-extended-templates/*
-	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
-	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
+	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
+	cd $(srcDir) && $(MANAGE) loaddata \
 		testsite/fixtures/default-db.json
 	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/djaodjin-extended-templates
 	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
