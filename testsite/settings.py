@@ -125,7 +125,7 @@ if logging.getLogger('gunicorn.error').handlers:
     })
 
 FILE_UPLOAD_HANDLERS = (
-    "pages.uploadhandler.ProgressBarUploadHandler",
+    "extended_templates.uploadhandler.ProgressBarUploadHandler",
     "django.core.files.uploadhandler.MemoryFileUploadHandler",
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 )

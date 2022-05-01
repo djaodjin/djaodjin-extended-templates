@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+'''API URLs for the editing the theme templates'''
 
 from django.conf.urls import url
 
