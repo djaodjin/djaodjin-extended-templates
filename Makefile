@@ -12,7 +12,7 @@ LOCALSTATEDIR ?= $(installTop)/var
 installDirs   ?= install -d
 installFiles  := install -p -m 644
 NPM           ?= npm
-PYTHON        := python
+PYTHON        := $(binDir)/python
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 RUN_DIR       ?= $(srcDir)
