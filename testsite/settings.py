@@ -265,13 +265,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Extended templates App
-# ----------------------
-EXTENDED_TEMPLATES = {
-    'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
-    'UPLOADED_STATIC_DIR' : STATIC_ROOT
-}
-
 # Authentication
 # --------------
 LOGIN_URL = 'login'

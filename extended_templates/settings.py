@@ -34,9 +34,11 @@ from django.conf import settings
 from django.utils._os import safe_join
 
 def theme_dir(account): #pylint:disable=unused-argument
+    theme_base_dir = os.path.join(settings.RUN_DIR
+        if hasattr(settings, 'RUN_DIR') else settings.BASE_DIR, 'themes')
     if account:
-        return os.path.join(settings.BASE_DIR, 'themes', account)
-    return os.path.join(settings.BASE_DIR, 'themes')
+        return os.path.join(theme_base_dir, account)
+    return theme_base_dir
 
 
 _SETTINGS = {
