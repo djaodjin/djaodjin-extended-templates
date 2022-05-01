@@ -62,10 +62,9 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.2.7
+0.3.0
 
-  * adds view that rebuilds css files from .scss
+  * adds HTML templates online editor that used to be
+        in [djaodjin-pages](https://github.com/djaodjin/djaodjin-pages/)
 
-0.2.5
-
-  * compatibles with Django3
+[previous release notes](changelog)
