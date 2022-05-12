@@ -48,31 +48,9 @@ class AccountMixinBase(object):
                 slug=self.kwargs.get(self.account_url_kwarg))
         return get_current_account()
 
-    def get_reverse_kwargs(self):
-        """
-        List of kwargs taken from the url that needs to be passed through
-        to ``reverse``.
-        """
-        if not self.account_url_kwarg:
-            from . import settings
-            self.account_url_kwarg = settings.ACCOUNT_URL_KWARG
-        if self.account_url_kwarg:
-            return [self.account_url_kwarg]
-        return []
-
-    def get_url_kwargs(self, **kwargs):
-        url_kwargs = {}
-        if not kwargs:
-            kwargs = self.kwargs
-        for url_kwarg in self.get_reverse_kwargs():
-            url_kwarg_val = kwargs.get(url_kwarg, None)
-            if url_kwarg_val:
-                url_kwargs.update({url_kwarg: url_kwarg_val})
-        return url_kwargs
-
     def get_context_data(self, **kwargs):
         context = super(AccountMixinBase, self).get_context_data(**kwargs)
-        url_kwargs = self.get_url_kwargs(**kwargs)
+        url_kwargs = {}
         try:
             context = update_context_urls(context, {
                 'api_sources': reverse(
@@ -84,7 +62,7 @@ class AccountMixinBase(object):
             context = update_context_urls(context, {
                 'api_themes': reverse(
                     'extended_templates_api_themes', kwargs=url_kwargs),
-                'theme_base': reverse(
+                'theme_update': reverse(
                     'extended_templates_theme_update', kwargs=url_kwargs),
                 'theme_download': reverse(
                     'extended_templates_theme_download', kwargs=url_kwargs)})

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,13 @@ from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.loader import _engine_list, get_template
 from django.utils._os import safe_join
-from django.utils.encoding import force_text
 from django_assets.templatetags.assets import assets
 import jinja2
 import requests
 
 from . import settings
-from .compat import (TokenType, do_static, get_html_engine, import_string,
-    six, urlparse)
+from .compat import (TokenType, do_static, force_str, get_html_engine,
+    import_string, six, urlparse)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -279,7 +278,7 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                             template_string = template_bytes.decode('utf-8')
                         else:
                             template_string = template_bytes
-                        template_string = force_text(template_string)
+                        template_string = force_str(template_string)
                         try:
                             check_template(template_string)
                             with open(tmp_path, 'wb') as extracted_file:

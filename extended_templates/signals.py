@@ -25,4 +25,6 @@
 from django.dispatch import Signal
 
 #pylint: disable=invalid-name
-template_loaded = Signal(providing_args=["template"])
+template_loaded = Signal(
+    #providing_args=["template"]
+)

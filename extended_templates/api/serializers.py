@@ -24,9 +24,9 @@
 from __future__ import unicode_literals
 
 import bleach
-from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
+from ..compat import gettext_lazy as _
 from ..models import LessVariable, ThemePackage
 
 #pylint: disable=no-init,abstract-method

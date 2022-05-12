@@ -22,14 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url
-
+from ...compat import re_path
 from ...views.themes import ThemePackagesView, ThemePackageDownloadView
 
 urlpatterns = [
-    url(r'^download/',
+    re_path(r'^download/',
         ThemePackageDownloadView.as_view(),
         name='extended_templates_theme_download'),
-    url(r'^',
+    re_path(r'^',
         ThemePackagesView.as_view(), name='extended_templates_theme_update'),
 ]

@@ -24,21 +24,20 @@
 
 '''API URLs for the editing the theme templates'''
 
-from django.conf.urls import url
-
 from ...import settings
+from ...compat import include, re_path
 from ...api.sources import (SourceEditAPIView, SourceEditBaseAPIView,
     SourceDetailAPIView)
 
 
 urlpatterns = [
-    url(r'^sources/editables/(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
+    re_path(r'^sources/editables/(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         SourceEditAPIView.as_view(),
         name='extended_templates_api_edit_template'),
-    url(r'^sources/editables$',
+    re_path(r'^sources/editables$',
         SourceEditBaseAPIView.as_view(),
         name='extended_templates_api_edit_template_base'),
-    url(r'^sources/(?P<page>\S+)?',
+    re_path(r'^sources/(?P<page>\S+)?',
         SourceDetailAPIView.as_view(),
         name='extended_templates_api_sources'),
 ]

@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,13 @@ from django.http import Http404
 from django.template.base import TemplateSyntaxError
 from django.template.backends.jinja2 import Jinja2 as Jinja2Templates
 from django.template.loader import _engine_list
-from django.utils.encoding import force_text
 from django.utils._os import safe_join
 from jinja2.lexer import Lexer
 from rest_framework import status, generics
 from rest_framework.response import Response
 
 from .serializers import SourceCodeSerializer, SourceElementSerializer
-from ..compat import DebugLexer, TokenType, get_html_engine, six
+from ..compat import DebugLexer, TokenType, force_str, get_html_engine, six
 from ..mixins import ThemePackageMixin, UpdateEditableMixin
 from ..themes import check_template, get_theme_dir, get_template_path
 
@@ -180,7 +179,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             with open(template_path) as template_file:
                 template_string = template_file.read()
             try:
-                template_string = force_text(template_string)
+                template_string = force_str(template_string)
                 engine, unused_libraries, unused_builtins = get_html_engine()
                 buffered_tokens = []
                 block_depth = 0

@@ -33,11 +33,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.validators import RegexValidator
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
 
 from . import settings
-from .compat import (_dirs_undefined, RemovedInDjango110Warning, import_string,
-    urljoin)
+from .compat import (_dirs_undefined, RemovedInDjango110Warning,
+    gettext_lazy as _, import_string, urljoin)
 from .backends.pdf import Template as PdfTemplate
 from .backends.eml import Template as EmlTemplate
 

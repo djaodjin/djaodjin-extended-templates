@@ -24,10 +24,11 @@
 
 '''API URLs for the extended_templates application'''
 
-from django.conf.urls import include, url
+from ...compat import include, re_path
+
 
 urlpatterns = [
-    url(r'^themes/', include('extended_templates.urls.api.assets')),
-    url(r'^themes/', include('extended_templates.urls.api.templates')),
-    url(r'^themes/', include('extended_templates.urls.api.themes')),
+    re_path(r'^themes/', include('extended_templates.urls.api.assets')),
+    re_path(r'^themes/', include('extended_templates.urls.api.templates')),
+    re_path(r'^themes/', include('extended_templates.urls.api.themes')),
 ]

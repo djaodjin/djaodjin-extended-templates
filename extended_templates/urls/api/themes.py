@@ -24,13 +24,12 @@
 
 '''API URLs for the updating the theme'''
 
-from django.conf.urls import url
-
+from ...compat import re_path
 from ...api.themes import ThemePackageListAPIView
 
 
 urlpatterns = [
-    url(r'^$',
+    re_path(r'^$',
         ThemePackageListAPIView.as_view(),
         name='extended_templates_api_themes'),
 ]

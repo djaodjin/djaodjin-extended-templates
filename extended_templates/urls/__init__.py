@@ -22,9 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
+from ..compat import include, re_path
 
 urlpatterns = [
-    url(r'^api/', include('extended_templates.urls.api')),
-    url(r'^', include('extended_templates.urls.views')),
+    re_path(r'^api/', include('extended_templates.urls.api')),
+    re_path(r'^', include('extended_templates.urls.views')),
 ]

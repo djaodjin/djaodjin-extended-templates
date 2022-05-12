@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,6 @@
 import hashlib, os
 
 from django.db import transaction
-from django.utils.encoding import force_text
-from django.utils.translation import ugettext_lazy as _
 from deployutils.helpers import datetime_or_now
 from rest_framework import parsers, status
 from rest_framework.generics import ListCreateAPIView
@@ -35,7 +33,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from .serializers import AssetSerializer, MediaItemListSerializer
-from ..compat import urljoin, urlparse, urlunparse
+from ..compat import force_str, gettext_lazy as _, urljoin, urlparse, urlunparse
 from ..docs import OpenAPIResponse, swagger_auto_schema
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
@@ -136,7 +134,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
         sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
 
         # Store filenames with forward slashes, even on Windows
-        filename = force_text(uploaded_file.name.replace('\\', '/'))
+        filename = force_str(uploaded_file.name.replace('\\', '/'))
         sha1_filename = sha1 + os.path.splitext(filename)[1]
         storage = get_default_storage(self.request, self.account)
         stored_filename = sha1_filename if self.store_hash else filename

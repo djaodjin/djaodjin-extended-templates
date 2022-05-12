@@ -24,25 +24,24 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import url
-
 from ... import settings
+from ...compat import include, re_path
 from ...api.upload_media import MediaListAPIView
 from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
 from ...api.sitecss import SiteCssAPIView
 
 
 urlpatterns = [
-    url(r'^assets/(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'^assets/(?P<path>%s)$' % settings.PATH_RE,
         MediaListAPIView.as_view(),
         name='extended_templates_api_uploaded_media_elements'),
-    url(r'^sitecss/variables/(?P<name>[\w-]+)/',
+    re_path(r'^sitecss/variables/(?P<name>[\w-]+)/',
         LessVariableDetail.as_view(),
         name='extended_templates_api_less_override'),
-    url(r'^sitecss/variables/',
+    re_path(r'^sitecss/variables/',
         LessVariableListAPIView.as_view(),
         name='extended_templates_api_less_overrides'),
-    url(r'^sitecss',
+    re_path(r'^sitecss',
         SiteCssAPIView.as_view(),
         name='extended_templates_api_edit_sitecss'),
 ]

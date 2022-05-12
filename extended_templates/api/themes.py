@@ -26,12 +26,12 @@ from __future__ import unicode_literals
 
 import logging, zipfile
 
-from django.utils.translation import ugettext_lazy as _
 from rest_framework import parsers, serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from .serializers import NoModelSerializer
+from ..compat import gettext_lazy as _
 from ..docs import swagger_auto_schema, OpenAPIResponse
 from ..mixins import ThemePackageMixin
 from ..themes import (install_theme as install_theme_base,

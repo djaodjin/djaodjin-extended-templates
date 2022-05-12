@@ -23,9 +23,9 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf import settings
-from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from extended_templates.compat import include, re_path
 from extended_templates.views.pages import PageView, EditView
 
 from .views import PdfView
@@ -34,14 +34,14 @@ urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    url(r'^app/$', PageView.as_view(template_name='index.html',
+    re_path(r'^app/$', PageView.as_view(template_name='index.html',
 body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
-    url(r'^', include('django.contrib.auth.urls')),
-    url(r'^', include('extended_templates.urls')),
-    url(r'^edit(?P<page>\S+)?',
+    re_path(r'^', include('django.contrib.auth.urls')),
+    re_path(r'^', include('extended_templates.urls')),
+    re_path(r'^edit(?P<page>\S+)?',
         EditView.as_view(), name='extended_templates_edit'),
-    url(r'^content/', PageView.as_view(template_name='index.html')),
-    url(r'pdf/', PdfView.as_view()),
-    url(r'^$', PageView.as_view(template_name='index.html',
+    re_path(r'^content/', PageView.as_view(template_name='index.html')),
+    re_path(r'pdf/', PdfView.as_view()),
+    re_path(r'^$', PageView.as_view(template_name='index.html',
 body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
 ]
