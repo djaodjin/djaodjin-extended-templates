@@ -26,7 +26,7 @@
             if( self.options.uploadSuccess &&
                 {}.toString.call(self.options.uploadSuccess)
                 === '[object Function]' ) {
-                self.options.uploadSuccess(file, resp);
+                self.options.uploadSuccess(file, resp, self.element);
             } else {
                 if( resp.detail ) {
                     showMessages(resp.detail, "success");
@@ -39,7 +39,7 @@
             var self = this;
             self.element.trigger("djupload.error", [file.name, resp]);
             if( self.options.uploadError ) {
-                self.options.uploadError(file, resp);
+                self.options.uploadError(file, resp, self.element);
             } else {
                 showErrorMessages(resp);
             }
@@ -49,13 +49,17 @@
             var self = this;
             self.element.trigger("djupload.progress", [file.name, progress]);
             if( self.options.uploadProgress ) {
-                self.options.uploadProgress(file, progress);
+                self.options.uploadProgress(file, progress, self.element);
             }
             return true;
         },
 
         init: function(){
             var self = this;
+            if( !self.options.uploadUrl ) {
+                console.warning("[djupload] uploading assets will not work because 'uploadUrl' is undefined.");
+                return;
+            }
             if( self.options.mediaPrefix !== ""
                 && !self.options.mediaPrefix.match(/\/$/)){
                 self.options.mediaPrefix += "/";
@@ -183,7 +187,7 @@
                             }
                         } else {
                             formData.append(
-                                "csrfmiddlewaretoken", getMetaCSRFToken());
+                                "csrfmiddlewaretoken", self._csrfToken());
                             var data = self.element.data();
                             for( var key in data ) {
                                 if( data.hasOwnProperty(key)
@@ -226,7 +230,7 @@
                                     url: completeUrl,
                                     beforeSend: function(xhr) {
                                         xhr.setRequestHeader(
-                                            "X-CSRFToken", getMetaCSRFToken());
+                                            "X-CSRFToken", self._csrfToken());
                                     },
                                     data: JSON.stringify(response),
                                     datatype: "json",
