@@ -50,6 +50,12 @@ setup(
         'extended_templates.urls.api',
         'extended_templates.urls.views',
         'extended_templates.views'],
+    package_data={'extended_templates': [
+        'static/js/*.js',
+        'templates/extended_templates/*.html',
+        'templates/django/*.html',
+        'templates/jinja2/*.html',
+    ]},
     url='https://github.com/djaodjin/djaodjin-extended-templates/',
     download_url='https://github.com/djaodjin/djaodjin-extended-templates'\
 '/tarball/%s' % extended_templates.__version__,

@@ -62,7 +62,7 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.3.0
+0.3.1
 
   * adds HTML templates online editor that used to be
         in [djaodjin-pages](https://github.com/djaodjin/djaodjin-pages/)
