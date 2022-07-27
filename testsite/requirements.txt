@@ -2,20 +2,20 @@
 beautifulsoup4==4.6.0
 bleach==2.0.0
 boto3==1.17.21
-Django==2.2.28
+Django==3.2.14
 djangorestframework==3.12.4
 django-assets==0.12
-django-storages==1.9.1
-djaodjin-deployutils==0.8.2
+django-storages==1.12.3
+djaodjin-deployutils==0.9.1
 Jinja2==2.11.3
 Markdown==2.6.11
 premailer==3.10.0
 python-dateutil==2.8.1
-requests==2.23.0
+requests==2.26.0
 WeasyPrint==53.3
 
 # testsite-only
 coverage==6.3.2
-django-extensions==2.2.9
+django-extensions==3.2.0          # 3.2.0 compatibles with Django==4.0
 gunicorn==19.7.1
 whitenoise==5.1.0

@@ -86,12 +86,19 @@ var view = jQuery("iframe.edited-page");
 if( view.length > 0 ) {
   view.on("load", function() {
       {% if inject_from_client %}injectScripts(this);{% endif %}
-      initCodeEditors("{{urls.edit.api_sources}}", this);
+      // templates editors
+      $("#code-editor").templateCodeEditors({
+          api_sources: "{{urls.edit.api_sources}}",
+          iframe: this
+      });
   });
 } else {
   jQuery(document).ready(function($) {
       {% if inject_from_client %}injectScripts(document);{% endif %}
-      initCodeEditors("{{urls.edit.api_sources}}");
+      // templates editors
+      $("#code-editor").templateCodeEditors({
+          api_sources: "{{urls.edit.api_sources}}",
+      });
   });
 }
 </script>
