@@ -1,3 +1,9 @@
+0.3.3
+
+  * makes js code as modules
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed, 27 July 2022 14:50:00 -0700
+
 0.3.2
 
   * adds missing bleach dependency when package is uploaded to pypi
