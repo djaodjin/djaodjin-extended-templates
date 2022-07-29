@@ -44,8 +44,8 @@ def environment(**options):
         else:
             loader_class = options['loader'].__class__
         template_search_paths = get_template_search_path()
-        template_search_paths += [safe_join(settings.BASE_DIR, 'extended_templates', 'templates')]
-        print("XXX %s(%s)" % (loader_class, template_search_paths))
+        template_search_paths += [safe_join(
+            settings.BASE_DIR, 'extended_templates', 'templates')]
         options['loader'] = loader_class(template_search_paths)
     env = TestsiteEnvironment(extensions=[i18n], **options)
     # i18n
