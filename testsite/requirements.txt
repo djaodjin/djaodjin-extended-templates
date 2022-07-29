@@ -1,6 +1,6 @@
 # testsite for djaodjin-extended-templates
 beautifulsoup4==4.11.1            # 4.11.1 compatibles with Py3.10
-bleach==2.0.0
+bleach==3.3.0
 boto3==1.17.21
 Django==3.2.14
 djangorestframework==3.12.4
