@@ -1,5 +1,6 @@
-  <form method="post" action=".{% if next %}/?next={{next}}{% endif %}">
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}">
-    {{form.as_p}}
-    <input type="submit" value="Login" />
-  </form>
+<form method="post" action=".{% if next %}/?next={{next}}{% endif %}">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}">
+  username: <input type="text" name="username" />
+  password: <input type="password" name="password" />
+  <input type="submit" value="Login" />
+</form>

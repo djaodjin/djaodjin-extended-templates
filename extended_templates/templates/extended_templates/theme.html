@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block content %}
 <div id="app">
@@ -32,10 +31,10 @@ djaodjinSettings = {
   }
 };
 </script>
-<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-themes-vue.js" %}'></script>
-<script type="text/javascript" charset="utf-8" src='{% static "vendor/dropzone.js" %}'></script>
-<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-resources.js" %}'></script>
-<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-upload.js" %}'></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-themes-vue.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/vendor/dropzone.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-upload.js"></script>
 <script type="text/javascript">
 jQuery(document).ready(function($) {
 
