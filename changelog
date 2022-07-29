@@ -1,3 +1,9 @@
+0.3.4
+
+  * removes misleading test, `get_template_names` is used by template engine
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 28 July 2022 14:45:00 -0700
+
 0.3.3
 
   * makes js code as modules

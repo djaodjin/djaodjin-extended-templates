@@ -67,7 +67,7 @@ doc:
 
 clean:
 	rm -f $(RUN_DIR)/testsite-app.log
-	rm -f $(RUN_DIR)/themes $(srcDir)/htdocs/media
+	rm -rf $(RUN_DIR)/themes $(srcDir)/htdocs/media
 	rm -f $(DB_NAME)
 	rm -f $(RUN_DIR)/credentials $(RUN_DIR)/gunicorn.conf
 

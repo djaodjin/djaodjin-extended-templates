@@ -63,8 +63,8 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.3.3
+0.3.4
 
-  * makes js code as modules
+  * removes misleading test, `get_template_names` is used by template engine
 
 [previous release notes](changelog)
