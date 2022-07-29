@@ -119,7 +119,7 @@ class PageMixin(UpdateEditableMixin):
         #pylint: disable=too-many-statements, too-many-locals
         enable_instrumentation()
         response = super(PageMixin, self).get(request, *args, **kwargs)
-        if self.template_name and isinstance(response, TemplateResponse):
+        if isinstance(response, TemplateResponse):
             response.render()
         soup = self.add_edition_tools(response)
         if not soup:
