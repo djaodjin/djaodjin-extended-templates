@@ -1,32 +1,30 @@
-{% load static %}
-
 <!-- Necessary vendor code to connect to the API end-points -->
-<script type="text/javascript" src="{% static 'vendor/jquery-ui.js' %}"></script><!-- for droppable() -->
-<script type="text/javascript" src="{% static 'js/djaodjin-resources.js' %}"></script>
+<script type="text/javascript" src="/static/vendor/jquery-ui.js"></script><!-- for droppable() -->
+<script type="text/javascript" src="/static/js/djaodjin-resources.js"></script>
 
 <!-- Scripts that need to be injected into the page actually being edited
      (i.e. iframe or current page). We hoisted this code before other
      resources are loaded so we get a chance to intercept the iframe onload
      event.
   -->
-<link rel="stylesheet" href="{% static 'vendor/font-awesome.css' %}"/><!-- XXX fontawesome is required by hallo? -->
+<link rel="stylesheet" href="/static/vendor/font-awesome.css"/><!-- XXX fontawesome is required by hallo? -->
 <script type="text/javascript">
 var edition_sources = [
 /* WYSIWYG element editors */
-  "{% static 'css/djaodjin-editor.css' %}",
-  "{% static 'vendor/jquery.js' %}",
-  "{% static 'vendor/jquery-ui.js' %}",
-  "{% static 'vendor/jquery.ui.touch-punch.js' %}",
-  "{% static 'vendor/jquery.textarea_autosize.js' %}",
-  "{% static 'vendor/jquery.selection.js' %}",
-  "{% static 'vendor/jquery.ba-throttle-debounce.js' %}",
-  "{% static 'vendor/rangy-core.js' %}",
-  "{% static 'vendor/hallo.js' %}",
-  "{% static 'vendor/Markdown.Converter.js' %}",
-  "{% static 'vendor/Markdown.Sanitizer.js' %}",
-  "{% static 'vendor/dropzone.js' %}",
-  "{% static 'js/djaodjin-resources.js' %}",
-  "{% static 'js/djaodjin-editor.js' %}",
+  "/static/css/djaodjin-editor.css",
+  "/static/vendor/jquery.js",
+  "/static/vendor/jquery-ui.js",
+  "/static/vendor/jquery.ui.touch-punch.js",
+  "/static/vendor/jquery.textarea_autosize.js",
+  "/static/vendor/jquery.selection.js",
+  "/static/vendor/jquery.ba-throttle-debounce.js",
+  "/static/vendor/rangy-core.js",
+  "/static/vendor/hallo.js",
+  "/static/vendor/Markdown.Converter.js",
+  "/static/vendor/Markdown.Sanitizer.js",
+  "/static/vendor/dropzone.js",
+  "/static/js/djaodjin-resources.js",
+  "/static/js/djaodjin-editor.js",
   "jQuery(document).ready(function($) {\
     $('.editable').editor({\
       baseUrl: '{{ urls.edit.api_page_element_base }}',\
@@ -76,9 +74,9 @@ function injectScripts(container) {
             doc.body.appendChild(script);
         };
 
-        addScript(doc, "{% static 'js/load-edition-src.js' %}");
-        addLess(doc, "{% static 'vendor/less/bootstrap/bootstrap.less' %}");
-        addScript(doc, "{% static 'vendor/less.js' %}");
+        addScript(doc, "/static/js/load-edition-src.js");
+        addLess(doc, "/static/vendor/less/bootstrap/bootstrap.less");
+        addScript(doc, "/static/vendor/less.js");
     }
 };
 
@@ -104,7 +102,7 @@ if( view.length > 0 ) {
 </script>
 
 <!-- Media gallery panel -->
-<link rel="stylesheet" href="{% static 'css/djaodjin-sidebar-gallery.css' %}" type="text/css" />
+<link rel="stylesheet" href="/static/css/djaodjin-sidebar-gallery.css" type="text/css" />
 <div id="media-gallery" class="dj-gallery custom-gallery">
   <div class="col-md-12">
     <hr>
@@ -155,10 +153,10 @@ if( view.length > 0 ) {
       </div>
     </div>
   </div>
-  <script type="text/javascript" src="{% static 'vendor/jquery.ui.touch-punch.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/dropzone.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/djaodjin-upload.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/djaodjin-sidebar-gallery.js' %}"></script>
+  <script type="text/javascript" src="/static/vendor/jquery.ui.touch-punch.js"></script>
+  <script type="text/javascript" src="/static/vendor/dropzone.js"></script>
+  <script type="text/javascript" src="/static/js/djaodjin-upload.js"></script>
+  <script type="text/javascript" src="/static/js/djaodjin-sidebar-gallery.js"></script>
   <script type="text/javascript">
 jQuery(document).ready(function($) {
   $(".dj-gallery").djgallery({
@@ -217,7 +215,7 @@ jQuery(document).ready(function($) {
 </div>
 
 <!-- Template editor panel -->
-<link rel="stylesheet" href="{% static 'vendor/jquery-ui.css' %}"/>
+<link rel="stylesheet" href="/static/vendor/jquery-ui.css"/>
 <div id="code-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <ul class="nav nav-tabs dashboard-tab" role="tablist">
       {# tabs inserted here #}
@@ -225,17 +223,17 @@ jQuery(document).ready(function($) {
   <div class="tab-content" style="width:100%;min-height:100%;display:inline;">
       {# content panels inserted here #}
   </div>
-  <script type="text/javascript" src="{% static 'vendor/jquery.ba-throttle-debounce.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/djaodjin-code-editor.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/ace.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/ext-language_tools.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/ext-modelist.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/ext-emmet.js' %}"></script>
+  <script type="text/javascript" src="/static/vendor/jquery.ba-throttle-debounce.js"></script>
+  <script type="text/javascript" src="/static/js/djaodjin-code-editor.js"></script>
+  <script type="text/javascript" src="/static/vendor/ace.js"></script>
+  <script type="text/javascript" src="/static/vendor/ext-language_tools.js"></script>
+  <script type="text/javascript" src="/static/vendor/ext-modelist.js"></script>
+  <script type="text/javascript" src="/static/vendor/ext-emmet.js"></script>
 </div>
 
 <!-- style editor -->
-<link rel="stylesheet" href="{% static 'vendor/bootstrap-colorpicker.css' %}"/>
-<link rel="stylesheet" href="{% static 'css/djaodjin-style-editor.css' %}" type="text/css" />
+<link rel="stylesheet" href="/static/vendor/bootstrap-colorpicker.css"/>
+<link rel="stylesheet" href="/static/css/djaodjin-style-editor.css" type="text/css" />
 <div id="style-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <h2>Styles</h2>
   <button class="refresh-styles btn btn-primary">Reload</button>
@@ -243,33 +241,35 @@ jQuery(document).ready(function($) {
   {% for section_name,section_attributes in editable_styles %}
   <hr>
   <h3>{{section_name}}</h3>
-    {% for attribute in section_attributes %}
-    <div class="form-group">
-      <label for="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
-             class="col-sm-3 control-label">{{attribute.property}}</label>
-      <div class="col-sm-7">
-        <input id="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
+  {% for attribute in section_attributes %}
+  <div class="row">
+    <label for="style_attribute_{{section_name}}_{{loop.index}}"
+           class="dj-style-label">{{attribute.property}}</label>
+    <div class="dj-style-input-wrap">
+        <input id="style_attribute_{{section_name}}_{{loop.index}}"
                name="{{attribute.property}}"
                type="text"
-               class="form-control"
+               class="dj-input"
                {% if attribute.editor %}
                data-dj-style-variable-editor="{{attribute.editor}}"
+               {% else %}
+               data-dj-style-variable-editor=""
                {% endif %}
-               value="{{ attribute.value }}" />
-      </div>
-      <div class="col-sm-2">
-      <button class="btn btn-primary style-reset-button"
-              data-target="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
-              data-reset-value="{{ attribute.default }}"
-              type="button"
-              >Reset to default</button>
-      </div>
+               value="{{attribute.value}}" />
     </div>
-    {% endfor %}
-    {% endfor  %}
+    <div class="dj-style-button-wrap">
+        <button class="btn btn-secondary style-reset-button"
+                title="reset to default"
+                data-target="style_attribute_{{section_name}}_{{loop.index}}"
+                data-reset-value="{{attribute.default}}"
+                type="button"><i class="fa fa-undo"></i></button>
+    </div>
+  </div>
+  {% endfor %}
+  {% endfor  %}
   </form>
-  <script type="text/javascript" src="{% static 'vendor/bootstrap-colorpicker.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/djaodjin-style-editor.js' %}"></script>
+  <script type="text/javascript" src="/static/vendor/bootstrap-colorpicker.js"></script>
+  <script type="text/javascript" src="/static/js/djaodjin-style-editor.js"></script>
   <script type="text/javascript">
 jQuery(document).ready(function($) {
   $("#style-editor").djstyles({

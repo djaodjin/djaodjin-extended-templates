@@ -1,10 +1,8 @@
-{% load testsite_tags %}
-{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
   <title>djaodjin-extended-templates testsite</title>
-  <script type="text/javascript" src="{% static 'vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="/static/vendor/jquery.js"></script>
   {% if csrf_token %}
   <meta name="csrf-token" content="{{csrf_token}}">
   <script type="text/javascript">
@@ -23,7 +21,7 @@
   </script>
   {% endif %}
   <link rel="stylesheet" media="screen" href="/media/vendor/bootstrap.css" />
-  <script type="text/javascript" src="{% static 'vendor/bootstrap.js' %}"></script>
+  <script type="text/javascript" src="/static/vendor/bootstrap.js"></script>
   {% block localheader %}{% endblock %}
 </head>
 <body>

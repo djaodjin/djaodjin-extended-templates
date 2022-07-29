@@ -82,40 +82,67 @@ INSTALLED_APPS = (
     'testsite',
 )
 
+LOG_HANDLER = {
+    'level': 'DEBUG',
+    'formatter': 'request_format',
+    'filters': ['request'],
+    'class':'logging.StreamHandler',
+}
+if not DEBUG and hasattr(sys.modules[__name__], 'LOG_FILE') and LOG_FILE:
+    LOG_HANDLER.update({
+        'class':'logging.handlers.WatchedFileHandler',
+        'filename': LOG_FILE
+    })
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        # Add an unbound RequestFilter.
+        'request': {
+            '()': 'deployutils.apps.django.logging.RequestFilter',
+        },
+    },
+    'formatters': {
+        'simple': {
+            'format': 'X X %(levelname)s [%(asctime)s] %(message)s',
+            'datefmt': '%d/%b/%Y:%H:%M:%S %z'
+        },
+        'request_format': {
+            'format': 'gunicorn.' + APP_NAME + '.app: [%(process)d]'\
+                ' %(levelname)s %(remote_addr)s %(username)s [%(asctime)s]'\
+                ' %(message)s "%(http_user_agent)s"',
+            'datefmt': '%d/%b/%Y:%H:%M:%S %z'
         }
     },
     'handlers': {
-        'logfile':{
-            'level':'DEBUG',
+        'db_log': {
+            'level': 'DEBUG',
+            'formatter': 'simple',
+            'filters': ['require_debug_true'],
             'class':'logging.StreamHandler',
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
+        'log': LOG_HANDLER,
     },
     'loggers': {
         'extended_templates': {
-            'handlers': ['logfile'],
+            'handlers': [],
             'level': 'INFO',
-            'propagate': False,
         },
 #        'django.db.backends': {
-#             'handlers': ['logfile'],
-#             'level': 'DEBUG',
-#             'propagate': True,
+#           'handlers': ['db_log'],
+#           'level': 'DEBUG',
+#           'propagate': False
 #        },
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': [],
             'level': 'ERROR',
-            'propagate': True,
         },
         # If we don't disable 'django' handlers here, we will get an extra
         # copy on stderr.
@@ -127,16 +154,11 @@ LOGGING = {
         # propagated from a child logger.
         #https://docs.python.org/2/library/logging.html#logging.Logger.propagate
         '': {
-            'handlers': ['logfile', 'mail_admins'],
+            'handlers': ['log'],
             'level': 'INFO'
-        }
-    }
+        },
+    },
 }
-if logging.getLogger('gunicorn.error').handlers:
-    LOGGING['handlers']['logfile'].update({
-        'class':'logging.handlers.WatchedFileHandler',
-        'filename': LOG_FILE
-    })
 
 
 MIDDLEWARE = (
@@ -232,16 +254,12 @@ TEMPLATES = [
     },
     {
         'NAME': 'html',
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': TEMPLATES_DIRS,
-        'APP_DIRS': True,
         'OPTIONS': {
-            'debug': TEMPLATE_DEBUG,
-            'context_processors': [proc.replace(
-                'django.core.context_processors',
-                'django.template.context_processors')
-                for proc in TEMPLATE_CONTEXT_PROCESSORS]},
-    },
+            'environment': 'testsite.jinja2.environment'
+        }
+    }
 ]
 
 
