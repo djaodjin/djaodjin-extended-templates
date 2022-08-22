@@ -24,11 +24,14 @@
 
 '''API URLs for the extended_templates application'''
 
-from ...compat import include, re_path
+from ...api.themes import ThemePackageListAPIView
+from ...compat import include, path, re_path
 
 
 urlpatterns = [
     re_path(r'^themes/', include('extended_templates.urls.api.assets')),
     re_path(r'^themes/', include('extended_templates.urls.api.templates')),
-    re_path(r'^themes/', include('extended_templates.urls.api.themes')),
+    path('themes',
+        ThemePackageListAPIView.as_view(),
+        name='extended_templates_api_themes'),
 ]
