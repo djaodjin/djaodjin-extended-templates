@@ -56,6 +56,8 @@ def write_template(template_path, template_source):
         os.makedirs(base_dir)
     with tempfile.NamedTemporaryFile(
             mode='w+t', dir=base_dir, delete=False) as temp_file:
+        if six.PY2 and hasattr(template_source, 'encode'):
+            template_source = template_source.encode('utf-8')
         temp_file.write(template_source)
     os.rename(temp_file.name, template_path)
     LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
