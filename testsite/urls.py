@@ -24,14 +24,23 @@
 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from extended_templates.compat import include, re_path
+from extended_templates.compat import include, path, re_path
 from extended_templates.views.pages import PageView, EditView
 
 from .views import PdfView
 
-urlpatterns = staticfiles_urlpatterns() \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns = staticfiles_urlpatterns() \
+        + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns = [
+        re_path(r'^%s(?P<path>.*)$' % settings.STATIC_URL.lstrip('/'),
+            serve, kwargs={'document_root': settings.STATIC_ROOT}),
+        re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
+            serve, kwargs={'document_root': settings.MEDIA_ROOT})
+    ]
 
 urlpatterns += [
     re_path(r'^app/$', PageView.as_view(template_name='index.html',

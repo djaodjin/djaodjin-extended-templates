@@ -14,7 +14,6 @@ import logging, os, re, sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getenv('RUN_DIR', os.getcwd())
 DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
-LOG_FILE = os.path.join(RUN_DIR, 'testsite-app.log')
 
 DEBUG = True
 ALLOWED_HOSTS = ('*',)

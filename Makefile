@@ -33,9 +33,9 @@ install::
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
                 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/db
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/run
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/db
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/run
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
 
 
 build-assets: vendor-assets-prerequisites
@@ -56,13 +56,13 @@ vendor-assets-prerequisites: $(srcDir)/testsite/package.json
 
 
 $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
-	install -d $(dir $@)
+	$(installDirs) $(dir $@)
 	[ -f $@ ] || \
 		sed -e "s,\%(SECRET_KEY)s,`$(PYTHON) -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'`," $< > $@
 
 
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
-	install -d $(dir $@)
+	$(installDirs) $(dir $@)
 	[ -f $@ ] || sed \
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
@@ -78,12 +78,6 @@ initdb: clean-dbs install-conf $(ASSETS_DIR)/vendor/bootstrap.css
 doc:
 	$(installDirs) build/docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
-
-clean:
-	rm -f $(RUN_DIR)/testsite-app.log
-	rm -rf $(RUN_DIR)/themes $(srcDir)/htdocs/media
-	rm -f $(DB_NAME)
-	rm -f $(RUN_DIR)/credentials $(RUN_DIR)/gunicorn.conf
 
 vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/bootstrap.css
 
@@ -120,5 +114,4 @@ $(ASSETS_DIR)/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $(installTop)/node_modules/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/vue/dist/vue.js $(ASSETS_DIR)/vendor
 
-#testsite/static/vendor/jquery-ui.css
-#testsite/static/vendor/jquery-ui.js
+#	$(installFiles) $(srcDir)/testsite/static/vendor/* $(ASSETS_DIR)/vendor
