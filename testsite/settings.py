@@ -198,7 +198,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATES_DIRS = (
-    os.path.join(RUN_DIR, 'themes/djaodjin-extended-templates/templates'),
+    os.path.join(RUN_DIR, 'themes/%s/templates' % APP_NAME),
     os.path.join(BASE_DIR, 'testsite/templates'),
 )
 
