@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import logging, os, re, sys
 
+from deployutils.configs import load_config, update_settings
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getenv('RUN_DIR', os.getcwd())
 DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
@@ -19,39 +22,8 @@ DEBUG = True
 ALLOWED_HOSTS = ('*',)
 APP_NAME = os.path.basename(BASE_DIR)
 
-
-def load_config(confpath):
-    '''
-    Given a path to a file, parse its lines in ini-like format, and then
-    set them in the current namespace.
-    '''
-    # todo: consider using something like ConfigObj for this:
-    # http://www.voidspace.org.uk/python/configobj.html
-    if os.path.isfile(confpath):
-        sys.stderr.write('config loaded from %s\n' % confpath)
-        with open(confpath) as conffile:
-            line = conffile.readline()
-            while line != '':
-                if not line.startswith('#'):
-                    look = re.match(r'(\w+)\s*=\s*(.*)', line)
-                    if look:
-                        value = look.group(2) \
-                            % {'LOCALSTATEDIR': BASE_DIR + '/var'}
-                        # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
-                        # definitely in the site.conf set), we had no choice
-                        # other than using eval. The {} are here to restrict
-                        # the globals and locals context eval has access to.
-                        # pylint: disable=eval-used
-                        setattr(sys.modules[__name__],
-                            look.group(1).upper(), eval(value, {}, {}))
-                line = conffile.readline()
-    else:
-        sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
-
-load_config(os.path.join(
-    os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'credentials'))
-load_config(os.path.join(
-    os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'site.conf'))
+update_settings(sys.modules[__name__],
+    load_config(APP_NAME, 'credentials', 'site.conf', verbose=True))
 
 if not hasattr(sys.modules[__name__], "SECRET_KEY"):
     from random import choice
