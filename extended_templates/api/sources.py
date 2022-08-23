@@ -180,6 +180,8 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             LOGGER.info("searching for %s in %s ...", element_id, template_path)
             with open(template_path) as template_file:
                 template_string = template_file.read()
+                if six.PY2 and hasattr(template_string, 'decode'):
+                    template_string = template_string.decode('utf-8')
             try:
                 template_string = force_str(template_string)
                 engine, unused_libraries, unused_builtins = get_html_engine()
