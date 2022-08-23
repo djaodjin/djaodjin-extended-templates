@@ -87,7 +87,9 @@ LOG_HANDLER = {
     'filters': ['request'],
     'class':'logging.StreamHandler',
 }
-if not DEBUG and hasattr(sys.modules[__name__], 'LOG_FILE') and LOG_FILE:
+if hasattr(sys.modules[__name__], 'LOG_FILE') and LOG_FILE:
+    if DEBUG:
+        sys.stderr.write("writing log into %s ...\n" % LOG_FILE)
     LOG_HANDLER.update({
         'class':'logging.handlers.WatchedFileHandler',
         'filename': LOG_FILE
