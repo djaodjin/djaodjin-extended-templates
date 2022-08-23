@@ -6,7 +6,7 @@ Django==3.2.15
 djangorestframework==3.12.4
 django-assets==0.12
 django-storages==1.13.1
-djaodjin-deployutils==0.10.1
+djaodjin-deployutils==0.10.2
 Jinja2==3.1.2                     # 3.1.2 compatibles with Py3.10
 Markdown==3.4.1
 premailer==3.10.0
