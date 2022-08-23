@@ -20,7 +20,7 @@ DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
 
 DEBUG = True
 ALLOWED_HOSTS = ('*',)
-APP_NAME = os.path.basename(BASE_DIR)
+APP_NAME = os.path.basename(os.path.dirname(__file__))
 
 update_settings(sys.modules[__name__],
     load_config(APP_NAME, 'credentials', 'site.conf', verbose=True))
