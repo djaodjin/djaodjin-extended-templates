@@ -72,7 +72,9 @@ _SETTINGS = {
     'MEDIA_PREFIX': '',
     'MEDIA_URL': getattr(settings, 'MEDIA_URL'),
     'MEDIA_ROOT': getattr(settings, 'MEDIA_ROOT'),
-    'PUBLIC_ROOT': getattr(settings, 'STATIC_ROOT'),
+    'PUBLIC_ROOT': (getattr(settings, 'STATIC_ROOT')
+        if getattr(settings, 'STATIC_ROOT')
+        else getattr(settings, 'STATICFILES_DIRS')[0]),
     'PUBLIC_WHITELIST': None,
     'PDF_FLATFORM_BIN': safe_join(
         os.path.dirname(sys.executable), 'podofo-flatform'),
