@@ -92,8 +92,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
         Uploads a theme package with templates that will override the default
         ones. See `references and tutorials on creating themes
-        <https://djaodjin.com/docs/themes/>`_ for details on the theme package
-        structure and customizing the default templates.
+        <https://www.djaodjin.com/docs/guides/themes/>`_ for details
+        on the theme package structure and customizing the default templates.
 
         **Tags: themes, broker, appmodel
 
