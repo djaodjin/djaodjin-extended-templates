@@ -29,7 +29,7 @@ from rest_framework import serializers
 from ..compat import gettext_lazy as _
 from ..models import LessVariable, ThemePackage
 
-#pylint: disable=no-init,abstract-method
+#pylint: disable=abstract-method
 
 class HTMLField(serializers.CharField):
 

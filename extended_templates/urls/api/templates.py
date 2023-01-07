@@ -25,7 +25,7 @@
 '''API URLs for the editing the theme templates'''
 
 from ...import settings
-from ...compat import include, re_path
+from ...compat import re_path
 from ...api.sources import (SourceEditAPIView, SourceEditBaseAPIView,
     SourceDetailAPIView)
 

@@ -25,7 +25,7 @@
 '''API URLs for the pages application'''
 
 from ... import settings
-from ...compat import include, re_path
+from ...compat import re_path
 from ...api.upload_media import MediaListAPIView
 from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
 from ...api.sitecss import SiteCssAPIView

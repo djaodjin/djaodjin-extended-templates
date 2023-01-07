@@ -26,6 +26,7 @@ from __future__ import unicode_literals
 
 import logging, os, tempfile, shutil, subprocess, sys, zipfile
 
+import jinja2, requests
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
 from django.template.base import Parser, NodeList
@@ -35,8 +36,7 @@ from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.loader import _engine_list, get_template
 from django.utils._os import safe_join
 from django_assets.templatetags.assets import assets
-import jinja2
-import requests
+from rest_framework.exceptions import ValidationError
 
 from . import settings
 from .compat import (TokenType, do_static, force_str, get_html_engine,
@@ -274,10 +274,17 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                         if not os.path.isdir(os.path.dirname(tmp_path)):
                             os.makedirs(os.path.dirname(tmp_path))
                         template_bytes = zip_file.read(info.filename)
-                        if hasattr(template_bytes, 'decode'):
-                            template_string = template_bytes.decode('utf-8')
-                        else:
-                            template_string = template_bytes
+                        try:
+                            if hasattr(template_bytes, 'decode'):
+                                template_string = template_bytes.decode('utf-8')
+                            else:
+                                template_string = template_bytes
+                        except UnicodeDecodeError as err:
+                            raise ValidationError({
+                                'detail': "%(relative_path)s: %(err)s" % {
+                                    'relative_path': relative_path,
+                                    'err': err
+                                }})
                         template_string = force_str(template_string)
                         try:
                             check_template(template_string)
