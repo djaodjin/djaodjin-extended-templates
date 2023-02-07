@@ -314,6 +314,12 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                                 pass
                         except TemplateSyntaxError as err:
                             LOGGER.info("error:%s: %s", relative_path, err)
+                            raise ValidationError({
+                                'detail': "%(relative_path)s: %(err)s" % {
+                                    'relative_path': relative_path,
+                                    'err': err
+                                }})
+
 
         # Should be safe to move in-place at this point.
         # Templates are necessary while public resources (css, js)

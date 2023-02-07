@@ -126,10 +126,6 @@ class ThemePackageMixin(AccountMixin):
         theme_dir = settings.THEME_DIR_CALLABLE(theme)
         return safe_join(theme_dir, 'templates')
 
-    @staticmethod
-    def get_statics_dir(theme):
-        return safe_join(settings.PUBLIC_ROOT, theme, 'static')
-
 
 class UpdateEditableMixin(object):
     """
