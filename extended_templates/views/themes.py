@@ -60,6 +60,8 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         """
         Copy the assets in srcroot to destroot.
         """
+        if not os.path.isdir(srcroot):
+            return
         if not os.path.exists(destroot):
             os.makedirs(destroot)
         for pathname in os.listdir(srcroot):
