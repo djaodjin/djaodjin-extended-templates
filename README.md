@@ -63,8 +63,10 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.3.4
+0.4.0
 
-  * removes misleading test, `get_template_names` is used by template engine
+  * removes trailing '/' in API endpoints
+  * stores template in downloaded zip only once
+  * returns nice error message when issue decoding utf-8 templates
 
 [previous release notes](changelog)

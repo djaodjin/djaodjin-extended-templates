@@ -1,8 +1,10 @@
 0.4.0
 
   * removes trailing '/' in API endpoints
+  * stores template in downloaded zip only once
+  * returns nice error message when issue decoding utf-8 templates
 
- -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon, 22 Aug 2022 14:45:00 -0700
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue,  7 Feb 2023 14:38:00 -0700
 
 0.3.4
 
