@@ -156,13 +156,13 @@
                 });
             }; // addPanel
 
-            var templates = (typeof templateNames !== "undefined" ) ?
-                templateNames : [];
-            if( self.options.iframe ) {
-                templates = self.options.iframe.contentWindow.templateNames || [];
+            var templates = self.options.templates ? self.options.templates : (
+                (typeof templateNames !== "undefined" ) ? templateNames : []);
+            if( self.options.iframe && self.options.iframe.contentWindow.templateNames ) {
+                templates = self.options.iframe.contentWindow.templateNames;
             }
             if( templates.length > 0 ) {
-                self.$element.find(".tab-content").empty();
+                self.$element.find(".tab-content .tpl-loader").remove();
                 for( var idx = 0; idx < templates.length; ++idx ) {
                     addPanel(self.$element, templates[idx].name);
                 }
@@ -215,7 +215,8 @@
 
     $.fn.templateCodeEditors.defaults = {
         api_sources: null,
-        iframe: null
+        iframe: null,
+        templates: null
     };
 
 })(jQuery);
