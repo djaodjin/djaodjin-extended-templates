@@ -43,11 +43,17 @@ def get_assets_dirs():
     from . import settings
     if settings.ASSETS_DIRS_CALLABLE:
         return import_string(settings.ASSETS_DIRS_CALLABLE)()
-    assets_dirs = getattr(django_settings, 'STATICFILES_DIRS', None)
-    if not assets_dirs:
+    candidates = getattr(django_settings, 'STATICFILES_DIRS', None)
+    if not candidates:
         static_root = getattr(django_settings, 'STATIC_ROOT', None)
         if static_root:
-            assets_dirs = [static_root]
+            candidates = [static_root]
+    assets_dirs = []
+    static_prefix = django_settings.STATIC_URL.rstrip('/')
+    for asset_dir in candidates:
+        if asset_dir.endswith(static_prefix):
+            asset_dir = asset_dir[:-len(static_prefix)]
+        assets_dirs += [asset_dir]
     return assets_dirs
 
 
