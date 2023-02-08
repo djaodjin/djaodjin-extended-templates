@@ -63,7 +63,7 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.4.0
+0.4.1
 
   * removes trailing '/' in API endpoints
   * stores template in downloaded zip only once
