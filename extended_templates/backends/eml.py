@@ -52,10 +52,20 @@ class Premailer(BasePremailer):
     def _load_external(self, url):
         parts = urlparse(url)
         rel_path = parts.path.strip('/')
+        parts = rel_path.split('/')
+        if len(parts) > 1:
+            path_prefix = parts[0]
+            rel_path_no_prefix = '/'.join(parts[1:])
+        else:
+            path_prefix = ""
+            rel_path_no_prefix = rel_path
         LOGGER.debug("looking for '%s' in order into directories %s",
             url, get_assets_dirs())
         for base_path in get_assets_dirs():
-            stylefile = safe_join(base_path, rel_path)
+            if path_prefix and base_path.endswith(path_prefix):
+                stylefile = safe_join(base_path, rel_path_no_prefix)
+            else:
+                stylefile = safe_join(base_path, rel_path)
             if os.path.exists(stylefile):
                 LOGGER.debug("looking for '%s' as '%s'... yes", url, stylefile)
                 with codecs.open(stylefile, encoding='utf-8') as css_file:
