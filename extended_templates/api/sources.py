@@ -50,7 +50,7 @@ STATE_BLOCK_CONTENT = 3
 STATE_BLOCK_CONTENT_ESCAPE = 4
 
 
-class ReplaceIdVisitor(object):
+class ReplaceIdVisitor(UpdateEditableMixin):
 
     def __init__(self, dest, element_id, element_text, template_path=None):
         self.dest = dest
@@ -95,8 +95,7 @@ class ReplaceIdVisitor(object):
         self.dest.write(text)
 
 
-class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
-                        generics.GenericAPIView):
+class SourceEditAPIView(ThemePackageMixin, generics.GenericAPIView):
 
     serializer_class = SourceElementSerializer
 
