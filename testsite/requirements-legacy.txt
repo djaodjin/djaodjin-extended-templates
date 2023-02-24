@@ -1,6 +1,5 @@
-# djaodjin-pages
+# testsite for djaodjin-extended-templates legacy Python
 beautifulsoup4==4.6.0
-bleach==2.0.0
 boto==2.48.0
 Django==1.11.29
 djangorestframework==3.9.4

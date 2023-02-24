@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,28 +23,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
-import bleach
 from rest_framework import serializers
 
 from ..compat import gettext_lazy as _
 from ..models import LessVariable, ThemePackage
 
 #pylint: disable=abstract-method
-
-class HTMLField(serializers.CharField):
-
-    def __init__(self, **kwargs):
-        self.html_tags = kwargs.pop('html_tags', [])
-        self.html_attributes = kwargs.pop('html_attributes', {})
-        self.html_styles = kwargs.pop('html_styles', [])
-        self.html_strip = kwargs.pop('html_strip', False)
-        super(HTMLField, self).__init__(**kwargs)
-
-    def to_internal_value(self, data):
-        return super(HTMLField, self).to_internal_value(
-            bleach.clean(data, tags=self.html_tags,
-            attributes=self.html_attributes, styles=self.html_styles,
-            strip=self.html_strip))
 
 
 class NoModelSerializer(serializers.Serializer):
