@@ -1,3 +1,11 @@
+0.4.2
+
+  * shows TemplateSyntax errors when uploading theme
+  * removes unused dependency on bleach
+  * removes dependency on vue-infinite-loading for pagination
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue, 24 Feb 2023 11:00:00 -0700
+
 0.4.1
 
   * returns true root directories for public assets, not Django 'static' concept

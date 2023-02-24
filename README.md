@@ -13,7 +13,7 @@ Major Features:
 Tested with
 
 - **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.10, **Django:** 4.0 (latest), **Django Rest Framework:** 3.12
+- **Python:** 3.10, **Django:** 4.1 (latest), **Django Rest Framework:** 3.12
 - **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
 
 
@@ -63,10 +63,10 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.4.1
+0.4.2
 
-  * removes trailing '/' in API endpoints
-  * stores template in downloaded zip only once
-  * returns nice error message when issue decoding utf-8 templates
+  * shows TemplateSyntax errors when uploading theme
+  * removes unused dependency on bleach
+  * removes dependency on vue-infinite-loading for pagination
 
 [previous release notes](changelog)
