@@ -131,7 +131,7 @@ def check_template(template_source, using=None):
 
     Raises TemplateDoesNotExist if no such template exists.
     """
-    errs = {}
+    errs = None
     engines = _engine_list(using)
     # We should find at least one engine that does not raise an error.
     for engine in engines:
@@ -143,9 +143,10 @@ def check_template(template_source, using=None):
                 new.template_debug = get_exception_info(exc)
                 six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
         except TemplateSyntaxError as err:
-            errs.update({engine: err})
+            # We rely on the last engine being the 'html' engine.
+            errs = err
     if errs:
-        raise TemplateSyntaxError(errs)
+        raise errs
     return None
 
 
@@ -239,10 +240,16 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
     tmp_dir = tempfile.mkdtemp(dir=tmp_base)
 
     #pylint: disable=too-many-nested-blocks
+    errs = []
     try:
         for info in zip_file.infolist():
             if info.file_size == 0:
                 # Crude way to detect directories
+                continue
+            if (info.filename.endswith('.DS_Store') or
+                info.filename.endswith('~')):
+                # skips over files that shouldn't be in the package
+                # but often are.
                 continue
             tmp_path = None
             test_parts = os.path.normpath(info.filename).split(os.sep)[1:]
@@ -280,9 +287,10 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                             else:
                                 template_string = template_bytes
                         except UnicodeDecodeError as err:
+                            LOGGER.info("error:%s: %s", info.filename, err)
                             raise ValidationError({
                                 'detail': "%(relative_path)s: %(err)s" % {
-                                    'relative_path': relative_path,
+                                    'relative_path': info.filename,
                                     'err': err
                                 }})
                         template_string = force_str(template_string)
@@ -313,13 +321,13 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                                 # in the default theme, so no diff is ok.
                                 pass
                         except TemplateSyntaxError as err:
-                            LOGGER.info("error:%s: %s", relative_path, err)
-                            raise ValidationError({
-                                'detail': "%(relative_path)s: %(err)s" % {
-                                    'relative_path': relative_path,
+                            LOGGER.info("error:%s: %s", info.filename, err)
+                            errs += [{"%(relative_path)s: %(err)s" % {
+                                    'relative_path': info.filename,
                                     'err': err
-                                }})
-
+                                }}]
+        if errs:
+            raise ValidationError({'detail': errs})
 
         # Should be safe to move in-place at this point.
         # Templates are necessary while public resources (css, js)
