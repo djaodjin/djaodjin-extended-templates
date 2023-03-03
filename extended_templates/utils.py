@@ -157,17 +157,20 @@ def get_default_storage_base(request, account=None, public=False, **kwargs):
         storage_kwargs.update(**kwargs)
         if public:
             storage_kwargs.update({'default_acl': 'public-read'})
-        for key in ['access_key', 'secret_key', 'security_token']:
+        for key in ['access_key', 'secret_key']:
             if key in request.session:
                 storage_kwargs[key] = request.session[key]
         bucket_name = _get_bucket_name(account)
         location = _get_media_prefix(account)
         LOGGER.debug("create %s(bucket_name='%s', location='%s', %s)",
             storage_class.__name__, bucket_name, location, storage_kwargs)
-        return storage_class(bucket_name=bucket_name, location=location,
+        storage = storage_class(bucket_name=bucket_name, location=location,
             **storage_kwargs)
-    LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
-        " field, default to FileSystemStorage.", storage_class)
+        if 'security_token' in request.session:
+            storage.security_token = request.session['security_token']
+        return storage
+    LOGGER.debug("``%s`` does not contain ``s3boto`` in its name,"\
+        " default to FileSystemStorage.", storage_class)
     return _get_file_system_storage(account)
 
 
