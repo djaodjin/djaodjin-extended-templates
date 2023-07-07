@@ -1,3 +1,11 @@
+0.4.3
+
+  * sends raw text e-mail if premail resources cannot be found
+  * compatibles with django-storages==1.13
+  * installs using pyproject.toml
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Fri, 7 Jul 2023 08:35:00 -0700
+
 0.4.2
 
   * shows TemplateSyntax errors when uploading theme
