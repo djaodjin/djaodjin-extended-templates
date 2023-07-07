@@ -174,9 +174,12 @@ class Template(object):
         headers = {'Reply-To': reply_to} if reply_to else None
         request = getattr(context, 'request', context.get('request', None))
 
-        html_content = Premailer(
-            self.render(context=context, request=request),
-            include_star_selectors=True).transform()
+        try:
+            html_content = Premailer(
+                self.render(context=context, request=request),
+                include_star_selectors=True).transform()
+        except ExternalNotFoundError:
+            html_content = self.render(context=context, request=request)
 
         if not plain_content:
             # Defaults to content stripped of html tags
