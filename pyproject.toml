@@ -1,0 +1,57 @@
+# This pyproject.toml seems to work to build a new package
+# when `setuptools==67.6.1` is installed.
+[project]
+name = "djaodjin-extended-templates"
+dynamic = ["version"]
+description = "DjaoDjin's Template wrappers for HTML email and PDF templates"
+readme = "README.md"
+requires-python = ">=3.7"
+license =  {text = "BSD-2-Clause"}
+keywords = ["django", "templates", "email", "pdf"]
+authors = [
+  {name = "The DjaoDjin Team", email = "help@djaodjin.com"}
+]
+maintainers = [
+  {name = "The DjaoDjin Team", email = "help@djaodjin.com"}
+]
+classifiers = [
+  "Framework :: Django",
+  "Environment :: Web Environment",
+  "Programming Language :: Python",
+  "License :: OSI Approved :: BSD License"
+]
+dependencies = [
+  "beautifulsoup4>=4.3.2",
+  "boto3>=1.17.21",
+  "Django>=1.11",
+  "djangorestframework>=3.3.1",
+  "django-assets>=0.12",
+  "django-storages>=1.13",
+  "djaodjin-deployutils>=0.10.5",
+  "Jinja2>=2.8",
+  "Markdown>=2.4.1",
+  "premailer>=2.9.2",
+  "requests>=2.22.0",
+  "WeasyPrint>=0.42"
+]
+
+[project.urls]
+repository = "https://github.com/djaodjin/djaodjin-extended-templates"
+documentation = "https://djaodjin-extended-templates.readthedocs.io/"
+changelog = "https://github.com/djaodjin/djaodjin-extended-templates/changelog"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["extended_templates*"]
+
+[tool.setuptools.package-data]
+extended_templates = [
+  'static/js/*.js',
+  'templates/extended_templates/*.html'
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "extended_templates.__version__"}

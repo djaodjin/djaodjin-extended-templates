@@ -10,9 +10,11 @@ CONFIG_DIR    ?= $(srcDir)
 LOCALSTATEDIR ?= $(installTop)/var
 
 installDirs   ?= install -d
-installFiles  := install -p -m 644
+installFiles  ?= install -p -m 644
 NPM           ?= npm
 PYTHON        := $(binDir)/python
+PIP           := $(binDir)/pip
+TWINE         := $(binDir)/twine
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 RUN_DIR       ?= $(srcDir)
@@ -26,9 +28,9 @@ MANAGE        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) RUN_DIR=$(RUN_DIR) $(P
 # before running the manage.py command (else missing SECRECT_KEY).
 RUNSYNCDB     = $(if $(findstring --run-syncdb,$(shell cd $(srcDir) && $(MANAGE) migrate --help 2>/dev/null)),--run-syncdb,)
 
+
 install::
-	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
-		build -b $(CURDIR)/build install
+	cd $(srcDir) && $(PIP) install .
 
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
@@ -36,6 +38,12 @@ install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/db
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/run
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
+
+
+dist:
+	$(PYTHON) -m build
+	$(TWINE) check dist/*
+	$(TWINE) upload dist/*
 
 
 build-assets: vendor-assets-prerequisites
@@ -57,8 +65,13 @@ vendor-assets-prerequisites: $(srcDir)/testsite/package.json
 
 $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
 	$(installDirs) $(dir $@)
-	[ -f $@ ] || \
-		sed -e "s,\%(SECRET_KEY)s,`$(PYTHON) -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'`," $< > $@
+	@if [ ! -f $@ ] ; then \
+		sed \
+		-e "s,\%(SECRET_KEY)s,`$(PYTHON) -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'`," \
+			$< > $@ ; \
+	else \
+		echo "warning: We are keeping $@ intact but $< contains updates that might affect behavior of the testsite." ; \
+	fi
 
 
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
@@ -67,7 +80,7 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: clean-dbs install-conf $(ASSETS_DIR)/vendor/bootstrap.css
+initdb: clean-dbs
 	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata testsite/fixtures/default-db.json
