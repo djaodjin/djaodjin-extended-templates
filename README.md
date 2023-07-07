@@ -10,12 +10,6 @@ Major Features:
 - Media assets gallery
 - Upload theme packages
 
-Tested with
-
-- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.10, **Django:** 4.1 (latest), **Django Rest Framework:** 3.12
-- **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
-
 
 Development
 ===========
@@ -63,10 +57,16 @@ with no error but the outputed PDF will be blank.
 Release Notes
 =============
 
-0.4.2
+Tested with
 
-  * shows TemplateSyntax errors when uploading theme
-  * removes unused dependency on bleach
-  * removes dependency on vue-infinite-loading for pagination
+- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/))
+- **Python:** 3.10, **Django:** 4.2 (latest)
+- **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
+
+0.4.3
+
+  * sends raw text e-mail if premail resources cannot be found
+  * compatibles with django-storages==1.13
+  * installs using pyproject.toml
 
 [previous release notes](changelog)
