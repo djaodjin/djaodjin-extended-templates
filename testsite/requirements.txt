@@ -10,7 +10,7 @@ Jinja2==3.1.2                     # 3.1.2 compatibles with Py3.10
 Markdown==3.4.1
 premailer==3.10.0
 python-dateutil==2.8.2
-requests==2.28.1
+requests==2.31.0
 WeasyPrint==56.1
 
 # testsite-only
