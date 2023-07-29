@@ -40,7 +40,7 @@ install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
 
 
-dist:
+dist::
 	$(PYTHON) -m build
 	$(TWINE) check dist/*
 	$(TWINE) upload dist/*
@@ -128,3 +128,6 @@ $(ASSETS_DIR)/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $(installTop)/node_modules/vue/dist/vue.js $(ASSETS_DIR)/vendor
 
 #	$(installFiles) $(srcDir)/testsite/static/vendor/* $(ASSETS_DIR)/vendor
+
+
+.PHONY: all check dist doc install
