@@ -63,10 +63,8 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.4.3
+0.4.4
 
-  * sends raw text e-mail if premail resources cannot be found
-  * compatibles with django-storages==1.13
-  * installs using pyproject.toml
+  * compatibles with Bootstrap5
 
 [previous release notes](changelog)

@@ -1,3 +1,9 @@
+0.4.4
+
+  * compatibles with Bootstrap5
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed, 2 Aug 2023 17:15:00 -0700
+
 0.4.3
 
   * sends raw text e-mail if premail resources cannot be found
