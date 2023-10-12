@@ -144,6 +144,9 @@
     Editor.prototype = $.extend({}, BaseEditor.prototype, {
         init: function(){
             var self = this;
+            if( self.options.editionTool ) {
+                self.$el.append(self.options.editionTool);
+            }
             self.$el.on("click", function(){
                 self.toggleEdition();
             });
@@ -294,6 +297,53 @@
             self.$el.html(amount);
         }
     });
+
+    function DateEditor(element, options){
+        var self = this;
+        self.el = element;
+        self.$el = $(element);
+        self.options = options;
+        self.init();
+        return self;
+    }
+
+
+    DateEditor.prototype = $.extend({}, Editor.prototype, {
+
+        valueSelector: function() {
+            var self = this;
+            self.$valueSelector = $(self.options.templates.dateSelector);
+
+            self.$valueSelector.on("blur", function(event){
+                self.saveEdition();
+                self.$valueSelector.remove();
+                self.$valueSelector = null;
+                event.stopPropagation();
+            });
+
+            return self.$valueSelector;
+        },
+
+        getSavedText: function(){
+            var self = this;
+            var enteredValue = self.$el.text();
+            var amount = parseInt(
+                (parseFloat(enteredValue.replace(/[^0-9\.]+/g, "")) * 100).toFixed(2));
+            return amount;
+        },
+
+        toggleEdition: function(){
+            var self = this;
+            if (self.$valueSelector){
+                self.$valueSelector.blur();
+            }else{
+//                self.getOriginText();
+                self.$el.append(self.valueSelector());
+                self.$valueSelector.focus();
+            }
+        }
+    });
+
 
     function FormattedEditor(element, options){
         var self = this;
@@ -588,6 +638,8 @@
                     $.data($(this), "editor", new MarkdownEditor($(this), opts));
                 }else if ($(this).hasClass("edit-currency")){
                     $.data($(this), "editor", new CurrencyEditor($(this), opts));
+                }else if ($(this).hasClass("edit-date")){
+                    $.data($(this), "editor", new DateEditor($(this), opts));
                 }else if ($(this).hasClass("edit-range")){
                     $.data($(this), "editor", new RangeEditor($(this), opts));
                 }else{
@@ -599,6 +651,7 @@
 
     $.fn.editor.defaults = {
         baseUrl: null, // Url to send request to server
+        editionTool: null,
         emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
         onSuccess: function(element, resp){
@@ -613,7 +666,10 @@
         rangePosition: "middle", // position of range input from element "middle", "top" or "bottom"
         delayMarkdownInit: 0, // Add ability to delay the get request for markdown
         debug: false,
-        focus: false
+        focus: false,
+        templates: {
+            dateSelector: '<input class="djaodjin-editor" style="width:auto;" type="date">'
+        }
     };
 
 }( jQuery ));
