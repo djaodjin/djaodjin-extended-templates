@@ -30,6 +30,8 @@ from django.views.generic import TemplateView, View
 from deployutils.apps.django.themes import package_theme
 
 from .. import settings
+from ..compat import reverse
+from ..helpers import update_context_urls
 from ..mixins import AccountMixin, ThemePackageMixin
 
 
@@ -39,6 +41,12 @@ LOGGER = logging.getLogger(__name__)
 class ThemePackagesView(AccountMixin, TemplateView):
 
     template_name = "extended_templates/theme.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ThemePackagesView, self).get_context_data(**kwargs)
+        context = update_context_urls(context, {
+            'api_tools': reverse('extended_templates_api_tools')})
+        return context
 
 
 class ThemePackageDownloadView(ThemePackageMixin, View):

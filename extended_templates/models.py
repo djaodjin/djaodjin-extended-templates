@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,8 @@ import logging
 from django.db import models
 
 from . import settings
-from .compat import import_string, python_2_unicode_compatible
+from .compat import (gettext_lazy as _, import_string,
+    python_2_unicode_compatible, six)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -42,6 +43,20 @@ def get_extra_field_class():
     elif isinstance(extra_class, str):
         extra_class = import_string(extra_class)
     return extra_class
+
+
+@python_2_unicode_compatible
+class EditTools(models.Model):
+    """
+    Toggle to show/hide edit tools for a specific user
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        db_column='user_id')
+    show_edit_tools = models.BooleanField(null=True, default=True,
+        help_text=_("Show the online editor tools"))
+
+    def __str__(self):
+        return "%s-%s" %(self.user, self.show_edit_tools)
 
 
 @python_2_unicode_compatible
@@ -102,3 +117,10 @@ def get_active_theme():
     if settings.ACTIVE_THEME_CALLABLE:
         return import_string(settings.ACTIVE_THEME_CALLABLE)()
     return settings.APP_NAME
+
+
+def get_show_edit_tools(request=None):
+    if isinstance(settings.SHOW_EDIT_TOOLS, six.string_types):
+        return import_string(settings.SHOW_EDIT_TOOLS)(request)
+    edit_tools = EditTools.objects.filter(user=request.user).first()
+    return edit_tools is not None and bool(edit_tools.show_edit_tools)

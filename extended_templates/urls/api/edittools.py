@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2023, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,16 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the extended_templates application'''
+"""API URLs to manage online edit tools"""
 
-from ...api.themes import ThemePackageListAPIView
-from ...compat import include, path
+from ...compat import path
+from ...api.themes import ThemeEditToolsAPIView
 
 
 urlpatterns = [
-    path('themes/', include('extended_templates.urls.api.assets')),
-    path('themes/', include('extended_templates.urls.api.edittools')),
-    path('themes/', include('extended_templates.urls.api.templates')),
-    path('themes', ThemePackageListAPIView.as_view(),
-        name='extended_templates_api_themes'),
+    path('tools', ThemeEditToolsAPIView.as_view(),
+        name='extended_templates_api_tools'),
 ]

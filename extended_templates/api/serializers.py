@@ -26,7 +26,7 @@ from __future__ import unicode_literals
 from rest_framework import serializers
 
 from ..compat import gettext_lazy as _
-from ..models import LessVariable, ThemePackage
+from ..models import EditTools, LessVariable, ThemePackage
 
 #pylint: disable=abstract-method
 
@@ -38,6 +38,13 @@ class NoModelSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         raise RuntimeError('`update()` should not be called.')
+
+
+class EditToolsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = EditTools
+        fields = ('show_edit_tools',)
 
 
 class LessVariableSerializer(serializers.ModelSerializer):

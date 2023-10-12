@@ -4,8 +4,7 @@ Vue.component('theme-update', {
     ],
     data: function() {
         return {
-            url: (this.$urls.rules && this.$urls.rules.api_detail) ?
-                this.$urls.rules.api_detail : null,
+            url: this.$urls.api_tools ? this.$urls.api_tools : null,
             showEditTools: false
         }
     },

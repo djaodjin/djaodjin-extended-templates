@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,14 @@ from __future__ import unicode_literals
 import logging, zipfile
 
 from rest_framework import parsers, serializers, status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView
 from rest_framework.response import Response
 
-from .serializers import NoModelSerializer
+from .serializers import NoModelSerializer, EditToolsSerializer
 from ..compat import gettext_lazy as _
 from ..docs import swagger_auto_schema, OpenAPIResponse
 from ..mixins import ThemePackageMixin
+from ..models import EditTools
 from ..themes import (install_theme as install_theme_base,
     install_theme_fileobj, remove_theme)
 
@@ -51,6 +52,46 @@ class ThemePackageUploadSerializer(NoModelSerializer):
 
     location = serializers.CharField(read_only=True,
         help_text=_("URL where the theme package was uploaded."))
+
+
+class ThemeEditToolsAPIView(RetrieveUpdateAPIView):
+
+    serializer_class = EditToolsSerializer
+
+    def get_object(self):
+        edit_tools = EditTools.objects.filter(user=self.request.user).first()
+        if not edit_tools:
+            edit_tools = EditTools(show_edit_tools=False)
+        return edit_tools
+
+
+    def put(self, request, *args, **kwargs):
+        """
+        Toggles edit tools on/off
+
+        **Tags: themes, broker, appmodel
+
+        **Examples
+
+        .. code-block:: http
+
+            POST /api/themes/tools HTTP/1.1
+
+            {
+              "show_edit_tools": true
+            }
+        """
+        #pylint:disable=unused-argument
+        return super(ThemeEditToolsAPIView, self).put(
+            request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        show_edit_tools = serializer.validated_data['show_edit_tools']
+        if show_edit_tools:
+            EditTools.objects.update_or_create(
+                user=self.request.user, show_edit_tools=show_edit_tools)
+        else:
+            EditTools.objects.filter(user=self.request.user).delete()
 
 
 class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
