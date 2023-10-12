@@ -63,8 +63,10 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.4.4
+0.4.5
 
-  * compatibles with Bootstrap5
+  * turns edit tools on/off per user instead of whole site
+  * enables partial theme upload and download
+  * adds online editor for dates
 
 [previous release notes](changelog)

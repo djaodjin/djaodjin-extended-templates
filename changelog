@@ -1,3 +1,11 @@
+0.4.5
+
+  * turns edit tools on/off per user instead of whole site
+  * enables partial theme upload and download
+  * adds online editor for dates
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,12 Oct 2023 16:45:00 -0700
+
 0.4.4
 
   * compatibles with Bootstrap5
