@@ -334,13 +334,24 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
         # are optional.
         tmp_public = safe_join(tmp_dir, 'public')
         tmp_templates = safe_join(tmp_dir, 'templates')
+        found = False
+        public_paths = os.listdir(tmp_public)
+        if len(public_paths) == 1:
+            # If we have a single directory in the public/ directory,
+            # we just replace that one instead of replacing the whole
+            # public assets directory. This enables to keep images, etc.
+            # while deploying Javascript and CSS updates on a regular basis.
+            public_cache_path = safe_join(tmp_public, public_paths[0])
+            if os.path.isdir(public_cache_path):
+                tmp_public = public_cache_path
+                public_dir = safe_join(public_dir, public_paths[0])
         mkdirs = []
         renames = []
         for paths in [(tmp_templates, templates_dir),
                      (tmp_public, public_dir)]:
             if os.path.exists(paths[0]):
                 if not os.path.exists(os.path.dirname(paths[1])):
-                    mkdirs += [os.path.exists(os.path.dirname(paths[1]))]
+                    mkdirs += [os.path.dirname(paths[1])]
                 renames += [paths]
         for path in mkdirs:
             os.makedirs(path)

@@ -30,7 +30,7 @@ from django.views.generic import TemplateView, View
 from deployutils.apps.django.themes import package_theme
 
 from .. import settings
-from ..compat import reverse
+from ..compat import six, reverse
 from ..helpers import update_context_urls
 from ..mixins import AccountMixin, ThemePackageMixin
 
@@ -50,6 +50,18 @@ class ThemePackagesView(AccountMixin, TemplateView):
 
 
 class ThemePackageDownloadView(ThemePackageMixin, View):
+    """
+    URL end point to download the theme as a .zip package
+    """
+    @property
+    def templates_only(self):
+        try:
+            param = self.request.query_params.get('templates_only', False)
+        except AttributeError:
+            param = self.request.GET.get('templates_only', False)
+        if isinstance(param, six.string_types):
+            param = param.lower() in ('true', '1')
+        return param
 
     @staticmethod
     def write_zipfile(zipf, dir_path, dir_option=""):
@@ -100,7 +112,8 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         try:
             package_theme(self.theme, build_dir,
                 excludes=settings.TEMPLATES_BLACKLIST)
-            self.package_assets(self.theme, build_dir)
+            if not self.templates_only:
+                self.package_assets(self.theme, build_dir)
             # We don't use deployutils fill_package because we need
             # a buffer.
             with zipfile.ZipFile(content, mode="w") as zipf:
