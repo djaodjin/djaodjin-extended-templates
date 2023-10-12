@@ -30,7 +30,7 @@ from django.db import models
 
 from . import settings
 from .compat import (gettext_lazy as _, import_string,
-    python_2_unicode_compatible, six)
+    is_authenticated, python_2_unicode_compatible, six)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -122,5 +122,7 @@ def get_active_theme():
 def get_show_edit_tools(request=None):
     if isinstance(settings.SHOW_EDIT_TOOLS, six.string_types):
         return import_string(settings.SHOW_EDIT_TOOLS)(request)
+    if not is_authenticated(request):
+        return False
     edit_tools = EditTools.objects.filter(user=request.user).first()
     return edit_tools is not None and bool(edit_tools.show_edit_tools)

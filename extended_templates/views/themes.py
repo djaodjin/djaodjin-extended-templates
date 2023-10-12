@@ -33,12 +33,13 @@ from .. import settings
 from ..compat import six, reverse
 from ..helpers import update_context_urls
 from ..mixins import AccountMixin, ThemePackageMixin
+from .pages import PageMixin
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ThemePackagesView(AccountMixin, TemplateView):
+class ThemePackagesView(PageMixin, AccountMixin, TemplateView):
 
     template_name = "extended_templates/theme.html"
 
@@ -102,7 +103,7 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         # assets_dir = get_assets_dirs()
         # We are not using `get_assets_dirs()` before we can filter only
         # the static files used in templates. We don't want all of HTDOCS.
-        assets_dir = [os.path.join(settings.PUBLIC_ROOT, self.theme)]
+        assets_dir = [os.path.join(settings.PUBLIC_ROOT, app_name)]
         for base_path in assets_dir:
             self.install_assets(base_path, os.path.join(build_dir, 'public'))
 

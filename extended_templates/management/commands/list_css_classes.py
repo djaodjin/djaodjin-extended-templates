@@ -71,7 +71,7 @@ class Command(BaseCommand):
             process_template(visitor, template_path=template_path)
         self.stdout.write("CSS classes found:")
         for css_class in sorted(visitor.css_classes):
-            cmd = ["grep", "-rl", "'\.%s'" % str(css_class),
+            cmd = ["grep", "-rl", r"'\.%s'" % str(css_class),
                 settings.BASE_DIR]
             try:
                 lines = subprocess.check_output(" ".join(cmd), shell=True)
@@ -83,4 +83,3 @@ class Command(BaseCommand):
             except subprocess.CalledProcessError:
                 #self.stdout.write(".%s: not found" % str(css_class))
                 pass
-

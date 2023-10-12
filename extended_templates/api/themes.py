@@ -81,7 +81,7 @@ class ThemeEditToolsAPIView(RetrieveUpdateAPIView):
               "show_edit_tools": true
             }
         """
-        #pylint:disable=unused-argument
+        #pylint:disable=unused-argument,useless-parent-delegation
         return super(ThemeEditToolsAPIView, self).put(
             request, *args, **kwargs)
 

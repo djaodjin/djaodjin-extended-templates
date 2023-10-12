@@ -1,9 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div id="app">
+<div id="app" style="height:100vh;">
   <theme-update inline-template>
     <div>
+      <form method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}">
+        <div>
+          <input id="show_edit_tools"
+                 name="show_edit_tools"
+                 type="checkbox"
+                 v-model="showEditTools" @change="save">
+          <label for="show_edit_tools">
+            Show inline template editor tools
+          </label>
+        </div>
+      </form>
       <div id="theme-upload" class="pages-upload"
            data-complete-url="{{urls.api_themes}}"
            djupload-success >

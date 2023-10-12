@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2023, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ from ..compat import csrf, render_template, reverse
 from ..thread_locals import (enable_instrumentation,
     _add_editable_styles_context, get_edition_tools_context_data)
 from ..mixins import AccountMixin, UploadedImageMixin, UpdateEditableMixin
+from ..models import get_show_edit_tools
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -104,16 +105,23 @@ class PageMixin(UpdateEditableMixin):
     """
     Display or Edit a ``Page`` of a ``Project``.
     """
-    body_bottom_template_name = "extended_templates/_body_bottom.html"
+    body_bottom_template_name= 'extended_templates/_body_bottom_edit_tools.html'
+    # without the gallery and code editor
+    # body_bottom_template_name = "extended_templates/_body_bottom.html"
     edit_frame_template_name = None
 
     def add_edition_tools(self, response, context=None):
         if context is None:
             context = {}
         context.update(get_edition_tools_context_data())
+
+        if not get_show_edit_tools(self.request):
+            return None
+
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_bottom_template_name=self.body_bottom_template_name)
+
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals

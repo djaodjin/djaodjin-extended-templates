@@ -178,7 +178,7 @@ def install_theme(app_name, package_uri, force=False):
             package_file = get_package_file_from_s3(package_uri)
         elif parts.scheme in ['http', 'https']:
             basename = os.path.basename(parts.path)
-            resp = requests.get(package_uri, stream=True)
+            resp = requests.get(package_uri, stream=True, timeout=10000)
             if resp.status_code == 200:
                 package_file = tempfile.NamedTemporaryFile()
                 shutil.copyfileobj(resp.raw, package_file)
@@ -334,8 +334,9 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
         # are optional.
         tmp_public = safe_join(tmp_dir, 'public')
         tmp_templates = safe_join(tmp_dir, 'templates')
-        found = False
-        public_paths = os.listdir(tmp_public)
+        public_paths = []
+        if os.path.exists(tmp_public):
+            public_paths = os.listdir(tmp_public)
         if len(public_paths) == 1:
             # If we have a single directory in the public/ directory,
             # we just replace that one instead of replacing the whole
@@ -370,6 +371,7 @@ def remove_theme(theme_name):
     Remove assets and templates directories.
     """
     try:
+        #pylint:disable=used-before-assignment
         FileNotFoundError
     except NameError:
         # py27 `rmtree` will raise an OSError executing `os.listdir(path)`
