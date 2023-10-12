@@ -52,7 +52,7 @@ class EditTools(models.Model):
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
         db_column='user_id')
-    show_edit_tools = models.BooleanField(null=True, default=True,
+    show_edit_tools = models.BooleanField(default=True,
         help_text=_("Show the online editor tools"))
 
     def __str__(self):
