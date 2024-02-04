@@ -37,8 +37,7 @@ from ..models import get_show_edit_tools
 
 
 def inject_edition_tools(response, request=None, context=None,
-        body_top_template_name="extended_templates/_body_top.html",
-        body_bottom_template_name="extended_templates/_body_bottom.html",
+        body_top_template_name=None, body_bottom_template_name=None,
         edit_frame_template_name=None):
     #pylint:disable=too-many-arguments
     """
@@ -105,6 +104,7 @@ class PageMixin(UpdateEditableMixin):
     """
     Display or Edit a ``Page`` of a ``Project``.
     """
+    body_top_template_name = None
     body_bottom_template_name= 'extended_templates/_body_bottom_edit_tools.html'
     # without the gallery and code editor
     # body_bottom_template_name = "extended_templates/_body_bottom.html"
@@ -120,6 +120,7 @@ class PageMixin(UpdateEditableMixin):
 
         return inject_edition_tools(
             response, request=self.request, context=context,
+            body_top_template_name=self.body_top_template_name,
             body_bottom_template_name=self.body_bottom_template_name)
 
 
@@ -130,10 +131,6 @@ class PageMixin(UpdateEditableMixin):
         if isinstance(response, TemplateResponse):
             response.render()
         soup = self.add_edition_tools(response)
-        if not soup:
-            content_type = response.get('content-type', '')
-            if content_type.startswith('text/html'):
-                soup = BeautifulSoup(response.content, 'html5lib')
         if soup:
             response.content = str(soup)
         return response

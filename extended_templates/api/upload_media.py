@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from .serializers import AssetSerializer, MediaItemListSerializer
 from ..compat import force_str, gettext_lazy as _, urljoin, urlparse, urlunparse
-from ..docs import OpenAPIResponse, swagger_auto_schema
+from ..docs import extend_schema, OpenApiResponse
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..utils import validate_title, get_default_storage
@@ -195,8 +195,8 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             'detail': _('Media correctly deleted.')},
             status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(responses={
-      200: OpenAPIResponse("Update successful", AssetSerializer(many=True))})
+    @extend_schema(responses={
+      200: OpenApiResponse(AssetSerializer(many=True))})
     def put(self, request, *args, **kwargs):
         """
         Updates meta tags on assets

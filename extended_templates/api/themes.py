@@ -32,7 +32,7 @@ from rest_framework.response import Response
 
 from .serializers import NoModelSerializer, EditToolsSerializer
 from ..compat import gettext_lazy as _
-from ..docs import swagger_auto_schema, OpenAPIResponse
+from ..docs import extend_schema, OpenApiResponse
 from ..mixins import ThemePackageMixin
 from ..models import EditTools
 from ..themes import (install_theme as install_theme_base,
@@ -55,6 +55,25 @@ class ThemePackageUploadSerializer(NoModelSerializer):
 
 
 class ThemeEditToolsAPIView(RetrieveUpdateAPIView):
+    """
+    Retrives edit tools toggle
+
+    **Tags: themes, broker, appmodel
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/themes/tools HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "show_edit_tools": true
+        }
+    """
 
     serializer_class = EditToolsSerializer
 
@@ -76,6 +95,16 @@ class ThemeEditToolsAPIView(RetrieveUpdateAPIView):
         .. code-block:: http
 
             POST /api/themes/tools HTTP/1.1
+
+        .. code-block:: json
+
+            {
+              "show_edit_tools": true
+            }
+
+        responds
+
+        .. code-block:: json
 
             {
               "show_edit_tools": true
@@ -124,9 +153,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         return Response({'detail': _("reset to default theme")},
             status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(responses={
-        200: OpenAPIResponse("Upload successful",
-            ThemePackageUploadSerializer)})
+    @extend_schema(responses={
+        200: OpenApiResponse(ThemePackageUploadSerializer)})
     def post(self, request, *args, **kwargs):
         """
         Uploads a theme package
