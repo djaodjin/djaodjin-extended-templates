@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 
 import os
 
-from storages.backends.s3boto3 import S3Boto3Storage as S3Storage
+from storages.backends.s3 import S3Storage
 
 from ..compat import urlparse
 

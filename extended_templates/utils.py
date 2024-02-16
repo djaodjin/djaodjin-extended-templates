@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -152,7 +152,10 @@ def get_default_storage(request, account=None, **kwargs):
 def get_default_storage_base(request, account=None, public=False, **kwargs):
     # default implementation
     storage_class = get_storage_class()
-    if 's3boto' in storage_class.__name__.lower():
+    if storage_class.__name__.endswith('3Storage'):
+        # Hacky way to test for `storages.backends.s3.S3Storage`
+        # and `storages.backends.s3boto3.S3Boto3Storage` without importing
+        # the optional package 'django-storages'.
         storage_kwargs = {}
         storage_kwargs.update(**kwargs)
         if public:
@@ -169,7 +172,7 @@ def get_default_storage_base(request, account=None, public=False, **kwargs):
         if 'security_token' in request.session:
             storage.security_token = request.session['security_token']
         return storage
-    LOGGER.debug("``%s`` does not contain ``s3boto`` in its name,"\
+    LOGGER.debug("``%s`` does not contain ``3Storage`` in its name,"\
         " default to FileSystemStorage.", storage_class)
     return _get_file_system_storage(account)
 

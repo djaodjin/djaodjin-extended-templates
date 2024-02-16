@@ -156,7 +156,7 @@ FILE_UPLOAD_HANDLERS = (
 )
 
 if 'AWS_STORAGE_BUCKET_NAME' in locals():
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
 
 # XXX - to define
 FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
