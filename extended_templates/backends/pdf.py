@@ -139,15 +139,20 @@ class PdfEngine(BaseEngine):
                     if skip is not None and origin in skip:
                         tried.append((origin, 'Skipped'))
                         continue
+                    contents = None
                     try:
                         contents = loader.get_contents(origin)
                     except TemplateDoesNotExist:
                         tried.append((origin, 'Source does not exist'))
                         continue
-                    else:
-                        template = Template(
-                            contents, origin, origin.template_name)
-                        return template, template.origin
+                    except UnicodeDecodeError:
+                        # If we get this error it means the file exists;
+                        # we just can't pass the mode to
+                        # `django.template.loaders.filesystem.Loader`
+                        pass
+                    template = Template(
+                        contents, origin, origin.template_name)
+                    return template, template.origin
             else:
                 # This code is there to support Django 1.8 only.
                 try:
