@@ -63,10 +63,10 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.4.5
+0.4.6
 
-  * turns edit tools on/off per user instead of whole site
-  * enables partial theme upload and download
-  * adds online editor for dates
+  * fixes .pdf template files when running with latest Django versions
+  * handles updates to django-storages>=1.14 properly
+  * supports OpenAPI 3 doc generator
 
 [previous release notes](changelog)

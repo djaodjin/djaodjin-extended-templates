@@ -1,10 +1,18 @@
+0.4.6
+
+  * fixes .pdf template files when running with latest Django versions
+  * handles updates to django-storages>=1.14 properly
+  * supports OpenAPI 3 doc generator
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 14 Mar 2024 12:50:00 -0700
+
 0.4.5
 
   * turns edit tools on/off per user instead of whole site
   * enables partial theme upload and download
   * adds online editor for dates
 
- -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,12 Oct 2023 16:45:00 -0700
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 12 Oct 2023 16:45:00 -0700
 
 0.4.4
 
