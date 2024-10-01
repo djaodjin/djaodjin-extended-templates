@@ -25,6 +25,7 @@
 import codecs, logging, os, warnings
 
 from bs4 import BeautifulSoup
+from django import VERSION as DJANGO_VERSION
 from django.core.mail import EmailMultiAlternatives
 from django.template import engines
 from django.utils.html import strip_tags
@@ -139,11 +140,6 @@ class EmlEngine(BaseEngine):
             if dirs is _dirs_undefined:
                 return Template(self.engine.get_template(
                     template_name), engine=self)
-            # We cannot `import django` at toplevel with Django4.2,
-            # as it will create an import loop in the `requests` module
-            # through `premailer`. Don't ask.
-            #pylint:disable=import-outside-toplevel
-            from django import VERSION as DJANGO_VERSION
             if DJANGO_VERSION[0] >= 1 and DJANGO_VERSION[1] >= 8:
                 warnings.warn(
                     "The dirs argument of get_template is deprecated.",
