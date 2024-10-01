@@ -21,8 +21,8 @@ After cloning the repository, create a virtualenv environment, install
 the prerequisites, create the database then run the testsite webapp.
 
 <pre><code>
-    $ virtualenv <em>installTop</em>
-    $ source <em>installTop</em>/bin/activate
+    $ python -m venv .venv
+    $ source .venv/bin/activate
     $ pip install -r testsite/requirements.txt
     $ make vendor-assets-prerequisites
 
