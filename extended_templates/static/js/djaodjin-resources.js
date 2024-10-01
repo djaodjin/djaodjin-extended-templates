@@ -53,6 +53,7 @@ function showMessages(messages, style) {
             messageBlock = jQuery(div.firstChild);
         } else {
             messageBlock = jQuery(messageBlock[0].cloneNode(true));
+            messageBlock.find('div').remove();
         }
 
         // insert the actual messages
@@ -113,13 +114,16 @@ function _showErrorMessages(resp) {
                         } else if( data[key].hasOwnProperty('detail') ) {
                             message = data[key].detail;
                         }
-                        messages.push(key + ": " + message);
                         var inputField = jQuery("[name=\"" + key + "\"]");
                         var parent = inputField.parents('.form-group');
                         inputField.addClass("is-invalid");
                         parent.addClass("has-error");
                         var help = parent.find('.invalid-feedback');
-                        if( help.length > 0 ) { help.text(message); }
+                        if( help.length > 0 ) {
+                            help.text(message);
+                        } else {
+                            messages.push(key + ": " + message);
+                        }
                     }
                 }
             }

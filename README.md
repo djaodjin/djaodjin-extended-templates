@@ -14,6 +14,9 @@ Major Features:
 Development
 ===========
 
+**Attention!** (2024-10-01) Renamed `master` branch to `main`
+(see [GitHub Renaming the default branch from master](https://github.com/github/renaming)).
+
 After cloning the repository, create a virtualenv environment, install
 the prerequisites, create the database then run the testsite webapp.
 
@@ -59,9 +62,10 @@ Release Notes
 
 Tested with
 
-- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.10, **Django:** 4.2 (latest)
-- **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
+- **Python:** 3.10, **Django:** 4.2  ([LTS](https://www.djangoproject.com/download/))
+- **Python:** 3.12, **Django:** 5.0  (latest)
+- **Python:** 3.7,  **Django:** 3.2  (legacy)
+- **Python:** 2.7,  **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
 0.4.6
 

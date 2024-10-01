@@ -26,4 +26,4 @@
 PEP 386-compliant version number for the extended_templates django app.
 """
 
-__version__ = '0.4.6'
+__version__ = '0.4.7-dev'
