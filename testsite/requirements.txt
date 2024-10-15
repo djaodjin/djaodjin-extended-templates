@@ -1,6 +1,6 @@
 # testsite for djaodjin-extended-templates
 beautifulsoup4==4.11.1            # 4.11.1 compatibles with Py3.10
-Django==4.2.16
+Django==3.2.25
 djangorestframework==3.14.0       # 3.12.4 not compatible with Django4.2
 django-assets==0.12
 django-storages==1.14.4           # 1.14.4 not compatible with Django5.1
