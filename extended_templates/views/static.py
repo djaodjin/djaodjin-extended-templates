@@ -105,7 +105,10 @@ class AssetView(View):
             else:
                 LOGGER.debug("no rebuild of %s", str(rel_path))
 
-        resp = django_static_serve(request, rel_path)
+        document_root = kwargs.get('document_root')
+        show_indexes = kwargs.get('show_indexes', False)
+        resp = django_static_serve(request, rel_path,
+            document_root=document_root, show_indexes=show_indexes)
         if source:
             resp['Cache-Control'] = 'no-cache'
         return resp
