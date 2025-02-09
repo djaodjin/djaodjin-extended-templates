@@ -1,3 +1,9 @@
+0.4.7
+
+  * passes csrfToken to Javascript components
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sat,  8 Feb 2025 18:10:00 -0700
+
 0.4.6
 
   * fixes .pdf template files when running with latest Django versions

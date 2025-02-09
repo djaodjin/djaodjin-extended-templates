@@ -184,6 +184,12 @@ Options:
             });
         },
 
+        _csrfToken: function() {
+            var self = this;
+            return self.options.csrfToken ?
+                self.options.csrfToken : getMetaCSRFToken();
+        },
+
         _mediaLocation: function(url) {
             var parser = document.createElement('a');
             parser.href = url;
@@ -216,6 +222,7 @@ Options:
 
             self.element.djupload({
                 uploadUrl: uploadUrl,
+                csrfToken: self.options.csrfToken,
                 uploadZone: "body",
                 uploadClickableZone: self.options.clickableArea,
                 uploadParamName: "file",
@@ -277,6 +284,9 @@ Options:
             $.ajax({
                 method: "GET",
                 url: mediaFilterUrl,
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
+                },
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(data){
@@ -393,7 +403,7 @@ Options:
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                    xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
                 success: function(resp){
                     $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
@@ -425,7 +435,7 @@ Options:
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     beforeSend: function(xhr, settings) {
-                        xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                        xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                     },
                     success: function(resp){
                         $.each(resp.results, function(index, element) {
@@ -477,7 +487,7 @@ Options:
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                    xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
                 success: function(response){
                     self.options.droppedMediaCallback(response);
@@ -495,6 +505,7 @@ Options:
 
         // Djaodjin gallery required options
         mediaUrl: null, // Url to get list of media and upload, update and delete a media item
+        csrfToken: null,
 
         // Customize djaodjin gallery.
         buttonClass: "",

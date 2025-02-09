@@ -49,6 +49,12 @@
             });
         },
 
+        _csrfToken: function() {
+            var self = this;
+            return self.options.csrfToken ?
+                self.options.csrfToken : getMetaCSRFToken();
+        },
+
         loadSource: function(){
             var self = this;
             var path = self.$element.attr("data-content");
@@ -94,7 +100,7 @@
                 data: JSON.stringify({
                     path: path, text: self.editor.getValue()}),
                 beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                    xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
                 success: function(){
                     // reload content
@@ -120,7 +126,8 @@
     };
 
     $.fn.djtemplates.defaults = {
-        api_source_code: "/api/source"
+        api_source_code: "/api/source",
+        csrfToken: null
     };
 
 
@@ -152,6 +159,7 @@
                 contentsContainer.append(content);
                 content.find(".content").djtemplates({
                     api_source_code: self.options.api_sources,
+                    csrfToken: self.options.csrfToken,
                     iframe_view: self.options.iframe
                 });
             }; // addPanel
@@ -188,7 +196,7 @@
                     data: JSON.stringify({
                         path: path, text: "{% extends \"base.html\" %}\n"}),
                     beforeSend: function(xhr, settings) {
-                        xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                        xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                     },
                     success: function(){
                         // move to new page
@@ -201,6 +209,12 @@
                 });
             });
         },
+
+        _csrfToken: function() {
+            var self = this;
+            return self.options.csrfToken ?
+                self.options.csrfToken : getMetaCSRFToken();
+        }
     };
 
     $.fn.templateCodeEditors = function(options) {
@@ -215,6 +229,7 @@
 
     $.fn.templateCodeEditors.defaults = {
         api_sources: null,
+        csrfToken: null,
         iframe: null,
         templates: null
     };

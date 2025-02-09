@@ -70,6 +70,12 @@
             self.setupCustomEditors();
         },
 
+        _csrfToken: function() {
+            var self = this;
+            if( self.options.csrfToken ) { return self.options.csrfToken; }
+            return getMetaCSRFToken();
+        },
+
         _cssfileCandidate: function() {
             var cssfileCandidate = null;
             var links = $('head > link');
@@ -249,7 +255,7 @@
                             contentType: "text/plain; charset=utf-8",
                             data: result.css,
                             beforeSend: function(xhr, settings) {
-                                xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                                xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                                 xhr.setRequestHeader("Content-Disposition", "attachment; filename=" + lesshref.substr(0, lesshref.lastIndexOf(".")) + ".css");
                             },
                             success: function(response) {
@@ -260,7 +266,7 @@
                                     contentType: "application/json; charset=utf-8",
                                     data: JSON.stringify(less_variables),
                                     beforeSend: function(xhr, settings) {
-                                        xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                                        xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                                     },
                                     success: function(response) {
                                         self.refreshCSS(result.css);
@@ -294,7 +300,8 @@
 
     $.fn.djstyles.defaults = {
         api_less_overrides: "/api/less-overrides",
-        api_sitecss: null
+        api_sitecss: null,
+        csrfToken: null
     };
 
 })(jQuery);

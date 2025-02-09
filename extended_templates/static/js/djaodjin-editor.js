@@ -43,6 +43,9 @@
 
         _getCSRFToken: function() {
             var self = this;
+            if( self.options.csrfToken ) {
+                return self.options.csrfToken;
+            }
             var crsfNode = self.el.find("[name='csrfmiddlewaretoken']");
             if( crsfNode.length > 0 ) {
                 return crsfNode.val();
@@ -120,6 +123,7 @@
 
     $.fn.baseEditor.defaults = {
         baseUrl: null, // Url to send request to server
+        csrfToken: null,
         uniqueIdentifier: "id",
         hints: null,
         onSuccess: function(element, resp){

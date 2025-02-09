@@ -108,7 +108,9 @@ class AssetView(View):
         document_root = kwargs.get('document_root')
         show_indexes = kwargs.get('show_indexes', False)
         resp = django_static_serve(request, rel_path,
-            document_root=document_root, show_indexes=show_indexes)
+            # Unless we import `django.views.static.serve`, we cannot define:
+            #document_root=document_root,
+            show_indexes=show_indexes)
         if source:
             resp['Cache-Control'] = 'no-cache'
         return resp

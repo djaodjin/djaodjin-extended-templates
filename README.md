@@ -67,10 +67,8 @@ Tested with
 - **Python:** 3.7,  **Django:** 3.2  (legacy)
 - **Python:** 2.7,  **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.4.6
+0.4.7
 
-  * fixes .pdf template files when running with latest Django versions
-  * handles updates to django-storages>=1.14 properly
-  * supports OpenAPI 3 doc generator
+  * passes csrfToken to Javascript components
 
 [previous release notes](changelog)
