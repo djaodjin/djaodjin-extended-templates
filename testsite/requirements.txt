@@ -14,8 +14,8 @@ WeasyPrint==56.1
 
 # testsite-only
 coverage==6.4.4
-django-extensions==3.2.0          # 3.2.0 compatibles with Django==4.0
-gunicorn==20.1.0
+django-extensions==3.2.3
+gunicorn==23.0.0
 whitenoise==6.2.0
 
 # prerequesites for `django-storages`
