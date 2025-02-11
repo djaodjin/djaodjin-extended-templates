@@ -1,3 +1,11 @@
+0.4.8
+
+  * adds support for Django 5.1
+  * adds support for Django 4.2 and 5.1 to testsite
+  * replaces get_storage_class with compat wrapper of storages.backends
+
+ -- Morgan Shorter <morgan@morganshorter.com>  Tue, 11 Feb 2025 11:03:00 -0800
+
 0.4.7
 
   * passes csrfToken to Javascript components

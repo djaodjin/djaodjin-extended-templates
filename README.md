@@ -63,12 +63,14 @@ Release Notes
 Tested with
 
 - **Python:** 3.10, **Django:** 4.2  ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.12, **Django:** 5.0  (latest)
+- **Python:** 3.12, **Django:** 5.1  (latest)
 - **Python:** 3.7,  **Django:** 3.2  (legacy)
 - **Python:** 2.7,  **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.4.7
+0.4.8
 
-  * passes csrfToken to Javascript components
+  * adds support for Django 5.1
+  * adds support for Django 4.2 and 5.1 to testsite
+  * replaces `get_storage_class` with compat wrapper of `storages.backends`
 
 [previous release notes](changelog)
