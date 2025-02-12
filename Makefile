@@ -98,7 +98,7 @@ vendor-assets-prerequisites: $(libDir)/.npm/djaodjin-extended-templates-packages
 
 $(libDir)/.npm/djaodjin-extended-templates-packages: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(libDir)
-	$(NPM) install --loglevel verbose --cache $(libDir)/.npm --tmp $(libDir)/tmp --prefix $(libDir)
+	$(NPM) install --loglevel verbose --cache $(libDir)/.npm --prefix $(libDir)
 	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
 	$(installFiles) $(libDir)/node_modules/ace-builds/src/ace.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(libDir)/node_modules/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor
