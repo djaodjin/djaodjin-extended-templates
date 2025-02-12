@@ -78,7 +78,8 @@ $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 	$(installDirs) $(dir $@)
 	[ -f $@ ] || sed \
-		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
+		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' \
+		-e 's,%(RUN_DIR)s,$(RUN_DIR),' $< > $@
 
 
 initdb: clean-dbs
