@@ -17,5 +17,5 @@ WeasyPrint==0.42.3
 # testsite-only
 coverage==4.0.3
 django-extensions==2.0.6
-gunicorn==19.7.1
+gunicorn==23.0.0
 whitenoise==4.1.2
