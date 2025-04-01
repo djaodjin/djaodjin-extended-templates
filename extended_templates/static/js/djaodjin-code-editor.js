@@ -150,7 +150,7 @@
                 var contentsContainer = element.find(".tab-content");
                 var idx = tabsContainer.find(">li").length;
                 var tab = $("<li class=\"nav-item\"><a class=\"nav-link" + (idx === 0 ? " active" : "") + "\" href=\"#tab-" + idx + "\" data-bs-toggle=\"tab\">" + name + "</a></li>");
-                var content = $("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + " role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
+                var content = $("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + "\" role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
                 if( typeof beforeElem !== 'undefined' ) {
                     beforeElem.before(tab);
                 } else {

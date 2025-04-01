@@ -169,6 +169,7 @@ def get_theme_dir(theme_name):
 
 def install_theme(app_name, package_uri, force=False):
     parts = urlparse(package_uri)
+    basename = os.path.basename(parts.path)
     package_file = None
     try:
         if parts.scheme == 's3':
@@ -177,7 +178,6 @@ def install_theme(app_name, package_uri, force=False):
             from .backends.s3 import get_package_file_from_s3
             package_file = get_package_file_from_s3(package_uri)
         elif parts.scheme in ['http', 'https']:
-            basename = os.path.basename(parts.path)
             resp = requests.get(package_uri, stream=True, timeout=10000)
             if resp.status_code == 200:
                 package_file = tempfile.NamedTemporaryFile()
