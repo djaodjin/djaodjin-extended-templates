@@ -1,3 +1,10 @@
+0.4.9
+
+  * breaks import cycles (get_assets_dirs)
+  * swaps order of `location` and `request` parameters in `build_absolute_uri`
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon,  7 Apr 2025 13:25:00 -0700
+
 0.4.8
 
   * adds support for Django 5.1

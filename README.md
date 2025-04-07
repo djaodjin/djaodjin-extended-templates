@@ -66,10 +66,8 @@ Tested with
 - **Python:** 3.12, **Django:** 5.1  (latest)
 - **Python:** 3.7,  **Django:** 3.2  (legacy)
 
-0.4.8
+0.4.9
 
-  * adds support for Django 5.1
-  * adds support for Django 4.2 and 5.1 to testsite
-  * replaces `get_storage_class` with compat wrapper of `storages.backends`
+  * adds support for Django 4.2 and Django 5.1
 
 [previous release notes](changelog)
