@@ -326,11 +326,16 @@ Options:
             if( self.options.acl === "public-read" ) {
                 location = self._mediaLocation(location);
             }
-            if (self.options.acceptedVideos.some(function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
-                mediaItem = "<video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\"></video>";
-            } else if (self.options.acceptedImages.some(function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
-                mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\">";
-            } else {
+            if( ext ) {
+                if (self.options.acceptedVideos.some(
+                    function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
+                    mediaItem = "<video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\"></video>";
+                } else if (self.options.acceptedImages.some(
+                    function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
+                    mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\">";
+                }
+            }
+            if( !mediaItem ) {
                 mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"/static/img/generic-document.png\" data-location=\"" + location + "\" tags=\"" + tags + "\">";
             }
             if( mediaItem ) {

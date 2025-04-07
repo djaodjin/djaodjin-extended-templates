@@ -196,6 +196,7 @@ def get_html_engine():
             engine = engines['django'].engine
             return engine, engine.template_libraries, engine.template_builtins
     except ImportError: # django < 1.8
+        # pylint:disable=no-value-for-parameter,used-before-assignment
         return DjangoTemplate()
 
 

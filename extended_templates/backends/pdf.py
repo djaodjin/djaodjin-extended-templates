@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,6 @@ import weasyprint
 
 from .. import settings
 from ..compat import BaseEngine, _dirs_undefined, RemovedInDjango110Warning, six
-from ..helpers import build_absolute_uri
 
 
 LOGGER = logging.getLogger(__name__)
@@ -72,14 +71,14 @@ class PdfTemplateResponse(TemplateResponse):
         for lnk in soup.find_all('a'):
             href = lnk.get('href')
             if href and href.startswith('/'):
-                lnk['href'] = build_absolute_uri(self._request, href)
+                lnk['href'] = build_absolute_uri(
+                    location=href, request=self._request)
         html_content = soup.prettify()
         cstr = io.BytesIO()
-        try:
-            doc = weasyprint.HTML(string=html_content)
-            doc.write_pdf(cstr)
-        except RuntimeError as _:
-            raise
+
+        doc = weasyprint.HTML(string=html_content)
+        doc.write_pdf(cstr)
+
         return cstr.getvalue()
 
 
@@ -242,3 +241,21 @@ class Template(object):
         LOGGER.info("RUN: %s", ' '.join(cmd))
 
         return subprocess.check_output(cmd), None
+
+
+# same prototype as djaodjin-multitier.mixins.build_absolute_uri
+def build_absolute_uri(location='/', request=None, site=None,
+                       with_scheme=True, force_subdomain=False):
+    if settings.BUILD_ABSOLUTE_URI_CALLABLE:
+        try:
+            return import_string(
+                settings.BUILD_ABSOLUTE_URI_CALLABLE)(location=location,
+                    request=request, site=site,
+                    with_scheme=with_scheme, force_subdomain=force_subdomain)
+        except ImportError:
+            pass
+    if request:
+        return request.build_absolute_uri(location)
+    # If we don't have a `request` object, better to return a URL path
+    # than throwing an error.
+    return location

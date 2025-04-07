@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2025, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ from django.views.generic import View
 from django.contrib.staticfiles.views import serve as django_static_serve
 
 from .. import settings
-from ..helpers import get_assets_dirs
+from ..utils import get_assets_dirs
 
 LOGGER = logging.getLogger(__name__)
 

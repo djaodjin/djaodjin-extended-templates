@@ -37,7 +37,7 @@ from premailer.premailer import (Premailer as BasePremailer,
 from .. import settings
 from ..compat import (BaseEngine, _dirs_undefined, RemovedInDjango110Warning,
     urlparse)
-from ..helpers import get_assets_dirs
+from ..utils import get_assets_dirs
 
 
 LOGGER = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ class EmlEngine(BaseEngine):
         Return a collation of template tag libraries from installed
         applications and the supplied custom_libraries argument.
         """
-        #pylint: disable=no-name-in-module,import-error
+        #pylint:disable=no-name-in-module,import-outside-toplevel
         from django.template.backends.django import get_installed_libraries
         libraries = get_installed_libraries()
         libraries.update(custom_libraries)
@@ -117,7 +117,8 @@ class EmlEngine(BaseEngine):
                     tried.extend(err.tried)
             else:
                 # This code is there to support Django 1.8 only.
-                from ..compat import DjangoTemplate
+                from ..compat import (#pylint:disable=import-outside-toplevel
+                    DjangoTemplate)
                 try:
                     source, template_path = loader.load_template_source(
                         template_name, template_dirs=dirs)

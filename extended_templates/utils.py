@@ -24,10 +24,9 @@
 
 from __future__ import unicode_literals
 
-import codecs, logging, os, warnings
+import logging, os
 
-import django
-from django.template import Template, loader
+from django.conf import settings as django_settings
 from django.apps import apps as django_apps
 from django.core.exceptions import ImproperlyConfigured
 from django.core.validators import RegexValidator
@@ -35,11 +34,8 @@ from django.core.files.storage import FileSystemStorage
 from django.utils.module_loading import import_string
 
 from . import settings
-from .compat import (_dirs_undefined, RemovedInDjango110Warning,
-    gettext_lazy as _, import_string, urljoin, get_storage_class)
-from .backends.pdf import Template as PdfTemplate
-from .backends.eml import Template as EmlTemplate
-
+from .compat import (gettext_lazy as _, import_string, urljoin,
+    get_storage_class)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +46,23 @@ validate_title = RegexValidator(#pylint: disable=invalid-name
         "numbers, space, underscores or hyphens."),
         'invalid'
 )
+
+
+def get_assets_dirs():
+    if settings.ASSETS_DIRS_CALLABLE:
+        return import_string(settings.ASSETS_DIRS_CALLABLE)()
+    candidates = getattr(django_settings, 'STATICFILES_DIRS', None)
+    if not candidates:
+        static_root = getattr(django_settings, 'STATIC_ROOT', None)
+        if static_root:
+            candidates = [static_root]
+    assets_dirs = []
+    static_prefix = django_settings.STATIC_URL.rstrip('/')
+    for asset_dir in candidates:
+        if asset_dir.endswith(static_prefix):
+            asset_dir = asset_dir[:-len(static_prefix)]
+        assets_dirs += [asset_dir]
+    return assets_dirs
 
 
 def get_account_model():
@@ -75,65 +88,6 @@ def get_current_account():
         account = import_string(settings.DEFAULT_ACCOUNT_CALLABLE)()
         LOGGER.debug("get_current_account: '%s'", account)
     return account
-
-
-# The following was derived from code originally posted
-# at https://gist.github.com/zyegfryed/918403
-
-def get_template_from_string(source, origin=None, name=None):
-    """
-    Returns a compiled Template object for the given template code,
-    handling template inheritance recursively.
-    """
-    # This function is deprecated in Django 1.8+
-    #pylint:disable=too-many-function-args
-    if name and name.endswith('.eml'):
-        return EmlTemplate(source, origin, name)
-    if name and name.endswith('.pdf'):
-        return PdfTemplate('pdf', origin, name)
-    return Template(source, origin, name)
-
-
-def make_origin(display_name, from_loader, name, dirs):
-    # Always return an Origin object, because PdfTemplate need it to render
-    # the PDF Form file.
-    return loader.LoaderOrigin(display_name, from_loader, name, dirs)
-
-
-def get_template(template_name, dirs=_dirs_undefined):
-    """
-    Returns a compiled Template object for the given template name,
-    handling template inheritance recursively.
-    """
-    # Implementation Note:
-    # If we do this earlier (i.e. when the module is imported), there
-    # is a chance our hook gets overwritten somewhere depending on the
-    # order in which the modules are imported.
-    loader.get_template_from_string = get_template_from_string
-    loader.make_origin = make_origin
-
-    def fake_strict_errors(exception): #pylint: disable=unused-argument
-        return ("", -1)
-
-    if template_name.endswith('.pdf'):
-        # HACK: Ignore UnicodeError, due to PDF file read
-        codecs.register_error('strict', fake_strict_errors)
-
-    if dirs is _dirs_undefined:
-        template = loader.get_template(template_name)
-    else:
-        if django.VERSION[0] >= 1 and django.VERSION[1] >= 8:
-            warnings.warn(
-                "The dirs argument of get_template is deprecated.",
-                RemovedInDjango110Warning, stacklevel=2)
-        #pylint:disable=unexpected-keyword-arg
-        template = loader.get_template(template_name, dirs=dirs)
-
-    if template_name.endswith('.pdf'):
-        # HACK: Ignore UnicodeError, due to PDF file read
-        codecs.register_error('strict', codecs.strict_errors)
-
-    return template
 
 
 def get_default_storage(request, account=None, **kwargs):

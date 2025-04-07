@@ -25,7 +25,7 @@
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 
-from extended_templates.utils import get_template
+from extended_templates.backends import get_template
 
 
 class PdfView(TemplateView):

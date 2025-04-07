@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2025, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ class AccountMixinBase(object):
 
     def get_account(self):
         if not self.account_url_kwarg:
+            #pylint:disable=import-outside-toplevel
             from . import settings
             self.account_url_kwarg = settings.ACCOUNT_URL_KWARG
         if self.account_url_kwarg in self.kwargs:

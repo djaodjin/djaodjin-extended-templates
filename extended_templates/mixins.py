@@ -1,4 +1,4 @@
-# Copyright (c) 2022 DjaoDjin inc.
+# Copyright (c) 2025 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,9 @@ import logging
 
 import markdown
 from bs4 import BeautifulSoup
-from django.utils._os import safe_join
 
 from . import settings
-from .compat import import_string, six, urlsplit
+from .compat import urlsplit
 from .models import MediaTag, get_active_theme
 from .extras import AccountMixinBase
 
@@ -117,14 +116,6 @@ class ThemePackageMixin(AccountMixin):
             if not self._theme:
                 self._theme = get_active_theme()
         return self._theme
-
-    @staticmethod
-    def get_templates_dir(theme):
-        if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-            settings.THEME_DIR_CALLABLE = import_string(
-                settings.THEME_DIR_CALLABLE)
-        theme_dir = settings.THEME_DIR_CALLABLE(theme)
-        return safe_join(theme_dir, 'templates')
 
 
 class UpdateEditableMixin(object):

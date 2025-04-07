@@ -172,6 +172,7 @@ def install_theme(app_name, package_uri, force=False):
     basename = os.path.basename(parts.path)
     package_file = None
     try:
+        #pylint:disable=consider-using-with
         if parts.scheme == 's3':
             #pylint:disable=import-outside-toplevel
             # S3 backend is optional.
