@@ -1,3 +1,9 @@
+0.4.10
+
+  * upgrades prerequisite deployutils to 0.14.0
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Fri, 19 Sep 2025 11:35:00 -0700
+
 0.4.9
 
   * breaks import cycles (get_assets_dirs)

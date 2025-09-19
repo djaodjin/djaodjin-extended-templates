@@ -64,10 +64,10 @@ Tested with
 
 - **Python:** 3.10, **Django:** 4.2  ([LTS](https://www.djangoproject.com/download/))
 - **Python:** 3.12, **Django:** 5.1  (latest)
-- **Python:** 3.7,  **Django:** 3.2  (legacy)
+- **Python:** 3.9,  **Django:** 3.2  (legacy)
 
-0.4.9
+0.4.10
 
-  * adds support for Django 4.2 and Django 5.1
+  * upgrades prerequisite deployutils to 0.14.0
 
 [previous release notes](changelog)
