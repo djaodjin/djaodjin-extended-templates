@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2025, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@ from io import BytesIO
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView, View
-from deployutils.apps.django.themes import package_theme
+from deployutils.apps.django_deployutils.themes import package_theme
 
 from .. import settings
 from ..compat import six, reverse

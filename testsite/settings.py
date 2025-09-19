@@ -79,7 +79,7 @@ LOGGING = {
         },
         # Add an unbound RequestFilter.
         'request': {
-            '()': 'deployutils.apps.django.logging.RequestFilter',
+            '()': 'deployutils.apps.django_deployutils.logging.RequestFilter',
         },
     },
     'formatters': {
