@@ -218,7 +218,7 @@
             return true;
         },
 
-        saveEdition: function(){
+        saveEdition: function() {
             var self = this;
             if( !self.checkInput() ) {
                 return false;
@@ -632,6 +632,115 @@
         }
     });
 
+    /** Editor to upload media asset (img, video, etc.)
+
+        relies on `djupload` in djaodjin-upload.js
+     */
+    function MediaEditor(element, options){
+        var self = this;
+        self.el = element;
+        self.$el = $(element);
+        self.options = options;
+        self.init();
+        return self;
+    }
+
+    MediaEditor.prototype = $.extend({}, BaseEditor.prototype, {
+
+        init: function(){
+            var self = this;
+            self.$el.click(function() {
+                var mediaGallery = $(self.options.mediaGallerySelector);
+                if( mediaGallery.length > 0 ) {
+                    var djgallery = mediaGallery.data("djgallery");
+                    djgallery.showGallery();
+                    mediaGallery.off("djgallery.select");
+                    mediaGallery.on("djgallery.select",
+                    function(gallery, location) {
+                        self.updateMediaSource(location);
+                    });
+                }
+            });
+
+            self.$el.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            self.$el.on('dragenter', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            self.$el.on('drop', function(event) {
+                event.preventDefault();
+                if(event.originalEvent.dataTransfer &&
+                   event.originalEvent.dataTransfer.files.length ) {
+                    event.stopPropagation();
+                    /*UPLOAD FILES HERE*/
+                    var mediaGallery = $(self.options.mediaGallerySelector);
+                    if( mediaGallery.length > 0 ) {
+                        var djgallery = mediaGallery.data("djgallery");
+                        var djupload = mediaGallery.data("djupload");
+                        djgallery.showGallery();
+                        mediaGallery.on("djgallery.select", function(gallery, location) {
+                            self.updateMediaSource(location);
+                            mediaGallery.off("djgallery.select");
+                        });
+                        const files = event.originalEvent.dataTransfer.files;
+                        djupload.uploadFiles(files);
+                    }
+                } else {
+                    const location = event.originalEvent.dataTransfer.getData('text/plain');
+                    self.updateMediaSource(location);
+                    var mediaGallery = $(self.options.mediaGallerySelector);
+                    if( mediaGallery.length > 0 ) {
+                        mediaGallery.off("djgallery.select");
+                    }
+                }
+            });
+        },
+
+        saveEdition: function() {
+            var self = this;
+            var idElement = self.$el.attr("id");
+            var data = {slug: idElement, text: self.$el.attr("src")};
+            if( self.options.hints ) {
+                data['hints'] = self.options.hints;
+            }
+            $.ajax({
+                method: "PUT",
+                async: false,
+                url: self.elementUrl(),
+                data: JSON.stringify(data),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
+                },
+            });
+        },
+
+        updateMediaSource: function(location) {
+            var self = this;
+            if( self.$el.prop("tagName") === "IMG" ) {
+                if( self.options.acceptedImages.some(function(ext) {
+                    return location.indexOf(ext) >= 0; })) {
+                    self.$el.attr("src", location);
+                    self.saveEdition();
+                }
+            } else if( self.$el.prop("tagName") === "VIDEO" ) {
+                if (self.options.acceptedVideos.some(function(ext) {
+                    return location.indexOf(ext) >= 0; })){
+                    self.$el.attr("src", location);
+                    self.saveEdition();
+                }
+            }
+        }
+
+    });
+
+
     $.fn.editor = function(options, custom){
         var opts = $.extend( {}, $.fn.editor.defaults, options );
         return this.each(function() {
@@ -646,6 +755,8 @@
                     $.data($(this), "editor", new DateEditor($(this), opts));
                 }else if ($(this).hasClass("edit-range")){
                     $.data($(this), "editor", new RangeEditor($(this), opts));
+                }else if ($(this).hasClass("edit-media")){
+                    $.data($(this), "editor", new MediaEditor($(this), opts));
                 }else{
                     $.data($(this), "editor", new Editor($(this), opts));
                 }
@@ -653,11 +764,20 @@
         });
     };
 
+
     $.fn.editor.defaults = {
-        baseUrl: null, // Url to send request to server
+        /** URL to persist changes in the document */
+        baseUrl: null,
+        /** URL to upload media assets */
+        uploadUrl: null,
+        /** Optional CSRF token for Django */
+        csrfToken: null,
         editionTool: null,
         emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
+        mediaGallerySelector: "#media-gallery",
+        acceptedImages: [".jpg", ".png", ".gif"],
+        acceptedVideos: [".mp4"],
         onSuccess: function(element, resp){
             return true;
         },

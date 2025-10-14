@@ -1,4 +1,6 @@
 // djaodjin-upload.js
+//
+// requires dropzone.js
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -20,9 +22,11 @@
 (function ($) {
     "use strict";
 
-    function Djupload(el, options){
-        this.element = $(el);
+    function Djupload(element, options) {
+        this.el = element;
+        this.$el = $(this.el);
         this.options = options;
+        this.dropzone = null;
         this.init();
     }
 
@@ -41,37 +45,33 @@
 
         _uploadSuccess: function(file, resp) {
             var self = this;
-            self.element.trigger("djupload.success", resp.location);
+            self.$el.trigger("djupload.success", resp.location);
             if( self.options.uploadSuccess &&
                 {}.toString.call(self.options.uploadSuccess)
                 === '[object Function]' ) {
-                self.options.uploadSuccess(file, resp, self.element);
-            } else {
-                if( resp.detail ) {
-                    showMessages(resp.detail, "success");
-                } else {
-                    showMessages([self.options.uploadSuccessMessage(
-                        file.name, resp.location)], "success");
-                }
+                self.options.uploadSuccess(file, resp, self.$el);
             }
             return true;
         },
 
         _uploadError: function(file, resp) {
             var self = this;
-            self.element.trigger("djupload.error", [file.name, resp]);
-            if( self.options.uploadError ) {
-                self.options.uploadError(file, resp, self.element);
-            } else {
-                showErrorMessages(resp);
+            self.$el.trigger("djupload.error", [file.name, resp]);
+            if( self.options.uploadError &&
+                {}.toString.call(self.options.uploadError)
+                === '[object Function]' ) {
+                self.options.uploadError(file, resp, self.$el);
             }
+            return true;
         },
 
         _uploadProgress: function(file, progress) {
             var self = this;
-            self.element.trigger("djupload.progress", [file.name, progress]);
-            if( self.options.uploadProgress ) {
-                self.options.uploadProgress(file, progress, self.element);
+            self.$el.trigger("djupload.progress", [file.name, progress]);
+            if( self.options.uploadProgress &&
+                {}.toString.call(self.options.uploadProgress)
+                === '[object Function]' ) {
+                self.options.uploadProgress(file, progress, self.$el);
             }
             return true;
         },
@@ -79,7 +79,7 @@
         init: function(){
             var self = this;
             if( !self.options.uploadUrl ) {
-                console.warning("[djupload] uploading assets will not work because 'uploadUrl' is undefined.");
+                console.warn("[djupload] uploading assets will not work because 'uploadUrl' is undefined.");
                 return;
             }
             if( self.options.mediaPrefix !== ""
@@ -137,14 +137,14 @@
         initDropzone: function() {
             var self = this;
             var dropzoneUrl = (self.options.accessKey ? self.options.uploadUrl
-                : (self.element.attr("data-complete-url") ?
-                    self.element.attr("data-complete-url")
+                : (self.$el.attr("data-complete-url") ?
+                    self.$el.attr("data-complete-url")
                     : self.options.uploadUrl));
             if( !dropzoneUrl ) {
                 showErrorMessages(self.options.configError);
                 throw new Error(self.options.configError);
             }
-            self.element.dropzone({
+            self.dropzone = new Dropzone(self.el, {
                 paramName: self.options.uploadParamName,
                 url: dropzoneUrl,
                 maxFilesize: self.options.uploadMaxFileSize,
@@ -210,7 +210,7 @@
                         } else {
                             formData.append(
                                 "csrfmiddlewaretoken", self._csrfToken());
-                            var data = self.element.data();
+                            var data = self.$el.data();
                             for( var key in data ) {
                                 if( data.hasOwnProperty(key)
                                     && key != 'djupload' ) {
@@ -229,11 +229,11 @@
                             };
                             // We will also call back a completion url
                             // on the server.
-                            var completeUrl = self.element.attr(
+                            var completeUrl = self.$el.attr(
                                 "data-complete-url");
                             if( completeUrl ) {
                                 var data = {};
-                                [].forEach.call(self.element[0].attributes, function(attr) {
+                                [].forEach.call(self.$el[0].attributes, function(attr) {
                                     if (/^data-/.test(attr.name)) {
                                         var camelCaseName = attr.name.substr(5).replace(/-(.)/g, function ($0, $1) {
                                             return $1.toUpperCase();
@@ -281,14 +281,20 @@
                     });
                 }
             });
-        }
+        },
+
+        uploadFiles: function(files) {
+            var self = this;
+            self.dropzone.uploadFiles(files);
+        },
     };
 
     $.fn.djupload = function(options) {
         var opts = $.extend( {}, $.fn.djupload.defaults, options );
         return this.each(function() {
-            if (!$.data(this, "djupload")) {
-                $.data(this, "djupload", new Djupload(this, opts));
+            var $this = $(this);
+            if( !$this.data("djupload") ) {
+                $this.data("djupload", new Djupload(this, opts));
             }
         });
     };
@@ -322,11 +328,6 @@
         uploadProgress: null,
 
         // messages
-        uploadSuccessMessage: function(filename, location) {
-            return '"${filename}" uploaded sucessfully to ${location}'.replace(
-                '${filename}', filename).replace(
-                '${location}', location);
-        },
         configError: "instantiated djupload() with no uploadUrl specified."
 
     };

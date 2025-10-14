@@ -72,7 +72,7 @@ class ReplaceIdVisitor(UpdateEditableMixin):
                 self.insert_markdown(editable, self.element_text)
             elif 'edit-currency' in editable['class']:
                 self.insert_currency(editable, self.element_text)
-            elif 'droppable-image' in editable['class']:
+            elif 'edit-media' in editable['class']:
                 editable['src'] = self.element_text
             else:
                 editable.string = self.element_text
@@ -164,6 +164,9 @@ class SourceEditAPIView(ThemePackageMixin, generics.GenericAPIView):
                 ReplaceIdVisitor(dest, element_id, element_text,
                     template_path=template_path),
                 template_path=template_path)
+
+            # We are going to return a 404 when we are updating an element
+            # with the exact same text or 'src' attribute.
 
             dest = dest.getvalue()
             if dest and dest != template_string:

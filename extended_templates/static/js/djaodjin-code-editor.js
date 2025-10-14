@@ -34,6 +34,7 @@
     TemplateEditor.prototype = {
         init: function () {
             var self = this;
+
             self.$element.on("pages.loadresources", function(event) {
                 self.loadSource();
             });
@@ -208,6 +209,10 @@
                     }
                 });
             });
+
+            self.$element.click('.dj-close', function(event) {
+                self.$element.hide();
+            });
         },
 
         _csrfToken: function() {
@@ -220,8 +225,9 @@
     $.fn.templateCodeEditors = function(options) {
         var opts = $.extend( {}, $.fn.templateCodeEditors.defaults, options );
         return this.each(function() {
-            if (!$.data($(this), "templateCodeEditors")) {
-                $.data($(this), "templateCodeEditors",
+            var $this = $(this);
+            if (!$this.data("templateCodeEditors")) {
+                $this.data("templateCodeEditors",
                     new TemplateCodeEditors(this, opts));
             }
         });

@@ -1,80 +1,10 @@
 /* jshint multistr: true */
-/* global getMetaCSRFToken Dropzone jQuery :true */
+/* global getMetaCSRFToken jQuery :true */
 
 /* relies on:
-    - jquery-ui.js
-    - dropzone.js
-
-Media request:
-
-GET mediaUrl:
-
-    - request
-
-    - response: 200 OK
-    {
-        ...,
-        "results":[
-            {"location": "/media/item/url1.jpg", "tags" : []},
-            {"location": "/media/item/url2.jpg", "tags" : ["html", "django"]}
-        ],
-        ...
-    }
-
-POST mediaUrl:
-    - request: {<paramNameUpload>: uploaded_file}
-
-    - response: 201 CREATED
-    {"location":"/media/item/url1.jpg","tags":[]}
-
-
-PUT mediaUrl:
-
-    - request: {items: [{location: "/media/item/url1.jpg"}, {location: "/media/item/url2.jpg"}], tags: ["tag1", "tag2"]}
-
-    - response: 200 OK
-    {
-        ...,
-        "results":[
-            {"location": "/media/item/url1.jpg", "tags" : ["tag1", "tag2"]},
-            {"location": "/media/item/url2.jpg", "tags" : ["tag1", "tag2"]}
-        ],
-        ...
-    }
-
-DELETE mediaUrl?location=/media/item/url1.jpg 200 OK
-    - response: 200 OK
-
-Options:
-
-    mediaUrl :                          default: null, type: String, url to get, post, put and delete media from backend
-
-    // AWS S3 Direct upload settings
-    S3DirectUploadUrl :                 default: null, type: String, A S3 url
-    mediaPrefix :                       default: null, type: String, S3 folder ex: media/
-    accessKey :                         default: null, type: String, S3 Temporary credentials
-    securityToken :                     default: null, type: String, S3 Temporary credentials
-    policy :                            default: null, type: String, S3 Temporary credentials
-    signature :                         default: null, type: String, S3 Temporary credentials
-    amzCredential :                     default: null, type: String, S3 Temporary credentials
-    amzDate :                           default: null, type: String, S3 Temporary credentials
-
-    // Custom gallery callback and templates
-    paramNameUpload :                   default: "file", type: String, Custom param name for uploaded file
-    maxFilesizeUpload :                 default: 256, type: Integer
-    acceptedImages :                    default: [".jpg", ".png", ".gif"], type: Array
-    acceptedVideos :                    default: [".mp4"], type: Array
-    buttonClass :                       type: String
-    selectedMediaClass :                type: String, class when a media item is selected
-    startLoad :                         type: Boolean, if true load image on document ready
-    itemUploadProgress :                type:function, params:progress, return the progress on upload
-    galleryMessage :                    type:function, params:message, notification of the gallery
-
-    // Custom droppable media item and callback
-    mediaPlaceholder :                  type:string, seclector to init droppable placeholder
-    saveDroppedMediaUrl :               type:string, Url to send request when media is dropped in placeholder
-    droppedMediaCallback :              type:function, params:response, Callback on succeeded dropped media item
-
+    - jquery.js
+    - djupload.js
+    - dropzone.js (transitively through djupload.js)
 */
 
 (function (root, factory) {
@@ -97,121 +27,129 @@ Options:
 (function ($) {
     "use strict";
 
-    function Djgallery(el, options){
-        this.element = $(el);
-        this.options = options;
-        this.init();
+    /**
+       A UI element to interact with a media gallery
+
+       This UI element is based on jQuery, Djupload and Dropzone.
+
+       The HTML tree this UI element is attached to should contain the following
+       HTML elements for the logic to work:
+
+       - `<div class="dj-gallery-items"></div>` so media assets
+       can be displayed as thumbnails and selected for different actions.
+
+       - `<button class="dj-close"></button>` so the gallery disapears when it
+         is not needed.
+
+       - `<button class="dj-gallery-delete-item"></button>` so a media asset
+         can be deleted from the gallery.
+
+       - `<button class="dj-gallery-copy-location"></button>` so the location
+       of a media asset can be copied to the clipboard.
+
+       - `<input type="text" class="dj-gallery-filter"></input>` so media
+       assets displayed in the gallery can be filtered by tags.
+
+       - `<div class="dj-gallery-upload-progress"><div class="progress-bar"></div></div>`
+         so upload progress of a media asset can be displayed.
+
+       - `<span class="dj-gallery-message"></span>` so messages returned
+       by the API calls can be displayed.
+
+       - `<input class="dj-gallery-location-input" />` so the location
+       of the selected media asset can be displayed.
+
+       - `<input class="dj-gallery-tag-input" />` so the tags of the selected
+       media asset can be displayed. When `Tagify` is installed, the input
+       field to enter tags will be decorated with `Tagify`.
+
+       - `<div class="dj-gallery-info-preview"></button>` so an asset can
+         be previewed in actual size.
+
+       - `<div class="dj-gallery-info-item-selected"></div>` and
+       `<div class="dj-gallery-info-item-empty"></div>` to switch
+       between selected and unselected items in the contextual information
+       widget.
+
+       Data sources
+       ------------
+
+       The options 'url' must be configured as an API endpoint to list and
+       delete media assets, as well as update their meta tags
+       (ex: [/api/themes/assets/](https://github.com/djaodjin/djaodjin-extended-templates/blob/9e7c44a50818d46141270fb2d6aa7339178ea174/extended_templates/api/upload_media.py#L43)).
+       'url' is also used to upload media assets unless 'S3DirectUploadUrl'
+       is configured.
+
+       Optionally, 'S3DirectUploadUrl' can be configured as an API endpoint
+       to upload directly to the media assets storage.
+    */
+    function Djgallery(element, options){
+        var self = this;
+        self.el = element;
+        self.$el = $(self.el);
+        self.options = options;
+        self.selectedMedia = null;
+        self.tagify = null;
+        self.init();
+        return self;
     }
 
     Djgallery.prototype = {
-        init: function(){
+        init: function() {
             var self = this;
-            self.originalTags = [];
-            self.currentInfo = "";
-            self.selectedMedia = null;
-            self.initGallery();
-            self.initDocument();
-            self.initMediaInfo();
-            if (self.options.startLoad){
-                self.loadImage();
+
+            if( !self.options.url ) {
+                console.warn("[djgallery] listing media assets will not work because 'url' is undefined.");
             }
-            $(document).on("click", "[data-dj-gallery-media-url]" , function(){
-                this.select();
+
+            self.clearSelection();
+
+            // attach the event handlers
+
+            self.$el.on("click", ".dj-close", function(event) {
+                self.hideGallery();
             });
-        },
-
-        initGallery: function(){
-            var self = this;
-            if ($(".dj-gallery").length === 0){
-                $("body").append(self.options.galleryTemplate);
-            }
-        },
-
-        initDocument: function(){
-            var self = this;
-            self.element.on("click", ".dj-gallery-delete-item",
-                function(event) { self.deleteMedia(event); });
-            self.element.on("click", ".dj-gallery-preview-item",
-                function(event) { self.previewMedia(event); });
-            self.element.on("keyup", ".dj-gallery-filter",
-                function(event) { self.loadImage(); });
-            self.element.on("click", ".dj-gallery-tag-item",
-                function(event) { self.tagMedia(); });
-            self.element.on("click", ".dj-gallery-item-container",
-                function(event) { self.selectMedia($(this)); });
-            self.element.on("djgallery.loadresources",
-                function(event) { self.loadImage(); });
-            $(".dj-gallery-load").on("click",
-                function(event) { self.loadImage(); });
-
-            $("body").on("click", ".closeModal", function(event){
-                event.preventDefault();
-                $("#openModal").remove();
+            self.$el.on("click", ".dj-gallery-delete-item", function(event) {
+                self.deleteMedia(event);
+            });
+            self.$el.on("click", ".dj-gallery-copy-location", function(event) {
+                const location = self.getMediaLocationFromItem(
+                    self.selectedMedia);
+                if( navigator.clipboard && navigator.clipboard.writeText ) {
+                    navigator.clipboard.writeText(location);
+                }
+            });
+            self.$el.on("keyup", ".dj-gallery-filter", function(event) {
+                self._loadMedias();
+            });
+            self.$el.on("click", ".dj-gallery-item-container", function(event) {
+                self.selectMedia($(this));
+            });
+            self.$el.on("djgallery.loadresources", function(event) {
+                self._loadMedias();
             });
 
-            $(self.options.mediaPlaceholder).droppable({
-                drop: function( event, ui ) {
-                    var droppable = $(this);
-                    var location = self._mediaLocation(
-                        ui.draggable.attr("src"));
-                    var source = location.toLowerCase();
-                    if (droppable.prop("tagName") === "IMG"){
-                        if (self.options.acceptedImages.some(function(v) {
-                            return source.indexOf(v) >= 0; })) {
-                            droppable.attr("src", location);
-                            $(ui.helper).remove();
-                            self.saveDroppedMedia(droppable);
-                        } else {
-                            self.options.galleryMessage(
-                                self.options.placeholderAcceptsErrorMessage(
-                                    self.options.acceptedImages.join(", ")),
-                                'error');
-                        }
-                    }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (self.options.acceptedVideos.some(function(v) {
-                            return source.indexOf(v) >= 0; })){
-                            droppable.attr("src", location);
-                            $(ui.helper).remove();
-                            self.saveDroppedMedia(droppable);
-                        } else {
-                            self.options.galleryMessage(
-                                self.options.placeholderAcceptsErrorMessage(
-                                    self.options.acceptedVideos.join(", ")),
-                                'error');
-                        }
+            try {
+                self.tagify = new Tagify(
+                    self.$el.find(".dj-gallery-tag-input")[0]);
+                self.tagify.on('blur', function(event) {
+                    var tagString = "";
+                    var sep = "";
+                    for( let idx = 0; idx < self.tagify.value.length; ++idx ) {
+                        tagString += sep + self.tagify.value[idx].value;
+                        sep = ",";
                     }
-                }
-            });
-        },
-
-        _csrfToken: function() {
-            var self = this;
-            return self.options.csrfToken ?
-                self.options.csrfToken : getMetaCSRFToken();
-        },
-
-        _mediaLocation: function(url) {
-            var parser = document.createElement('a');
-            parser.href = url;
-            var result = parser.pathname;
-            if( parser.host != location.hostname ) {
-                result = parser.host + result;
-                if( parser.protocol ) {
-                    result = parser.protocol + "//" + result;
-                }
+                    self.tagMedia(tagString);
+                });
+            } catch(Exception) {
+                self.$el.find(".dj-gallery-tag-input").blur(function(event) {
+                    self.tagMedia();
+                });
             }
-            return result;
-        },
 
-        initMediaInfo: function(){
-            var self = this;
-            $(".dj-gallery-info-item>.dj-gallery-info-item-selected").hide();
-            $(".dj-gallery-info-item>.dj-gallery-info-item-empty").show();
-        },
+            // prepares helper components to upload media assets
 
-        initDropzone: function(){
-            var self = this;
-            var uploadUrl = self.options.mediaUrl;
+            var uploadUrl = self.options.url;
             if( self.options.S3DirectUploadUrl &&
                 self.options.S3DirectUploadUrl.indexOf("/api/auth/") >= 0 ) {
                 uploadUrl = self.options.S3DirectUploadUrl;
@@ -220,7 +158,7 @@ Options:
                 }
             }
 
-            self.element.djupload({
+            self.$el.djupload({
                 uploadUrl: uploadUrl,
                 csrfToken: self.options.csrfToken,
                 uploadZone: "body",
@@ -241,21 +179,20 @@ Options:
                 uploadSuccess: function(file, response){
                     var status = file.xhr.status;
                     $(".dz-preview").remove();
-                    var lastIndex = $(".dj-gallery-items").children().last().children().attr("id");
-                    if (lastIndex){
-                        lastIndex = parseInt(lastIndex.split("image_")[1]) + 1;
-                    }else{
-                        lastIndex = 0;
-                    }
+                    var lastIndex = $(".dj-gallery-items .dj-gallery-item-container").length;
                     var filename = file.name;
                     var location = response.location;
                     if( [201, 204].indexOf(status) >= 0 ){
                         self.addMediaItem(response, lastIndex, false);
-                        self.options.galleryMessage(
+                        self.galleryMessage(
                             self.options.uploadSuccessMessage(
                                 filename, location));
                     } else if( status === 200 ) {
-                        self.options.galleryMessage(
+                        const $mediaItem = self.$el.find(
+                          '.dj-gallery-item-container [src="' + location + '"]'
+                        ).parent();
+                        self.selectMedia($mediaItem);
+                        self.galleryMessage(
                             self.options.uploadPreviousSuccessMessage(
                                 filename, location));
                     }
@@ -265,21 +202,58 @@ Options:
                     if( typeof resp.detail !== "undefined" ) {
                         message = resp.detail;
                     }
-                    self.options.galleryMessage(message, "error");
+                    self.galleryMessage(message, "error");
                 },
-                uploadProgress: function(file, progress){
+                uploadProgress: function(file, progress) {
+                    var djGalleryUploadProgress = self.$el.find(
+                        ".dj-gallery-upload-progress");
+                    var progressBar = djGalleryUploadProgress.find(
+                        ".progress-bar")
+                    djGalleryUploadProgress.slideDown();
+                    progress = progress.toFixed();
+                    progressBar.css("width", progress + "%");
+                    if( progress == 100 ){
+                        progressBar.text(this.uploadCompleteLabel);
+                        setTimeout(function() {
+                            djGalleryUploadProgress.slideUp();
+                            progressBar.text("").css("width", "0%");
+                        }, 2000);
+                    }
                     self.options.itemUploadProgress(progress);
                 }
             });
+        }, // init
+
+        _csrfToken: function() {
+            var self = this;
+            return self.options.csrfToken ?
+                self.options.csrfToken : getMetaCSRFToken();
         },
 
+        // XXX Removes query parameters on private S3 URLs ?
+        _mediaLocation: function(url) {
+            var parser = document.createElement('a');
+            parser.href = url;
+            var result = parser.pathname;
+            if( parser.host != location.hostname ) {
+                result = parser.host + result;
+                if( parser.protocol ) {
+                    result = parser.protocol + "//" + result;
+                }
+            }
+            return result;
+        },
+
+        /** Load the meta information for media assets (URL, tags, etc.)
+            through `self.options.url`.
+         */
         _loadMedias: function() {
             var self = this;
-            var $element = $(self.element);
-            var mediaFilterUrl = self.options.mediaUrl;
+            var $element = $(self.$el);
+            var mediaFilterUrl = self.options.url;
             var $filter = $element.find(".dj-gallery-filter");
             if( $filter.val() !== "") {
-                mediaFilterUrl = self.options.mediaUrl + "?q=" + $filter.val();
+                mediaFilterUrl = self.options.url + "?q=" + $filter.val();
             }
             $.ajax({
                 method: "GET",
@@ -296,15 +270,9 @@ Options:
                     });
                 },
                 error: function(resp) {
-                    self.options.galleryMessage(resp, 'error');
+                    self.galleryMessage(resp, 'error');
                 }
             });
-        },
-
-        loadImage: function(){
-            var self = this;
-            self.initDropzone();
-            self._loadMedias();
         },
 
         addMediaItem: function(file, index, init){
@@ -327,33 +295,32 @@ Options:
                 location = self._mediaLocation(location);
             }
             if( ext ) {
-                if (self.options.acceptedVideos.some(
-                    function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
-                    mediaItem = "<video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\"></video>";
-                } else if (self.options.acceptedImages.some(
-                    function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
-                    mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"" + location + "\" tags=\"" + tags + "\">";
+                if( self.options.acceptedVideos.some(function(v) {
+                    return ext.toLowerCase().indexOf(v) >= 0; })) {
+                    mediaItem = self.options.itemTemplateVideo.replace(
+                        '${index}', index).replace(
+                        '${location}', location).replace(
+                        '${tags}', tags);
+                } else if( self.options.acceptedImages.some(function(v) {
+                    return ext.toLowerCase().indexOf(v) >= 0; })) {
+                    mediaItem = self.options.itemTemplateImg.replace(
+                        '${index}', index).replace(
+                        '${location}', location).replace(
+                        '${tags}', tags);
                 }
             }
             if( !mediaItem ) {
-                mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media img-thumbnail\" src=\"/static/img/generic-document.png\" data-location=\"" + location + "\" tags=\"" + tags + "\">";
+                mediaItem = self.options.itemTemplateUnknown.replace(
+                    '${index}', index).replace(
+                    '${location}', location).replace(
+                    '${tags}', tags);
             }
             if( mediaItem ) {
-                var $mediaItem = $("<div class=\"dj-gallery-item-container "
-                      + self.options.mediaClass + " \">"
-                      + mediaItem
-                      + "</div>");
+                var $mediaItem = $(mediaItem);
                 $(".dj-gallery-items").prepend($mediaItem);
-                $("#image_" + index).draggable({
-                    helper: "clone",
-                    revert: true,
-                    appendTo: "body",
-                    zIndex: 1000000,
-                    start: function(event, ui) {
-                        ui.helper.css({
-                            width: 65
-                        });
-                    }
+                $mediaItem.on('dragstart', function(event) {
+                    event.originalEvent.dataTransfer.setData('text/plain',
+                        self.getMediaLocationFromItem($(this)));
                 });
                 if( !init ) {
                     self.selectMedia($mediaItem);
@@ -361,174 +328,196 @@ Options:
             }
         },
 
+        clearSelection: function() {
+            // Display contextual information for the selected item
+            var self = this;
+            self.selectedMedia = null;
+            self.$el.find(".dj-gallery-info-item-selected").hide();
+            self.$el.find(".dj-gallery-info-item-empty").show();
+        },
+
+        galleryMessage: function(message, type) {
+            var self = this;
+            var $elem = self.$el.find(".dj-gallery-message");
+            $elem.text(message);
+            if( type == 'error' ) {
+                $elem.addClass('text-danger');
+            } else {
+                $elem.removeClass('text-danger');
+            }
+            setTimeout(function() {
+                $elem.text("");
+            }, 2000);
+            return self.options.galleryMessage(message);
+        },
+
+        /** Returns the URL location for the media asset shown in `item`.
+         */
+        getMediaLocationFromItem: function(item) {
+            var self = this;
+            const refElem = item.find("[data-location]");
+            const location = refElem.length > 0 ?
+                self._mediaLocation(refElem.data("location")) :
+                self._mediaLocation(item.find("[src]").attr("src"));
+            return location;
+        },
+
+        /**
+           Highlights the selected item in the media gallery.
+
+           `item` is the jQuery element wrapping HTML nodes with class
+           'dj-gallery-item-container'.
+
+           `self.options.selectedMediaClass` is the class to highlight
+           the active selection.
+         */
         selectMedia: function(item) {
             var self = this;
-            var $elem = self.element;
+            var $elem = self.$el;
             // Removes highlights for previously selected media
             $elem.find(".dj-gallery-item-container").not(item).removeClass(
                 self.options.selectedMediaClass);
 
-            self.selectedMedia = item.children(".dj-gallery-item");
-            var refElem = item.find("[tags]");
-            if( refElem.length > 0 ) {
-                self.orginalTags = refElem.attr("tags").split(",");
-            } else {
-                self.orginalTags = "";
-            }
+            self.selectedMedia = item;
             item.addClass(self.options.selectedMediaClass);
 
-            // populates contextual menu
-            var location = null;
-            refElem = item.find("[data-location]");
-            if( refElem.length > 0 ) {
-                location = self._mediaLocation(refElem.data("location"));
-            } else {
-                refElem = item.find("[src]");
-                location = self._mediaLocation(refElem.attr("src"));
+            // Prepares the preview UI element
+            var content = item.children().clone();
+            $elem.find('.dj-gallery-info-preview').empty();
+            $elem.find('.dj-gallery-info-preview').append(content);
+
+            // Populates contextual information for the selected item
+            // set the input fields in the contextual information
+            const location = self.getMediaLocationFromItem(item);
+            $elem.find(".dj-gallery-location-input").val(location);
+            const tags = item.find("[data-tags]").data("tags");
+            if( tags ) {
+                $elem.find(".dj-gallery-tag-input").val(tags);
             }
-            var icon = item.find("[src]").attr("src");
 
-            $elem.find("[data-dj-gallery-media-src]").attr("src", icon);
-            $elem.find("[data-dj-gallery-media-location]").attr(
-                "location", location);
-            $elem.find("[data-dj-gallery-media-url]").val(location);
-            $elem.find("[data-dj-gallery-media-tag]").val(item.attr("tags"));
+            // Display contextual information for the selected item
+            $(".dj-gallery-info-item-selected").show();
+            $(".dj-gallery-info-item-empty").hide();
 
-            $(".dj-gallery-info-item>.dj-gallery-info-item-selected").show();
-            $(".dj-gallery-info-item>.dj-gallery-info-item-empty").hide();
+            $elem.trigger("djgallery.select", location);
         },
 
+        /** Deletes the selected media item
+         */
         deleteMedia: function(event){
             var self = this;
             event.preventDefault();
-            var location = self._mediaLocation(self.selectedMedia.attr("src"));
+            var deletedMedia = self.selectedMedia;
+            const location = self.getMediaLocationFromItem(deletedMedia);
             $.ajax({
                 method: "DELETE",
-                url: self.options.mediaUrl + "?location=" + location,
+                url: self.options.url + "?location=" + location,
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
                 success: function(resp){
-                    $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
-                    self.initMediaInfo();
-                    self.options.galleryMessage(resp.detail);
+                    deletedMedia.remove();
+                    self.clearSelection();
+                    self.galleryMessage(resp.detail);
                 },
                 error: function(resp) {
-                    self.options.galleryMessage(resp, 'error');
+                    self.galleryMessage(resp, 'error');
                 }
             });
         },
 
-        tagMedia: function(){
+        /** Sets 'tags' in the media meta data.
+         */
+        tagMedia: function(value) {
             var self = this;
-            var tags = $(".dj-gallery-tag-input").val().split(",");
+            var tags = (value ? value
+                : $(".dj-gallery-tag-input").val()).split(",");
             for( var idx = 0; idx < tags.length; ++idx ) {
                 tags[idx] = $.trim(tags[idx]);
             }
-            if (tags !== self.originalTags){
-                $.ajax({
-                    type: "PUT",
-                    url: self.options.mediaUrl,
-                    data: JSON.stringify({
-                        "items": [{
-                            "location": self._mediaLocation(
-                                self.selectedMedia.attr("src"))
-                        }],
-                        "tags": tags}),
-                    datatype: "json",
-                    contentType: "application/json; charset=utf-8",
-                    beforeSend: function(xhr, settings) {
-                        xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
-                    },
-                    success: function(resp){
-                        $.each(resp.results, function(index, element) {
-                            $("[src=\"" + element.location + "\"]").attr(
-                                "tags", element.tags);
-                        });
-                        self.options.galleryMessage(resp.detail);
-                    },
-                    error: function(resp) {
-                        self.options.galleryMessage(resp, 'error');
-                    }
-                });
-            }
-        },
 
-        elementUrl: function(idElement) {
-            var self = this;
-            var path = idElement;
-            // We make sure that if either `baseUrl` or `path` ends with,
-            // respectively starts with, a '/' or not, concatenation will
-            // not result in a '//'.
-            if( path.indexOf('/') != 0 ) path = '/' + path
-            return self.options.saveDroppedMediaUrl.replace(/\/+$/, "") + path;
-        },
-
-        previewMedia: function(event){
-            var self = this;
-            event.preventDefault();
-            var src = self.selectedMedia.attr("src");
-            var type = "image";
-            if (self.options.acceptedVideos.some(function(v) { return src.toLowerCase().indexOf(v) >= 0; })){
-                type = "video";
-            }
-            self.options.previewMediaItem(self.selectedMedia.attr("src"), type);
-        },
-
-        saveDroppedMedia: function(element){
-            var self = this;
-            var idElement = element.attr("id");
-            var data = {slug: idElement, text: element.attr("src")};
-            if( self.options.hints ) {
-                data['hints'] = self.options.hints;
-            }
+            var tagged = self.selectedMedia.find('[data-tags]');
+            const location = self.getMediaLocationFromItem(
+                self.selectedMedia);
             $.ajax({
-                method: "PUT",
-                async: false,
-                url: self.elementUrl(idElement),
-                data: JSON.stringify(data),
+                type: "PUT",
+                url: self.options.url,
+                data: JSON.stringify({
+                    "items": [{
+                        "location": location
+                    }],
+                    "tags": tags}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
-                success: function(response){
-                    self.options.droppedMediaCallback(response);
+                success: function(resp){
+                    if( tagged.length > 0 ) {
+                        tagged.data('tags', tags);
+                    }
+                },
+                error: function(resp) {
+                    self.galleryMessage(resp, 'error');
                 }
             });
-        }
+        },
+
+        hideGallery: function(speed, easing, callback) {
+            var self = this;
+            self.$el.animate({right: '-' + self.defaultWidth + 'px'});
+            self.$el.hide();
+            self.$el.off("djgallery.select");
+        },
+
+        showGallery: function(speed, easing, callback) {
+            var self = this;
+            self.$el.trigger("djgallery.loadresources");
+            self.$el.css('right', '-' + self.defaultWidth + 'px');
+            self.$el.show();
+            self.$el.animate({right: 0});
+        },
     };
 
     $.fn.djgallery = function(options) {
         var opts = $.extend( {}, $.fn.djgallery.defaults, options );
-        return new Djgallery($(this), opts);
+        return this.each(function() {
+            var $this = $(this);
+            if( !$this.data("djgallery") ) {
+                $this.data("djgallery", new Djgallery(this, opts));
+            }
+        });
     };
 
     $.fn.djgallery.defaults = {
 
-        // Djaodjin gallery required options
-        mediaUrl: null, // Url to get list of media and upload, update and delete a media item
-        csrfToken: null,
+        // djgallery required options
 
-        // Customize djaodjin gallery.
-        buttonClass: "",
-        galleryTemplate: "<div class=\"dj-gallery\"><div class=\"sidebar-gallery\"><h1>Media</h1><input placeholder=\"Search...\" class=\"dj-gallery-filter\" type=\"text\"><div class=\"dj-gallery-items\"></div><div class=\"dj-gallery-info-item\"><div class=\"dj-gallery-info-item-empty\">Click on an item to view more options</div><div class=\"dj-gallery-info-item-selected\" style=\"display: none;\"><textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea><button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">Delete</button><button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">Preview</button><br /><input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"Please enter tag.\"><button class=\"dj-gallery-tag-item\">Update tags</button></div></div></div></div>",
-        mediaClass: "",
+        url: null, // URL to list, update meta tags and delete media assets,
+                   // as well as upload a file when 'S3DirectUploadUrl' is
+                   // undefined.
+
+        // default options that can be overridden
+
+        csrfToken: null,  // csrfToken passed back to the API
+
         selectedMediaClass: "dj-gallery-active-item",
-        startLoad: false,
-        itemUploadProgress: function(progress){ return true; },
-        galleryMessage: function(message, type){ return true; },
-        previewMediaItem: function(src){ return true; },
+
+        itemTemplateVideo: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><video class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></video></div>',
+        itemTemplateImg: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></div>',
+        itemTemplateUnknown: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}"></div>',
+
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
         maxFilesizeUpload: 256,
         paramNameUpload: "file",
-        clickableArea: false,
+        clickableArea: ".clickable-area",
 
         // S3 direct upload
-        S3DirectUploadUrl: null,
+        S3DirectUploadUrl: null,     // URL for uploads when different from
+                                     // `url` option.
         accessKey: null,
         mediaPrefix: "",
         securityToken: null,
@@ -538,121 +527,26 @@ Options:
         amzCredential: null,
         amzDate: null,
 
+        itemUploadProgress: function(progress) { return true; },
+        galleryMessage: function(message, type) { return true; },
 
-        // Custom droppable media item and callback
-        mediaPlaceholder: ".droppable-image",
-        saveDroppedMediaUrl: null,
-        hints: null,
-        droppedMediaCallback: function(reponse) { return true; },
+        // messages generated by djgallery
+        // This functions can be overriden in order to implement
+        // internationalization / locale.
 
-        // messages
         uploadSuccessMessage: function(filename, location) {
-            return '"' + filename + '" uploaded sucessfully to "' + location + '"';
+          return '"${filename}" uploaded sucessfully to "${location}"'.replace(
+              '${filename}', filename).replace('${location}', location);
         },
+
         uploadPreviousSuccessMessage: function(filename, location) {
-            return '"' + filename + '" has previously been uploaded to "' + location + '"';
+          return '"${filename}" has previously been uploaded to "${location}"'.replace(
+              '${filename}', filename).replace('${location}', location);
         },
         placeholderAcceptsErrorMessage: function(filetypes) {
-            return 'This placeholder accepts only: ' + filetypes + ' files.';
+          return 'This placeholder accepts only: ${filetypes} files.'.replace(
+              '${filetypes}', filetypes);
         }
-    };
-
-
-    /** Sliding panel
-
-        HTML requirements:
-
-        <button data-target="#_panel_" data-default-width="300"></button>
-        <div id="#_panel_"></div>
-     */
-    function PanelButton(el, options){
-        this.element = $(el);
-        this.options = options;
-        this.defaultWidth = 300;
-        this.init();
-    }
-
-    PanelButton.prototype = {
-        init: function () {
-            var self = this;
-            var target = $(self.element.attr("data-target"));
-            if( typeof self.options.defaultWidth !== "undefined" ) {
-                self.defaultWidth = self.options.defaultWidth;
-            } else {
-                var defaultWidth = self.element.attr("data-default-width");
-                if( defaultWidth ) {
-                    self.defaultWidth = parseInt(defaultWidth);
-                }
-            }
-
-            target.find(".close").click(function() {
-                if( target.is(":visible")) {
-                    target.hide();
-                    self.element.show();
-                }
-            });
-
-            self.element.click(function(event) {
-                event.preventDefault();
-                self.element.blur();
-                if( self.element.hasClass("dragged") ){
-                    self.element.removeClass("dragged");
-                    return false;
-                }
-                if( target.hasClass("visible-gallery") ) {
-                    target.css({right: -self.defaultWidth, width: self.defaultWidth}).removeClass("visible-gallery");
-                    self.element.removeAttr("style").css({right: 0}).draggable("destroy");
-                } else {
-                    target.css({right: 0, width: self.defaultWidth}).addClass("visible-gallery");
-                    self.element.css("right", self.defaultWidth);
-                    self.element.draggable({
-                        axis: "x",
-                        cursor: "move",
-                        containment: "window",
-                        start: function(event, ui) {
-                            self.element.addClass("dragged");
-                        },
-                        drag: function(event, ui) {
-                            var viewWidth = $(window).width();
-                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.defaultWidth){
-                                target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
-                            } else {
-                                self.element.css("left", viewWidth - self.defaultWidth - $(ui.helper).outerWidth());
-                                return false;
-                            }
-                        },
-                        stop: function(event, ui) {
-                            var viewWidth = $(window).width();
-                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.defaultWidth){
-                                target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
-                            } else {
-                                target.css("right", "0px").css("width", self.defaultWidth);
-                            }
-                            setTimeout( function(){
-                                if( self.element.hasClass("dragged")){
-                                    self.element.removeClass("dragged");
-                                }
-                            }, self.defaultWidth);
-                        }
-                    });
-                    target.trigger("djgallery.loadresources");
-                    target.find(".content").trigger("pages.loadresources");
-                }
-            });
-        }
-    };
-
-    $.fn.panelButton = function(options) {
-        var opts = $.extend( {}, $.fn.panelButton.defaults, options );
-        return this.each(function() {
-            if (!$.data(this, "panelButton")) {
-                $.data(this, "panelButton", new PanelButton(this, opts));
-            }
-        });
-    };
-
-    $.fn.panelButton.defaults = {
-//        defaultWidth: 300
     };
 
 })(jQuery);
