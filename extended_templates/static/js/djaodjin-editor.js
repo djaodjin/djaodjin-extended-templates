@@ -76,42 +76,6 @@
             if( path.indexOf('/') != 0 ) path = '/' + path
             return self.options.baseUrl.replace(/\/+$/, "") + path;
         },
-
-        addTags: function(tags) {
-            var self = this;
-            $.ajax({
-                method: "PUT",
-                url: self.elementUrl() + "/add-tags/",
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
-                },
-                data: JSON.stringify({"tag": tags}),
-                datatype: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(resp) {
-                    self.options.onSuccess(self, resp);
-                },
-                error: self.options.onError
-            });
-        },
-
-        removeTags: function(tags) {
-            var self = this;
-            $.ajax({
-                method: "PUT",
-                url: self.elementUrl() + "/remove-tags/",
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
-                },
-                data: JSON.stringify({"tag": tags}),
-                datatype: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(resp) {
-                    self.options.onSuccess(self, resp);
-                },
-                error: self.options.onError
-            });
-        },
     };
 
     $.fn.baseEditor = function(options, custom){
@@ -188,16 +152,12 @@
             return true;
         },
 
-        initHallo: function(){
-            var self = this;
-            self.$el.hallo().focus();
-        },
-
         toggleEdition: function(){
             var self = this;
-            self.initHallo();
             self.getOriginText();
             self.$el.attr("placeholder", self.options.emptyInputText);
+            self.$el.attr("contenteditable", true);
+            self.$el.focus();
         },
 
         getSavedText: function(){

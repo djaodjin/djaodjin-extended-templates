@@ -4,15 +4,104 @@
 <html>
 <head>
   <title>Edit Mode | djaodjin-extended_templates</title>
-  <script type="text/javascript" src="{% static 'vendor/jquery.js' %}"></script>
   <link rel="stylesheet" media="screen" href="{% static 'vendor/bootstrap.css' %}" />
-  <script type="text/javascript" src="{% static 'vendor/bootstrap.js' %}"></script>
-  {% if csrf_token %}
-  <meta name="csrf-token" content="{{csrf_token}}">
-  {% endif %}
 </head>
 <body>
 <iframe id="template_view" class="edited-page" style="border: none; position:fixed; left: 0; top: 0; width: 100%; height: 100%;" src="{{page}}"></iframe>
-{% include "extended_templates/_edit_tools.html" %}
+<!-- Scripts that need to be injected into the page actually being edited
+     (i.e. iframe or current page). We hoisted this code before other
+     resources are loaded so we get a chance to intercept the iframe onload
+     event.
+  -->
+<script type="text/javascript">
+var edition_sources = [
+/* WYSIWYG element editors */
+  "/static/vendor/jquery.js",
+  "/static/vendor/jquery-ui.js",
+  "/static/vendor/rangy-core.js",
+  "/static/vendor/hallo.js",
+  "/static/vendor/Markdown.Converter.js",
+  "/static/vendor/Markdown.Sanitizer.js",
+  "/static/js/djaodjin-resources.js",
+  "/static/js/djaodjin-editor.js",
+  "jQuery(document).ready(function($) {\
+    $('.editable').editor({\
+      baseUrl: '{{ urls.edit.api_page_element_base }}',\
+    });\
+  });"
+];
+
+function injectScripts(container) {
+    var self = container;
+    var doit = true;
+    var editedPage = window;
+    if( typeof self.contentWindow !== "undefined" ) {
+        editedPage = self.contentWindow;
+        doit = (typeof editedPage.edition_sources === "undefined" );
+    }
+    if( doit ) {
+        // OK. These were not previously loaded by an injector.
+        var doc = editedPage.document;
+        editedPage.edition_sources = edition_sources.slice();
+        editedPage.less = {
+            env: "development",
+            async: false,
+            fileAsync: false,
+            functions: {},
+            dumpLineNumbers: "comments",
+            relativeUrls: false,
+            rootpath: "/static/vendor/less/",
+            onReady: false
+        };
+
+        function addScript(doc, src, onload) {
+           var script = doc.createElement("script");
+           script.type = "text/javascript";
+           if( src[0] == "/" ) {
+               script.src = src;
+           } else {
+               script.text = src;
+           }
+           doc.body.appendChild(script);
+        };
+
+        function addLess(doc, src) {
+            var script = doc.createElement("link");
+            script.rel = "stylesheet/less";
+            script.type = "text/css"
+            script.href = src;
+            doc.body.appendChild(script);
+        };
+
+        addScript(doc, "/static/js/load-edition-src.js");
+/*XXX
+        addLess(doc, "/static/vendor/less/bootstrap/bootstrap.less");
+        addScript(doc, "/static/vendor/less.js");
+*/
+    }
+};
+
+var view = jQuery("iframe.edited-page");
+if( view.length > 0 ) {
+  view.on("load", function() {
+      {% if inject_from_client %}injectScripts(this);{% endif %}
+      // templates editors
+      $("#code-editor").templateCodeEditors({
+          api_sources: "{{urls.edit.api_sources}}",
+          iframe: this
+      });
+  });
+} else {
+  jQuery(document).ready(function($) {
+      {% if inject_from_client %}injectScripts(document);{% endif %}
+      // templates editors
+      $("#code-editor").templateCodeEditors({
+          api_sources: "{{urls.edit.api_sources}}",
+      });
+  });
+}
+</script>
+  <script type="text/javascript" src="{% static 'vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/bootstrap.js' %}"></script>
 </body>
 </html>

@@ -2,26 +2,16 @@
 <html>
 <head>
   <title>djaodjin-extended-templates testsite</title>
-  <script type="text/javascript" src="/static/vendor/jquery.js"></script>
   {% if csrf_token %}
   <meta name="csrf-token" content="{{csrf_token}}">
-  <script type="text/javascript">
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-    $.ajaxSetup({
-        crossDomain: false, // obviates need for sameOrigin test
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", "{{csrf_token}}");
-            }
-        }
-    });
-  </script>
   {% endif %}
   <link rel="stylesheet" media="screen" href="/media/vendor/bootstrap.css" />
-  <script type="text/javascript" src="/static/vendor/bootstrap.js"></script>
+  <link rel="stylesheet" href="/static/vendor/font-awesome.css"/><!-- XXX fontawesome is required by hallo? -->
+  <link rel="stylesheet" href="/static/css/djaodjin-sidebar-gallery.css" type="text/css" />
+<!-- style editor -->
+<link rel="stylesheet" href="/static/vendor/jquery-ui.css"/>
+<link rel="stylesheet" href="/static/vendor/bootstrap-colorpicker.css"/>
+<link rel="stylesheet" href="/static/css/djaodjin-style-editor.css" type="text/css" />
   {% block localheader %}{% endblock %}
 </head>
 <body>
@@ -61,6 +51,8 @@
   </div>
   {% block content %}{% endblock %}
   {% block bodyscripts %}
+<script type="text/javascript" src="/static/vendor/jquery.js"></script>
+<script type="text/javascript" src="/static/vendor/bootstrap.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/vendor/vue.js"></script>
 <script type="text/javascript">
 Vue.prototype.$itemsPerPage =

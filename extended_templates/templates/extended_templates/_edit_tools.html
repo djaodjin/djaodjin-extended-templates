@@ -1,108 +1,4 @@
-<!-- Necessary vendor code to connect to the API end-points -->
-<script type="text/javascript" src="/static/vendor/jquery-ui.js"></script><!-- for droppable() -->
-<script type="text/javascript" src="/static/js/djaodjin-resources.js"></script>
-
-<!-- Scripts that need to be injected into the page actually being edited
-     (i.e. iframe or current page). We hoisted this code before other
-     resources are loaded so we get a chance to intercept the iframe onload
-     event.
-  -->
-<link rel="stylesheet" href="/static/vendor/font-awesome.css"/><!-- XXX fontawesome is required by hallo? -->
-<script type="text/javascript">
-var edition_sources = [
-/* WYSIWYG element editors */
-  "/static/css/djaodjin-editor.css",
-  "/static/vendor/jquery.js",
-  "/static/vendor/jquery-ui.js",
-  "/static/vendor/jquery.ui.touch-punch.js",
-  "/static/vendor/jquery.textarea_autosize.js",
-  "/static/vendor/jquery.selection.js",
-  "/static/vendor/jquery.ba-throttle-debounce.js",
-  "/static/vendor/rangy-core.js",
-  "/static/vendor/hallo.js",
-  "/static/vendor/Markdown.Converter.js",
-  "/static/vendor/Markdown.Sanitizer.js",
-  "/static/vendor/dropzone.js",
-  "/static/js/djaodjin-resources.js",
-  "/static/js/djaodjin-editor.js",
-  "jQuery(document).ready(function($) {\
-    $('.editable').editor({\
-      baseUrl: '{{ urls.edit.api_page_element_base }}',\
-    });\
-  });"
-];
-
-function injectScripts(container) {
-    var self = container;
-    var doit = true;
-    var editedPage = window;
-    if( typeof self.contentWindow !== "undefined" ) {
-        editedPage = self.contentWindow;
-        doit = (typeof editedPage.edition_sources === "undefined" );
-    }
-    if( doit ) {
-        // OK. These were not previously loaded by an injector.
-        var doc = editedPage.document;
-        editedPage.edition_sources = edition_sources.slice();
-        editedPage.less = {
-            env: "development",
-            async: false,
-            fileAsync: false,
-            functions: {},
-            dumpLineNumbers: "comments",
-            relativeUrls: false,
-            rootpath: "/static/vendor/less/",
-            onReady: false
-        };
-
-        function addScript(doc, src, onload) {
-           var script = doc.createElement("script");
-           script.type = "text/javascript";
-           if( src[0] == "/" ) {
-               script.src = src;
-           } else {
-               script.text = src;
-           }
-           doc.body.appendChild(script);
-        };
-
-        function addLess(doc, src) {
-            var script = doc.createElement("link");
-            script.rel = "stylesheet/less";
-            script.type = "text/css"
-            script.href = src;
-            doc.body.appendChild(script);
-        };
-
-        addScript(doc, "/static/js/load-edition-src.js");
-        addLess(doc, "/static/vendor/less/bootstrap/bootstrap.less");
-        addScript(doc, "/static/vendor/less.js");
-    }
-};
-
-var view = jQuery("iframe.edited-page");
-if( view.length > 0 ) {
-  view.on("load", function() {
-      {% if inject_from_client %}injectScripts(this);{% endif %}
-      // templates editors
-      $("#code-editor").templateCodeEditors({
-          api_sources: "{{urls.edit.api_sources}}",
-          iframe: this
-      });
-  });
-} else {
-  jQuery(document).ready(function($) {
-      {% if inject_from_client %}injectScripts(document);{% endif %}
-      // templates editors
-      $("#code-editor").templateCodeEditors({
-          api_sources: "{{urls.edit.api_sources}}",
-      });
-  });
-}
-</script>
-
 <!-- Media gallery panel -->
-<link rel="stylesheet" href="/static/css/djaodjin-sidebar-gallery.css" type="text/css" />
 <div id="media-gallery" class="dj-gallery custom-gallery" style="display:none;">
   <div>
     <div>
@@ -179,7 +75,6 @@ if( view.length > 0 ) {
       </div>
     </div>
   </div>
-  <script type="text/javascript" src="/static/vendor/jquery.ui.touch-punch.js"></script>
   <script type="text/javascript" src="/static/vendor/dropzone.js"></script>
   <script type="text/javascript" src="/static/js/djaodjin-upload.js"></script>
   <script type="text/javascript" src="/static/js/djaodjin-sidebar-gallery.js"></script>
@@ -200,14 +95,11 @@ jQuery(document).ready(function($) {
 {% endif %}
     selectedMediaClass: "thumbnail-active",
   });
-
-  //$("#modal-preview-media").modal().show();
 });
   </script>
 </div>
 
 <!-- Template editor panel -->
-<link rel="stylesheet" href="/static/vendor/jquery-ui.css"/>
 <div id="code-editor" class="custom-gallery" style="display:none;">
   <div>
     <h4>Template editor</h4>
@@ -219,17 +111,23 @@ jQuery(document).ready(function($) {
   <div class="tab-content" style="width:100%;min-height:100%;display:inline;">
       {# content panels inserted here #}
   </div>
-  <script type="text/javascript" src="/static/vendor/jquery.ba-throttle-debounce.js"></script>
+  <script type="text/javascript" src="/static/vendor/jquery.ba-throttle-debounce.js"></script> {# djaodjin-code-editor.js:82 #}
   <script type="text/javascript" src="/static/js/djaodjin-code-editor.js"></script>
   <script type="text/javascript" src="/static/vendor/ace.js"></script>
   <script type="text/javascript" src="/static/vendor/ext-language_tools.js"></script>
   <script type="text/javascript" src="/static/vendor/ext-modelist.js"></script>
   <script type="text/javascript" src="/static/vendor/ext-emmet.js"></script>
+  <script type="text/javascript">
+  jQuery(document).ready(function($) {
+      // templates editors
+      $("#code-editor").templateCodeEditors({
+          api_sources: "{{urls.edit.api_sources}}",
+      });
+  });
+  </script>
 </div>
 
 <!-- style editor -->
-<link rel="stylesheet" href="/static/vendor/bootstrap-colorpicker.css"/>
-<link rel="stylesheet" href="/static/css/djaodjin-style-editor.css" type="text/css" />
 <div id="style-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <h2>Styles</h2>
   <button class="refresh-styles btn btn-primary">Reload</button>

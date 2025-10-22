@@ -332,6 +332,7 @@
             // Display contextual information for the selected item
             var self = this;
             self.selectedMedia = null;
+            self.$el.find('.dj-gallery-info-preview').empty();
             self.$el.find(".dj-gallery-info-item-selected").hide();
             self.$el.find(".dj-gallery-info-item-empty").show();
         },

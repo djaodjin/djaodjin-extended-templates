@@ -210,7 +210,7 @@
                 });
             });
 
-            self.$element.click('.dj-close', function(event) {
+            self.$element.on('click', '.dj-close', function(event) {
                 self.$element.hide();
             });
         },

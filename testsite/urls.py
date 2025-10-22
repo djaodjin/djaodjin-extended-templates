@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,14 +43,17 @@ else:
     ]
 
 urlpatterns += [
-    re_path(r'^app/$', PageView.as_view(template_name='index.html',
+    re_path(r'(?P<path>favicon.ico)', serve,
+        kwargs={'document_root': settings.STATIC_ROOT if settings.STATIC_ROOT
+            else 'testsite/static'}),
+    path('app/', PageView.as_view(template_name='index.html',
 body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
-    re_path(r'^', include('django.contrib.auth.urls')),
-    re_path(r'^', include('extended_templates.urls')),
+    path('', include('django.contrib.auth.urls')),
+    path('', include('extended_templates.urls')),
     re_path(r'^edit(?P<page>\S+)?',
         EditView.as_view(), name='extended_templates_edit'),
-    re_path(r'^content/', PageView.as_view(template_name='index.html')),
-    re_path(r'pdf/', PdfView.as_view()),
+    path('content/', PageView.as_view(template_name='index.html')),
+    path('pdf/', PdfView.as_view()),
     re_path(r'^$', PageView.as_view(template_name='index.html',
 body_bottom_template_name="extended_templates/_body_bottom_edit_tools.html")),
 ]
