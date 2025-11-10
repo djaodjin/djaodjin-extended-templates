@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@ from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.loader import _engine_list, get_template
 from django.utils._os import safe_join
-from django_assets.templatetags.assets import assets
 from rest_framework.exceptions import ValidationError
 
 from . import settings
@@ -95,28 +94,14 @@ class AssetsParser(Parser):
                 try:
                     command = token.contents.split()[0]
                 except IndexError:
-                    self.empty_block_tag(token)
+                    raise self.error(
+                        token, 'Empty block tag on line %d' % token.lineno)
                 if command in parse_until:
                     # put token back on token list so calling
                     # code knows why it terminated
                     self.prepend_token(token)
                     return nodelist
-                if command == 'assets':
-                    try:
-                        # XXX This should work but for some reason debug does
-                        # not get propagated.
-                        # Lost in webassets.bundle.resolve_contents
-                        token.contents += ' debug=False'
-                        assets_string = str(
-                            assets(self, token).render(self.context))
-                        self.dest_stream.write(assets_string)
-                    except TemplateSyntaxError as err:
-                        if hasattr(self, 'error'):
-                            raise self.error(token, err)
-                        # Django < 1.8
-                        if not self.compile_function_error(token, err):
-                            raise
-                elif command == 'static':
+                if command == 'static':
                     self.dest_stream.write(
                         do_static(self, token).render(self.context))
                 else:

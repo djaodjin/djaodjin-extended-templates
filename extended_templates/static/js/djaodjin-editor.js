@@ -1,16 +1,18 @@
 /**
    Functionality related to the wysiwyg editor in djaodjin-extended-templates.
 
+   djUpload and djGallery are used to upload media files.
+
    These are based on jquery.
  */
 
-/* global location setTimeout jQuery */
-/* global getMetaCSRFToken showErrorMessages */
+/* global jQuery */
+/* global showErrorMessages */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['exports', 'jQuery'], factory);
+        define('djEditors', ['exports', 'jQuery'], factory);
     } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
         factory(exports, require('jQuery'));
@@ -21,84 +23,14 @@
         // instead.
         // factory((root.djResources = {}), root.jQuery);
     }
-}(typeof self !== 'undefined' ? self : this, function (exports, jQuery) {
+}(typeof self !== 'undefined' ? self : this, function (exports, jQuery, djResources) {
 
 
 (function ($) {
     "use strict";
 
-    function BaseEditor(element, options){
-        var self = this;
-        self.el = element;
-        self.$el = $(element);
-        self.options = options;
-        self.init();
-        return self;
-    }
-
-    BaseEditor.prototype = {
-        init: function(){
-            var self = this;
-        },
-
-        _getCSRFToken: function() {
-            var self = this;
-            if( self.options.csrfToken ) {
-                return self.options.csrfToken;
-            }
-            var crsfNode = self.el.find("[name='csrfmiddlewaretoken']");
-            if( crsfNode.length > 0 ) {
-                return crsfNode.val();
-            }
-            return getMetaCSRFToken();
-        },
-
-        getId: function() {
-            var self = this;
-            var slug = self.$el.attr(self.options.uniqueIdentifier);
-            if( !slug ) {
-                slug = self.$el.parents(
-                    "[" + self.options.uniqueIdentifier + "]").attr(
-                        self.options.uniqueIdentifier);
-            }
-            if( !slug ) {
-                slug = "undefined";
-            }
-            return slug;
-        },
-
-        elementUrl: function() {
-            var self = this;
-            var path = self.getId();
-            // We make sure that if either `baseUrl` or `path` ends with,
-            // respectively starts with, a '/' or not, concatenation will
-            // not result in a '//'.
-            if( path.indexOf('/') != 0 ) path = '/' + path
-            return self.options.baseUrl.replace(/\/+$/, "") + path;
-        },
-    };
-
-    $.fn.baseEditor = function(options, custom){
-        var opts = $.extend( {}, $.fn.baseEditor.defaults, options );
-        return this.each(function() {
-            $(this).data("editor", new BaseEditor($(this), opts));
-        });
-    };
-
-    $.fn.baseEditor.defaults = {
-        baseUrl: null, // Url to send request to server
-        csrfToken: null,
-        uniqueIdentifier: "id",
-        hints: null,
-        onSuccess: function(element, resp){
-            return true;
-        },
-        onError: function(resp){
-            showErrorMessages(resp);
-        },
-    };
-
-    /**
+    /** Live editor based on HTML5 `contenteditable` that saves the content
+        through an API call once the element looses focus.
      */
     function Editor(element, options){
         var self = this;
@@ -109,7 +41,7 @@
         return self;
     }
 
-    Editor.prototype = $.extend({}, BaseEditor.prototype, {
+    Editor.prototype = {
         init: function(){
             var self = this;
             if( self.options.editionTool ) {
@@ -127,6 +59,39 @@
             if( self.options.focus ) {
                 self.toggleEdition();
             }
+        },
+
+        elementUrl: function() {
+            var self = this;
+
+            var baseUrl = self.$el.data("url");
+            if( !baseUrl ) {
+                baseUrl = self.$el.parents("[data-url]").data("url");
+            }
+            if( baseUrl ) return baseUrl;
+
+            baseUrl = self.options.baseUrl;
+            baseUrl = baseUrl.replace(/\/+$/, "");
+
+            const path = self.getId();
+            // We make sure that if either `baseUrl` or `path` ends with,
+            // respectively starts with, a '/' or not, concatenation will
+            // not result in a '//'.
+            return baseUrl + ((path.indexOf('/') != 0) ? '/' + path : path);
+        },
+
+        getId: function() {
+            var self = this;
+            var slug = self.$el.attr(self.options.uniqueIdentifier);
+            if( !slug ) {
+                slug = self.$el.parents(
+                    "[" + self.options.uniqueIdentifier + "]").attr(
+                        self.options.uniqueIdentifier);
+            }
+            if( !slug ) {
+                slug = "undefined";
+            }
+            return slug;
         },
 
         hoverElement: function(event){
@@ -187,7 +152,7 @@
             var data = {};
             var method = "PUT";
             var savedText = self.getSavedText();
-            if (self.$el.attr("data-key")){
+            if( self.$el.attr("data-key") ) {
                 data[self.$el.attr("data-key")] = savedText;
             } else {
                 data = {
@@ -198,30 +163,17 @@
             if( self.options.hints ) {
                 data['hints'] = self.options.hints;
             }
-
-            if( self.options.debug ) {
-                console.log("data-key:", self.$el.attr("data-key"),
-                    "send:", data);
-            }
-            $.ajax({
-                method: method,
-                url: self.elementUrl(),
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
-                },
-                data: JSON.stringify(data),
-                datatype: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(resp) {
-                    self.options.onSuccess(self, resp);
-                    self.$el.removeAttr("contenteditable");
-                    self.formatDisplayedValue();
-                },
-                error: self.options.onError
-            });
+            djApi.put(self.elementUrl(), data,
+            function(resp) {
+                self.options.onSuccess(self, resp);
+                self.$el.removeAttr("contenteditable");
+                self.formatDisplayedValue();
+            }, self.options.onError);
         }
-    });
+    };
 
+    /** Special editor that checks for currency formatting
+     */
     function CurrencyEditor(element, options){
         var self = this;
         self.el = element;
@@ -232,12 +184,16 @@
     }
 
     CurrencyEditor.prototype = $.extend({}, Editor.prototype, {
+
         getSavedText: function(){
             var self = this;
-            var enteredValue = self.$el.text();
-            var amount = parseInt(
-                (parseFloat(enteredValue.replace(/[^0-9\.]+/g, "")) * 100).toFixed(2));
-            return amount;
+            if( self.$el.attr("data-key") ) {
+                const enteredValue = self.$el.text();
+                return parseInt(
+                    (parseFloat(enteredValue.replace(/[^0-9\.]+/g, ""))
+                     * 100).toFixed(2));
+            }
+            return $.trim(self.$el.text());
         },
 
         formatDisplayedValue: function(){
@@ -262,6 +218,9 @@
         }
     });
 
+
+    /** Special editor that checks for date formatting
+     */
     function DateEditor(element, options){
         var self = this;
         self.el = element;
@@ -270,7 +229,6 @@
         self.init();
         return self;
     }
-
 
     DateEditor.prototype = $.extend({}, Editor.prototype, {
 
@@ -309,206 +267,8 @@
     });
 
 
-    function FormattedEditor(element, options){
-        var self = this;
-        self.el = element;
-        self.$el = $(element);
-        self.options = options;
-        self.init();
-        return self;
-    }
-
-    FormattedEditor.prototype = $.extend({}, Editor.prototype, {
-        initHallo: function(){
-            var self = this;
-            self.$el.hallo({
-                plugins: {
-                    "halloheadings": {},
-                    "halloformat": {},
-                    "halloblock": {},
-                    "hallojustify": {},
-                    "hallolists": {},
-                    "hallolink": {},
-                    "halloreundo": {}
-                },
-                editable: true,
-                toolbar: "halloToolbarFixed"
-            }).focus();
-            self.initDroppable();
-        },
-
-        // method only applicable
-        initDroppable: function(){
-            // Build our own droppable to avoid useless features
-            var self = this;
-            $.each(self.$el.children(), function(index, element){
-                if (!$(element).hasClass("ui-droppable")){
-                    $(element).droppable({
-                        drop: function(){
-                            var droppable = $(this);
-                            droppable.focus();
-                        },
-                        over: function(event, ui){
-                            var droppable = $(this);
-                            var draggable = ui.draggable;
-                            droppable.append("<img src=\"" + draggable.attr("src") + "\" style=\"max-width:100%;\">");
-                        },
-                        out: function(event, ui){
-                            var draggable = ui.draggable;
-                            $(this).children("[src=\"" + draggable.attr("src") + "\"]").remove();
-                        }
-                    });
-                }
-            });
-        }
-    });
-
-    function MarkdownEditor(element, options){
-        var self = this;
-        self.el = element;
-        self.$el = $(element);
-        self.options = options;
-        self.init();
-        return self;
-    }
-
-    MarkdownEditor.prototype = $.extend({}, Editor.prototype, {
-
-        markdownTools: function(){
-            var self = this;
-            if( !self.$mardownToolHtml ) {
-                self.$mardownToolHtml = $("<div id=\"markdown_tool_" + self.getId() + "\" class=\"" + self.options.container_tool_class + "\">\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-h3\">H3</button>\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-h4\">H4</button>\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-bold\"><strong>B</strong></button>\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-italic\"><em>I</em></button>\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-list-ul\">List</button>\
-                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-link\">Link</button></div>");
-                self.$mardownToolHtml.on("mousedown", function(event){
-                    event.preventDefault();
-                    var $target = $(event.target);
-                    if ($target.hasClass("markdown-h3")){
-                        self.$textarea.selection("insert", {text: "###", mode: "before"}).selection("insert", {text: "", mode: "after"});
-                    }else if($target.hasClass("markdown-h4")){
-                        self.$textarea.selection("insert", {text: "####", mode: "before"}).selection("insert", {text: "", mode: "after"});
-                    }else if($target.hasClass("markdown-bold")||$target.parent().hasClass("markdown-bold")){
-                        self.$textarea.selection("insert", {text: "**", mode: "before"}).selection("insert", {text: "**", mode: "after"});
-                    }else if($target.hasClass("markdown-list-ul")){
-                        self.$textarea.selection("insert", {text: "* ", mode: "before"}).selection("insert", {text: "", mode: "after"});
-                    }else if($target.hasClass("markdown-link")){
-                        var text = self.$textarea.selection();
-                        if (text.indexOf("http://") >= 0){
-                            self.$textarea.selection("insert", {text: "[" + text + "](", mode: "before"}).selection("insert", {text: ")", mode: "after"});
-                        }else{
-                            self.$textarea.selection("insert", {text: "[http://" + text + "](http://", mode: "before"}).selection("insert", {text: ")", mode: "after"});
-                        }
-                    }else if($target.attr("id") === "italic"){
-                        self.$textarea.selection("insert", {text: "*", mode: "before"}).selection("insert", {text: "*", mode: "after"});
-                    }
-                });
-            }
-            return self.$mardownToolHtml;
-        },
-
-        textArea: function(){
-            var self = this;
-            if( !self.$textarea ) {
-                self.$textarea = $("<textarea placeholder=\"" + self.options.emptyInputText + "\" class=\"djaodjin-editor\" id=\"textarea_" + self.getId() + "\" style=\"\"></textarea>");
-            }
-            // adds the handlers back always because `replaceWith` removes them.
-            self.$textarea.on("blur", function(event){
-                event.preventDefault();
-                self.saveEdition();
-            });
-            self.$textarea.droppable({
-                drop: function(event, ui){
-                    var droppable = $(this);
-                    var draggable = ui.draggable;
-                    droppable.focus();
-                    droppable.selection("insert", {
-                        text: "![Alt text](" + draggable.attr("src") + ")",
-                        mode: "before"
-                    });
-                    $(ui.helper).remove();
-                }
-            });
-            return self.$textarea;
-        },
-
-        getElementProperties: function(){
-            var self = this;
-            if (self.$el.prop("tagName") === "DIV"){
-                if (self.$el.children("p").length > 0){
-                    return self.$el.children("p");
-                }else{
-                    return $("p");
-                }
-            }else{
-                return self.$el;
-            }
-        },
-
-        getOriginText: function(){
-            var self = this;
-            self.originText = $.trim(self.$el.text());
-            return self.originText;
-        },
-
-        getProperties: function(){
-            var self = this;
-            self.classElement = self.$el.attr("class");
-            var element = self.getElementProperties();
-            self.cssVar = {
-                "font-size": element.css("font-size"),
-                "line-height": element.css("line-height"),
-                "height": parseInt(element.css("height").split("px")) + (parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
-                "margin-top": element.css("margin-top"),
-                "font-family": element.css("font-family"),
-                "font-weight": element.css("font-weight"),
-                "text-align": element.css("text-align"),
-                "padding-top": -(parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
-                "color": element.css("color"),
-                "width": element.css("width")
-            };
-        },
-
-        toggleEdition: function(){
-            var self = this;
-            setTimeout(function(){
-                self.getOriginText();
-                self.initEditor();
-            }, self.options.delayMarkdownInit);
-
-        },
-
-        initEditor: function(){
-            var self = this;
-            self.getProperties();
-            $("body").append(self.markdownTools());
-            self.$mardownToolHtml.css({
-                top: (self.$el.offset().top - 45) + "px",
-                left: self.$el.offset().left + "px"
-            });
-            self.$mardownToolHtml.show();
-            self.$el.replaceWith(self.textArea());
-            self.$textarea.css(self.cssVar).val(self.originText).textareaAutoSize().focus();
-        },
-
-        getSavedText: function(){
-            var self = this;
-            return $.trim(self.$textarea.val());
-        },
-
-        formatDisplayedValue: function(){
-            var self = this;
-            var convert = new Markdown.getSanitizingConverter().makeHtml;
-            var newHtml = convert(self.getSavedText()).replace("<img ", "<img style=\"max-width:100%\" ");
-            self.$textarea.replaceWith(self.$el.html(newHtml));
-            self.$mardownToolHtml.hide();
-            self.init(); // adds the handlers back to self.$el.
-        },
-    });
-
+    /** Special editor that checks for an integer range
+     */
     function RangeEditor(element, options){
         var self = this;
         self.el = element;
@@ -521,65 +281,79 @@
     RangeEditor.prototype = $.extend({}, Editor.prototype, {
         valueSelector: function(){
             var self = this;
-            self.$valueSelector = $("<input class=\"djaodjin-editor\" id=\"value_selector_" + self.getId() + "\" style=\"width:auto;\"/ type=\"range\">");
+            self.$valueSelector = $(self.options.templates.rangeSelector);
 
-            self.$valueSelector.on("input", function(event){
-                var val = $(this).val();
+            self.$valueSelector.on("blur", function(event) {
                 event.stopPropagation();
-                self.options.rangeUpdate(self.$el, val);
-                if (self.$el.data("range-value") !== "undefined"){
-                    self.$el.data("range-value", val);
-                }
-            });
-
-            self.$valueSelector.on("mouseup", function(event){
-                self.$valueSelector.blur();
-            });
-
-            self.$valueSelector.on("blur", function(event){
                 self.saveEdition();
+                const text = self.getHumanizedSavedText();
+                self.$el.data("range-value", self.$valueSelector.val());
                 self.$valueSelector.remove();
                 self.$valueSelector = null;
-                event.stopPropagation();
+                self.$el.text(text);
             });
 
             return self.$valueSelector;
         },
 
-        getOriginText: function(){
+        getHumanizedSavedText: function() {
             var self = this;
-            if (self.$el.data("range-value") !== "undefined"){
-                self.originText = self.$el.data("range-value");
-            }else{
-                self.originText = $.trim(self.$el.text());
-            }
-            return self.originText;
-        },
-
-        getSavedText: function(){
-            var self = this;
-            var newVal = self.$valueSelector.val();
+            const minVal = self.$el.data("range-min");
+            const newVal = self.$valueSelector.val();
+            const updatedVal = minVal ? newVal - minVal : newVal;
             var values = self.$el.data("range-values");
-            if (values){
-                if (values[String(newVal)]){
-                    newVal = values[String(newVal)];
+            if( values ) {
+                const item = values[updatedVal];
+                if( item ) {
+                    return item[1];
                 }
             }
             return newVal;
          },
 
-        toggleEdition: function(){
+        getSavedText: function() {
             var self = this;
-            if (self.$valueSelector){
+            const minVal = self.$el.data("range-min");
+            const newVal = self.$valueSelector.val();
+            const updatedVal = minVal ? newVal - minVal : newVal;
+            var values = self.$el.data("range-values");
+            if( values ) {
+                const item = values[updatedVal];
+                if( item ) {
+                    return item[0];
+                }
+            }
+            return newVal;
+         },
+
+        toggleEdition: function() {
+            var self = this;
+            if( self.$valueSelector ) {
                 self.$valueSelector.blur();
-            }else{
-                self.getOriginText();
+            } else {
+                self.$el.empty();
                 self.$el.append(self.valueSelector());
-                self.$valueSelector.attr("min", self.$el.data("range-min"))
+                var initVal = self.$el.data("range-min");
+                const initRangeValue = self.$el.data("range-value");
+                if( initRangeValue !== "undefined" ) {
+                    initVal = parseInt(initRangeValue);
+                    if( false ) {
+                    const values = self.$el.data("range-values");
+                    if( values ) {
+                        for( let idx = 0; idx < values.length; ++idx ) {
+                            if( values[idx][0] == initRangeValue ) {
+                                initVal = idx;
+                                break
+                            }
+                        }
+                    }
+                    }
+                }
+                self.$valueSelector
+                    .attr("min", self.$el.data("range-min"))
                     .attr("max", self.$el.data("range-max"))
                     .attr("step", self.$el.data("range-step"))
-                    .val(self.originText);
-
+                    .val(initVal);
                 if (self.options.rangePosition === "middle"){
                     self.$valueSelector.css({top: (self.$el.offset().top + (self.$el.height() / 2)) + "px"});
                 }else if (self.options.rangePosition === "bottom"){
@@ -605,7 +379,7 @@
         return self;
     }
 
-    MediaEditor.prototype = $.extend({}, BaseEditor.prototype, {
+    MediaEditor.prototype = $.extend({}, Editor.prototype, {
 
         init: function(){
             var self = this;
@@ -661,24 +435,9 @@
             });
         },
 
-        saveEdition: function() {
+        getSavedText: function(){
             var self = this;
-            var idElement = self.$el.attr("id");
-            var data = {slug: idElement, text: self.$el.attr("src")};
-            if( self.options.hints ) {
-                data['hints'] = self.options.hints;
-            }
-            $.ajax({
-                method: "PUT",
-                async: false,
-                url: self.elementUrl(),
-                data: JSON.stringify(data),
-                datatype: "json",
-                contentType: "application/json; charset=utf-8",
-                beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
-                },
-            });
+            return self.$el.attr("src");
         },
 
         updateMediaSource: function(location) {
@@ -705,12 +464,8 @@
         var opts = $.extend( {}, $.fn.editor.defaults, options );
         return this.each(function() {
             if (!$.data($(this), "editor")) {
-                if ($(this).hasClass("edit-formatted")){
-                    $.data($(this), "editor", new FormattedEditor($(this), opts));
-                }else if ($(this).hasClass("edit-markdown")){
-                    $.data($(this), "editor", new MarkdownEditor($(this), opts));
-                }else if ($(this).hasClass("edit-currency")){
-                    $.data($(this), "editor", new CurrencyEditor($(this), opts));
+                if ($(this).hasClass("edit-currency")){
+                   $.data($(this), "editor", new CurrencyEditor($(this), opts));
                 }else if ($(this).hasClass("edit-date")){
                     $.data($(this), "editor", new DateEditor($(this), opts));
                 }else if ($(this).hasClass("edit-range")){
@@ -730,11 +485,10 @@
         baseUrl: null,
         /** URL to upload media assets */
         uploadUrl: null,
-        /** Optional CSRF token for Django */
-        csrfToken: null,
         editionTool: null,
         emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
+        hints: null,
         mediaGallerySelector: "#media-gallery",
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
@@ -744,15 +498,13 @@
         onError: function(resp){
             showErrorMessages(resp);
         },
-        rangeUpdate: function(editable, newVal){
-            editable.text(newVal);
-        },
         rangePosition: "middle", // position of range input from element "middle", "top" or "bottom"
         delayMarkdownInit: 0, // Add ability to delay the get request for markdown
         debug: false,
         focus: false,
         templates: {
-            dateSelector: '<input class="djaodjin-editor" style="width:auto;" type="date">'
+            dateSelector: '<input class="djaodjin-editor" style="width:auto;" type="date">',
+            rangeSelector: '<input class="djaodjin-editor" style="width:auto;" type="range">',
         }
     };
 

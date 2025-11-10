@@ -22,16 +22,13 @@ classifiers = [
 ]
 dependencies = [
   "beautifulsoup4>=4.3.2",
-  "boto3>=1.17.21",
   "Django>=1.11",
   "djangorestframework>=3.3.1",
-  "django-assets>=0.12",
-  "django-storages>=1.14",
-  "djaodjin-deployutils>=0.14.0",
+  "django-storages>=1.14",           # for `get_package_file_from_s3`
+  "djaodjin-deployutils>=0.14.1",    # for `package_theme`
   "Jinja2>=2.8",
-  "Markdown>=2.4.1",
   "premailer>=2.9.2",
-  "requests>=2.22.0",
+  "requests>=2.22.0",                # to install theme from remote location
   "WeasyPrint>=0.42"
 ]
 

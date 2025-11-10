@@ -6,7 +6,6 @@
   <meta name="csrf-token" content="{{csrf_token}}">
   {% endif %}
   <link rel="stylesheet" media="screen" href="/media/vendor/bootstrap.css" />
-  <link rel="stylesheet" href="/static/vendor/font-awesome.css"/><!-- XXX fontawesome is required by hallo? -->
   <link rel="stylesheet" href="/static/css/djaodjin-sidebar-gallery.css" type="text/css" />
 <!-- style editor -->
 <link rel="stylesheet" href="/static/vendor/jquery-ui.css"/>
@@ -55,6 +54,8 @@
 <script type="text/javascript" src="/static/vendor/bootstrap.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/vendor/vue.js"></script>
 <script type="text/javascript">
+const DJAOAPP_API_BASE_URL = "";
+
 Vue.prototype.$itemsPerPage =
     {% if items_per_page %}{{items_per_page}}{% else %}25{% endif %};
 Vue.prototype.$urls = {% if urls %}{{urls|to_json}}{% else %}{}{% endif %};

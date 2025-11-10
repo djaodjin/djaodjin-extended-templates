@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2025, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from django.template.response import TemplateResponse
 from ..compat import csrf, render_template, reverse
 from ..thread_locals import (enable_instrumentation,
     _add_editable_styles_context, get_edition_tools_context_data)
-from ..mixins import AccountMixin, UploadedImageMixin, UpdateEditableMixin
+from ..mixins import AccountMixin, UploadedImageMixin
 from ..models import get_show_edit_tools
 
 
@@ -100,14 +100,12 @@ def inject_edition_tools(response, request=None, context=None,
     return soup
 
 
-class PageMixin(UpdateEditableMixin):
+class PageMixin(object):
     """
     Display or Edit a ``Page`` of a ``Project``.
     """
     body_top_template_name = None
     body_bottom_template_name= 'extended_templates/_body_bottom_edit_tools.html'
-    # without the gallery and code editor
-    # body_bottom_template_name = "extended_templates/_body_bottom.html"
     edit_frame_template_name = None
 
     def add_edition_tools(self, response, context=None):

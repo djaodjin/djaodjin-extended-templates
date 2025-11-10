@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ from rest_framework.response import Response
 
 from .serializers import SourceCodeSerializer, SourceElementSerializer
 from ..compat import DebugLexer, TokenType, force_str, get_html_engine, six
-from ..mixins import ThemePackageMixin, UpdateEditableMixin
+from ..mixins import ThemePackageMixin
 from ..themes import check_template, get_theme_dir, get_template_path
 
 LOGGER = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ STATE_BLOCK_CONTENT = 3
 STATE_BLOCK_CONTENT_ESCAPE = 4
 
 
-class ReplaceIdVisitor(UpdateEditableMixin):
+class ReplaceIdVisitor(object):
 
     def __init__(self, dest, element_id, element_text, template_path=None):
         self.dest = dest
@@ -66,13 +66,7 @@ class ReplaceIdVisitor(UpdateEditableMixin):
         soup = BeautifulSoup(block_text, 'html5lib')
         editable = soup.find(id=self.element_id)
         if editable:
-            if 'edit-formatted' in editable['class']:
-                self.insert_formatted(editable, self.element_text)
-            elif 'edit-markdown' in editable['class']:
-                self.insert_markdown(editable, self.element_text)
-            elif 'edit-currency' in editable['class']:
-                self.insert_currency(editable, self.element_text)
-            elif 'edit-media' in editable['class']:
+            if editable.name in ['img', 'video']:
                 editable['src'] = self.element_text
             else:
                 editable.string = self.element_text

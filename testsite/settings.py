@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 import logging, os, re, sys
 
 from deployutils.configs import load_config, update_settings
+from extended_templates.compat import reverse_lazy
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -105,6 +106,16 @@ LOGGING = {
         'log': LOG_HANDLER,
     },
     'loggers': {
+        'deployutils.perf': {
+            'handlers': ['log'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'deployutils': {
+            'handlers': ['db_log'],
+            'level': 'INFO',
+            'propagate': False
+        },
         'extended_templates': {
             'handlers': [],
             'level': 'INFO',
@@ -134,17 +145,16 @@ LOGGING = {
     },
 }
 
-
 MIDDLEWARE = (
+    'django.middleware.security.SecurityMiddleware',
+    'deployutils.apps.django_deployutils.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
-
-MIDDLEWARE_CLASSES = MIDDLEWARE
 
 ROOT_URLCONF = 'testsite.urls'
 WSGI_APPLICATION = 'testsite.wsgi.application'
@@ -248,6 +258,24 @@ DATABASES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+# API settings
+# ------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'deployutils.apps.django_deployutils.authentication.JWTAuthentication',
+        # `rest_framework.authentication.SessionAuthentication` is the last
+        # one in the list because it will raise a PermissionDenied if the CSRF
+        # is absent.
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'NON_FIELD_ERRORS_KEY': 'detail',
+    'ORDERING_PARAM': 'o',
+    'PAGE_SIZE': 25,
+    'SEARCH_PARAM': 'q',
+}
+
 # Internationalization
 # --------------------
 FILE_CHARSET = 'utf-8'
@@ -257,7 +285,45 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+
+# Session settings
+# ----------------
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+SESSION_ENGINE = 'deployutils.apps.django_deployutils.backends.jwt_session_store'
+
 # Authentication
 # --------------
+# The Django Middleware expects to find the authentication backend
+# before returning an authenticated user model.
+AUTHENTICATION_BACKENDS = (
+    'deployutils.apps.django_deployutils.backends.auth.ProxyUserBackend',
+)
+
+DEPLOYUTILS = {
+    'APP_NAME': APP_NAME,
+    # Hardcoded mockups here.
+    'MOCKUP_SESSIONS': {
+        'donny': {
+            'username': 'donny',   # Profile manager for site broker
+            'roles': {
+                'manager': [{
+                    'slug': APP_NAME,
+                    'printable_name': APP_NAME,
+                }]},
+            'site': {
+                'slug': APP_NAME,
+                'printable_name': APP_NAME,
+                'email': '%s@localhost.localdomain' % APP_NAME
+            }
+        },
+    },
+    'ALLOWED_NO_SESSION': [
+        STATIC_URL,
+        '/api/auth',
+        reverse_lazy('login'),
+        reverse_lazy('homepage'),
+    ]
+}
+
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/app/'
