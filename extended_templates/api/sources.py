@@ -60,16 +60,21 @@ class ReplaceIdVisitor(object):
 
     def update_block(self, block_text):
         #pylint:disable=too-many-arguments
-        LOGGER.debug("%slooking for element id='%s' in '%s'",
+        LOGGER.debug("%sreplaces element id='%s' by '%s' in '%s'",
             "(%s) " % self.template_path if self.template_path else "",
-            self.element_id, block_text)
+            self.element_id, self.element_text, block_text)
         soup = BeautifulSoup(block_text, 'html5lib')
         editable = soup.find(id=self.element_id)
         if editable:
             if editable.name in ['img', 'video']:
                 editable['src'] = self.element_text
             else:
-                editable.string = self.element_text
+                if '<' in self.element_text and '</' in self.element_text:
+                    new_text = BeautifulSoup(self.element_text, 'html5lib')
+                    editable.clear()
+                    editable.append(new_text.body.next)
+                else:
+                    editable.string = self.element_text
             # Implementation Note:
             # 1. we have to use ``.body.next`` here
             #    because html5lib "fixes" our HTML by adding missing

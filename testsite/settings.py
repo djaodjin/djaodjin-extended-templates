@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import logging, os, re, sys
+import os, sys
 
 from deployutils.configs import load_config, update_settings
 from extended_templates.compat import reverse_lazy
@@ -22,6 +22,7 @@ DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
 DEBUG = True
 ALLOWED_HOSTS = ('*',)
 APP_NAME = os.path.basename(os.path.dirname(__file__))
+LOG_FILE = None
 ASSETS_CDN = {}
 
 update_settings(sys.modules[__name__],

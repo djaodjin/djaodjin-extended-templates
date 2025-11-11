@@ -10,9 +10,9 @@ import django.template.defaulttags
 from django.utils.translation import gettext, ngettext
 from django.utils._os import safe_join
 from deployutils.apps.django_deployutils.themes import get_template_search_path
-from extended_templates import signals as extended_templates_signals
 from jinja2.ext import i18n
 from jinja2.sandbox import SandboxedEnvironment as Jinja2Environment
+from extended_templates import signals as extended_templates_signals
 from extended_templates.compat import import_string, reverse, six
 
 import testsite.templatetags.testsite_tags
@@ -27,8 +27,8 @@ class TestsiteEnvironment(Jinja2Environment):
         #pylint:disable=redefined-builtin
         template = super(TestsiteEnvironment, self).get_template(
             name, parent=parent, globals=globals)
-        LOGGER.info("[TestsiteEnvironment.get_template] loads %s from %s" % (
-            name, template.filename))
+        LOGGER.debug("[TestsiteEnvironment.get_template] loads %s from %s",
+            name, template.filename)
         extended_templates_signals.template_loaded.send(
             sender=self, template=template)
         return template

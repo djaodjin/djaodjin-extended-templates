@@ -39,8 +39,7 @@ class Command(BaseCommand):
     """
     missing_args_message = "Enter at least one receipient email."
 
-    @staticmethod
-    def add_arguments(parser):
+    def add_arguments(self, parser):
         parser.add_argument('args', nargs='+',
             help='One or more receipient email.')
 

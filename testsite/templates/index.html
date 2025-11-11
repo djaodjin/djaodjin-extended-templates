@@ -3,7 +3,7 @@
 <div id="app" style="margin-left: 5px;">
     <h1 class="editable" id="leaderboard-title">Edit tools</h1>
     <div>
-<p class="editable edit-formatted" id="injected-tools-formatted">
+<p class="editable edit-formatted" id="leaderboard-content">
 The edit tools comprise the UI elements for the editors as well as code
 that must be injected into the edited page. The code in
 <code>djaodjin-editor.js</code>, <code>djaodjin-sidebar-gallery.js</code>
@@ -38,13 +38,13 @@ Features
             <div>
 Features
 <ul>
-<li>Any change to page stylesheets will not affect the UI for edit tools.</li>
-<li>The editor URL is shown in the browser bar<sup>1</sup></li>
-<li>The list of templates used to render the page is not available.<sup>2</sup></li>
-<li>There is effectively two HTTP requests (one for the EditView and one
+  <li>Any change to page stylesheets will not affect the UI for edit tools.</li>
+  <li>The editor URL is shown in the browser bar<sup>1</sup></li>
+  <li>The list of templates used to render the page is not available.<sup>2</sup></li>
+  <li>There is effectively two HTTP requests (one for the EditView and one
 for the edited page).<sup>3</sup></li>
 </ul>
-<div class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom" id="leaderboard-message">
+<div class="lead editable edit-formatted" data-intro="Paragraph editable in markdown" data-position="bottom" id="injected-tools-formatted">
 This is a template for a marketing or informational website. Use it as a starting point to create something unique!
 </div>
 <div class="lead">

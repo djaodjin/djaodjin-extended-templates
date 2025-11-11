@@ -291,10 +291,10 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                                     not default_path.startswith(theme_dir)):
                                     cmdline = [
                                         'diff', '-u', default_path, tmp_path]
-                                    cmd = subprocess.Popen(
-                                        cmdline, stdout=subprocess.PIPE)
-                                    lines = cmd.stdout.readlines()
-                                    cmd.wait()
+                                    with subprocess.Popen(
+                                        cmdline, stdout=subprocess.PIPE) as cmd:
+                                        lines = cmd.stdout.readlines()
+                                        cmd.wait()
                                     # Non-zero error codes are ok here.
                                     # That's how diff indicates the files
                                     # are different.
