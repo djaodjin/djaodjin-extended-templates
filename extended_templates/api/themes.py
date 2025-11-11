@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView
 from rest_framework.response import Response
 
 from .serializers import NoModelSerializer, EditToolsSerializer
-from ..compat import gettext_lazy as _
+from ..compat import gettext_lazy as _, urlparse
 from ..docs import extend_schema, OpenApiResponse
 from ..mixins import ThemePackageMixin
 from ..models import EditTools
@@ -191,8 +191,10 @@ https://*mydomain*/api/themes
 
         #pylint:disable=unused-argument
         package_uri = request.data.get('location', None)
-        if package_uri and 'aws.com/' in package_uri:
-            self.install_theme(package_uri)
+        if package_uri:
+            parts = urlparse(package_uri)
+            if parts.netloc.endswith('aws.com'):
+                self.install_theme(package_uri)
         elif 'file' in request.FILES:
             package_file = request.FILES['file']
             LOGGER.info("install %s to %s", package_file.name, self.theme)

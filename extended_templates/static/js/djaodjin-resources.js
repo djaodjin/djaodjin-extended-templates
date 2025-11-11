@@ -174,10 +174,8 @@ function getMetaCSRFToken() {
         window.location = getUrlParameter('next');
 */
 function getUrlParameter(name) {
-    name = name.replace(/[\[]/g, '\\[').replace(/[\]]/g, '\\]');
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    var results = regex.exec(location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    let urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
 };
 
 

@@ -36,7 +36,9 @@
     PanelButton.prototype = {
         init: function () {
             var self = this;
-            var target = $(self.element.attr("data-target"));
+
+            var target = $(document.querySelector(
+                self.element.attr("data-target")));
             if( typeof self.options.defaultWidth !== "undefined" ) {
                 self.defaultWidth = self.options.defaultWidth;
             } else {
