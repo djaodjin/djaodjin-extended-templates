@@ -74,7 +74,9 @@ var messagesMixin = {
                                 } else if( data[key].hasOwnProperty('detail') ) {
                                     message = data[key].detail;
                                 }
-                                messages.push(key + ": " + message);
+                                if( message ) {
+                                    messages.push(key + ": " + message);
+                                }
                                 var inputField = jQuery("[name=\"" + key + "\"]");
                                 var parent = inputField.parents('.form-group');
                                 inputField.addClass("is-invalid");
@@ -126,6 +128,7 @@ var messagesMixin = {
                     messageBlock = jQuery(div.firstChild);
                 } else {
                     messageBlock = jQuery(messageBlock[0].cloneNode(true));
+                    messageBlock.find('div').remove();
                 }
 
                 // insert the actual messages
@@ -953,7 +956,7 @@ var paginationMixin = {
         },
         handleScroll: function(evt) {
             var vm = this;
-            let element = this.$el;
+            let element = vm.$el;
             if( element.getBoundingClientRect().bottom < window.innerHeight ) {
                 let menubar = vm.$el.querySelector('[role="pagination"]');
                 if( menubar) {
@@ -1051,11 +1054,9 @@ var sortableMixin = {
     data: function(){
         var defaultDir = this.$sortDirection || 'desc';
         var dir = (defaultDir === 'desc') ? DESC_SORT_PRE : '';
-        var o = this.$sortByField || 'created_at';
+        var params = this.$sortByField ? {o: (dir + this.$sortByField)} : {};
         return {
-            params: {
-                o: dir + o,
-            },
+            params: params,
             mixinSortCb: 'get'
         }
     },
@@ -1208,15 +1209,19 @@ var itemListMixin = {
                     }
                 }
             } else {
-                cb = function(res){
+                cb = function(resp){
                     if(vm.mergeResults){
-                        res.results = vm.items.results.concat(res.results);
+                        resp.results = vm.items.results.concat(resp.results);
                     }
-                    vm.items = res;
+                    for( var key in resp ) {
+                        if( resp.hasOwnProperty(key) ) {
+                            vm.items[key] = resp[key];
+                        }
+                    }
                     vm.itemsLoaded = true;
 
-                    if( res.detail ) {
-                        vm.showMessages([res.detail], "warning");
+                    if( resp.detail ) {
+                        vm.showMessages([resp.detail], "warning");
                     }
 
                     if(vm[vm.getCompleteCb]){
@@ -1266,6 +1271,16 @@ var typeAheadMixin = {
             return this.current === index ? " active" : "";
         },
 
+        highlightQuery: function(text) {
+            var vm = this;
+            if( !vm.query ) {
+                return text;
+            }
+            let regex = new RegExp(vm.query, "gi"); // search for all instances
+            let newText = text.replace(regex, `<mark>$&</mark>`);
+            return newText;
+        },
+
         cancel: function() {},
 
         clear: function() {
@@ -1290,7 +1305,7 @@ var typeAheadMixin = {
             }
         },
 
-        onHit: function onHit() {
+        onHit: function(item) {
             console.warn('You need to implement the `onHit` method', this);
         },
 
@@ -1298,6 +1313,18 @@ var typeAheadMixin = {
             var vm = this;
             vm.clear();
             vm.query = '';
+            vm.$nextTick(function() {
+                var inputs = vm.$refs.input;
+                if( inputs.length > 0 ) {
+                    inputs[0].focus();
+                }
+            });
+            vm.$emit('typeaheadreset');
+        },
+        resetAndReload: function() {
+            var vm = this;
+            vm.reset();
+            vm.reload();
         },
 
         setActive: function(index) {
@@ -1315,6 +1342,32 @@ var typeAheadMixin = {
                 vm.current = -1;
             }
         },
+        reload: function() {
+            var vm = this;
+            vm.loading = true;
+            var params = {};
+            params[vm.queryParamName] = vm.query;
+            vm.reqGet(vm.url, params,
+            function (resp) {
+                const data = vm.prepareResponseData ?
+                    vm.prepareResponseData(resp.results) : resp.results;
+                vm.items = vm.limit ? data.slice(0, vm.limit) : data;
+                vm.current = -1;
+                vm.loading = false;
+                vm.$nextTick(function() {
+                    var inputs = vm.$refs.input;
+                    if( inputs.length > 0 ) {
+                        inputs[0].focus();
+                    }
+                    if (vm.selectFirst) {
+                        vm.down();
+                    }
+                });
+            }, function() {
+                // on failure we just do nothing. - i.e. we don't want a bunch
+                // of error messages to pop up.
+            });
+        },
         search: function() {
             this.update();
         },
@@ -1327,25 +1380,7 @@ var typeAheadMixin = {
             if( vm.minChars && vm.query.length < vm.minChars ) {
                 return;
             }
-            vm.loading = true;
-            var params = {};
-            params[vm.queryParamName] = vm.query;
-            vm.reqGet(vm.url, params,
-            function (resp) {
-                if (resp && vm.query) {
-                    var data = resp.results;
-                    data = vm.prepareResponseData ? vm.prepareResponseData(data) : data;
-                    vm.items = vm.limit ? data.slice(0, vm.limit) : data;
-                    vm.current = -1;
-                    vm.loading = false;
-                    if (vm.selectFirst) {
-                        vm.down();
-                    }
-                }
-            }, function() {
-                // on failure we just do nothing. - i.e. we don't want a bunch
-                // of error messages to pop up.
-            });
+            vm.reload();
         },
     },
     computed: {
@@ -1366,6 +1401,173 @@ var typeAheadMixin = {
     }
 };
 
+
+/** Mixin to load profile or user details from the profile APIs
+ */
+var accountDetailMixin = {
+    data: function() {
+        return {
+            api_accounts_url: this.$urls.api_accounts,
+            accountsBySlug: {}
+        }
+    },
+    methods: {
+        getAccountField: function(account, fieldName) {
+            var vm = this;
+            if( account ) {
+                let fieldValue = account.hasOwnProperty(fieldName) ?
+                    account[fieldName] : null;
+                if( fieldValue ) {
+                    return fieldValue;
+                }
+                const accountSlug = account.slug ? account.slug : account;
+                const cached = vm.accountsBySlug[accountSlug];
+                if( cached && cached.hasOwnProperty(fieldName) ) {
+                    return cached[fieldName];
+                }
+                // XXX disable loading individually. we need to give
+                // `populateAccounts` a chance to run and complete.
+                if( false && vm.api_accounts_url ) {
+                    vm.accountsBySlug[accountSlug] = {
+                        picture: null,
+                        printable_name: accountSlug
+                    };
+                    vm.reqGet(vm._safeUrl(vm.api_accounts_url, accountSlug),
+                    function(resp) {
+                        vm.accountsBySlug[resp.slug] = resp;
+                    }, function() {
+                        // discard errors (ex: "not found").
+                    });
+                }
+            }
+            // If we don't return `undefined` here, we might inadvertently
+            // post initialized fields (null, or "") in HTTP requests.
+            return undefined;
+        },
+        getAccountPicture: function(account) {
+            return this.getAccountField(account, 'picture');
+        },
+        getAccountPrintableName: function(account) {
+            return this.getAccountField(account, 'printable_name');
+        },
+        populateAccounts: function(elements, fieldName) {
+            var vm = this;
+            if( !vm.api_accounts_url ) return;
+
+            if( !fieldName ) {
+                fieldName = 'slug';
+            }
+
+            const accounts = new Set();
+            for( let idx = 0; idx < elements.length; ++idx ) {
+                const item = elements[idx];
+                accounts.add((fieldName && item[fieldName]) ?
+                    item[fieldName] : item);
+            }
+            if( accounts.size ) {
+                let queryParams = "?q_f==slug&q=";
+                let sep = "";
+                for( const account of accounts ) {
+                    queryParams += sep + account;
+                    sep = ",";
+                }
+                vm.reqGet(vm.api_accounts_url + queryParams,
+                function(resp) {
+                    for( let idx = 0; idx < resp.results.length; ++idx ) {
+                        vm.$set(vm.accountsBySlug, resp.results[idx].slug,
+                            resp.results[idx]);
+                    }
+                    vm.$forceUpdate();
+                }, function() {
+                    // discard errors (ex: "not found").
+                });
+            }
+        },
+    }
+};
+
+/** Mixin to load user details from the profile APIs
+ */
+var userDetailMixin = {
+    data: function() {
+        return {
+            api_users_url: this.$urls.api_users,
+            usersBySlug: {}
+        }
+    },
+    methods: {
+        getUserField: function(user, fieldName) {
+            var vm = this;
+            if( user ) {
+                let fieldValue = user.hasOwnProperty(fieldName) ?
+                    user[fieldName] : null;
+                if( fieldValue ) {
+                    return fieldValue;
+                }
+                const userSlug = user.slug ? user.slug : user;
+                const cached = vm.usersBySlug[userSlug];
+                if( cached && cached.hasOwnProperty(fieldName) ) {
+                    return cached[fieldName];
+                }
+                // XXX disable loading individually. we need to give
+                // `populateUsers` a chance to run and complete.
+                if( false && vm.api_users_url ) {
+                    vm.usersBySlug[userSlug] = {
+                        picture: null,
+                        printable_name: userSlug
+                    };
+                    vm.reqGet(vm._safeUrl(vm.api_users_url, userSlug),
+                    function(resp) {
+                        vm.usersBySlug[resp.slug] = resp;
+                    }, function() {
+                        // discard errors (ex: "not found").
+                    });
+                }
+            }
+            return "";
+        },
+        getUserPicture: function(user) {
+            return this.getUserField(user, 'picture');
+        },
+        getUserPrintableName: function(user) {
+            return this.getUserField(user, 'printable_name');
+        },
+        populateUsers: function(elements, fieldName) {
+            var vm = this;
+            if( !vm.api_users_url ) return;
+
+            if( !fieldName ) {
+                fieldName = 'slug';
+            }
+
+            const users = new Set();
+            for( let idx = 0; idx < elements.length; ++idx ) {
+                const item = elements[idx];
+                users.add((fieldName && item[fieldName]) ?
+                    item[fieldName] : item.slug);
+            }
+            if( users.size ) {
+                let queryParams = "?q_f==slug&q=";
+                let sep = "";
+                for( const user of users ) {
+                    queryParams += sep + user;
+                    sep = ",";
+                }
+                vm.reqGet(vm.api_users_url + queryParams,
+                function(resp) {
+                    for( let idx = 0; idx < resp.results.length; ++idx ) {
+                        vm.$set(vm.usersBySlug, resp.results[idx].slug,
+                            resp.results[idx]);
+                    }
+                    vm.$forceUpdate();
+                }, function() {
+                    // discard errors (ex: "not found").
+                });
+            }
+        },
+    }
+};
+
     // attach properties to the exports object to define
     // the exported module properties.
     exports.httpRequestMixin = httpRequestMixin;
@@ -1374,4 +1576,6 @@ var typeAheadMixin = {
     exports.messagesMixin = messagesMixin;
     exports.paramsMixin = paramsMixin;
     exports.typeAheadMixin = typeAheadMixin;
+    exports.accountDetailMixin = accountDetailMixin;
+    exports.userDetailMixin = userDetailMixin;
 }));
