@@ -88,8 +88,7 @@ initdb: clean-dbs
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata testsite/fixtures/default-db.json
 	$(installDirs) $(RUN_DIR)/themes/djaodjin-extended-templates
-	$(installDirs) $(srcDir)/htdocs/media/vendor
-	$(installFiles) $(ASSETS_DIR)/vendor/bootstrap.css $(srcDir)/htdocs/media/vendor
+
 
 doc:
 	$(installDirs) build/docs
@@ -101,7 +100,7 @@ vendor-assets-prerequisites: $(libDir)/.npm/djaodjin-extended-templates-packages
 $(libDir)/.npm/djaodjin-extended-templates-packages: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(libDir)
 	$(NPM) install --loglevel verbose --cache $(libDir)/.npm --prefix $(libDir)
-	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
 	$(installFiles) $(libDir)/node_modules/ace-builds/src/ace.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(libDir)/node_modules/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(libDir)/node_modules/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor
