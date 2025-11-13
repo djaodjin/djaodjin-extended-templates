@@ -1,3 +1,10 @@
+0.4.11
+
+  * adds media editor to upload images directly in page templates
+  * depractes use of hallo.js
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 13 Nov 2025 15:05:00 -0700
+
 0.4.10
 
   * upgrades prerequisite deployutils to 0.14.0

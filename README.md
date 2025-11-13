@@ -66,8 +66,9 @@ Tested with
 - **Python:** 3.12, **Django:** 5.1  (latest)
 - **Python:** 3.9,  **Django:** 3.2  (legacy)
 
-0.4.10
+0.4.11
 
-  * upgrades prerequisite deployutils to 0.14.0
+  * adds media editor to upload images directly in page templates
+  * depractes use of hallo.js
 
 [previous release notes](changelog)
