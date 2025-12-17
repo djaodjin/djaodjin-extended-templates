@@ -76,7 +76,8 @@ class PdfTemplateResponse(TemplateResponse):
         html_content = soup.prettify()
         cstr = io.BytesIO()
 
-        doc = weasyprint.HTML(string=html_content)
+        doc = weasyprint.HTML(string=html_content, base_url=build_absolute_uri(
+                    location='/', request=self._request))
         doc.write_pdf(cstr)
 
         return cstr.getvalue()

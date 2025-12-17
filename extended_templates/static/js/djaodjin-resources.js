@@ -85,14 +85,13 @@ function showMessages(messages, style) {
  */
 function _showErrorMessages(resp) {
     var messages = [];
+    var hasContextMessages = false;
     if( typeof resp === "string" ) {
         messages = [resp];
     } else {
         var data = resp.data || resp.responseJSON;
         if( data && typeof data === "object" ) {
-            if( data.detail ) {
-                messages = [data.detail];
-            } else if( $.isArray(data) ) {
+            if( jQuery.isArray(data) ) {
                 for( var idx = 0; idx < data.length; ++idx ) {
                     messages = messages.concat(_showErrorMessages(data[idx]));
                 }
@@ -100,7 +99,7 @@ function _showErrorMessages(resp) {
                 for( var key in data ) {
                     if (data.hasOwnProperty(key)) {
                         var message = data[key];
-                        if( $.isArray(data[key]) ) {
+                        if( jQuery.isArray(data[key]) ) {
                             message = "";
                             var sep = "";
                             for( var i = 0; i < data[key].length; ++i ) {
@@ -121,14 +120,24 @@ function _showErrorMessages(resp) {
                         var help = parent.find('.invalid-feedback');
                         if( help.length > 0 ) {
                             help.text(message);
+                            hasContextMessages = true;
                         } else {
-                            messages.push(key + ": " + message);
+                            if( key === 'detail' ) {
+                                messages.push(message);
+                            } else {
+                                messages.push(key + ": " + message);
+                            }
                         }
                     }
                 }
             }
         } else if( resp.detail ) {
             messages = [resp.detail];
+        }
+    }
+    if( messages.length === 0 && hasContextMessages ) {
+        if( _showErrorMessagesOnFields ) {
+            messages = [_showErrorMessagesOnFields];
         }
     }
     return messages;
@@ -181,10 +190,13 @@ function getUrlParameter(name) {
 
 const djApi = {
 
-    apiBase: (typeof DJAOAPP_API_BASE_URL !== 'undefined' ?
-        DJAOAPP_API_BASE_URL : '/api'),
-
+    apiBase: '',
     defaultCSRFToken: null,
+
+    _csrfSafeMethod: function(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    },
 
     _isArray: function (obj) {
         return obj instanceof Object && obj.constructor === Array;
@@ -241,7 +253,8 @@ const djApi = {
                 // - http(url, success, fail)
                 args['failureCallback'] = arg2;
             }
-        } else if( self._isObject(arg) || self._isArray(arg) ) {
+        } else if( arg instanceof FormData ||
+            self._isObject(arg) || self._isArray(arg) ) {
             // We are dealing with either:
             // - http(elem, url, data)
             // - http(elem, url, data, success)
@@ -288,9 +301,56 @@ const djApi = {
         // - http(elem, url, data, success)
         // - http(elem, url, data, success, fail)
         args['elem'] = elem;
-        if( typeof url != 'string' ) throw '`url` should be a string';
+        if( typeof url != 'string' && !self._isArray(arg) ) {
+            throw '`url` should be a string or an array of ajax queries';
+        }
         args['url'] = url;
         return self.__parseCallArguments(args, arg, arg2, arg3);
+    },
+
+    _safeUrl: function(base, path) {
+        if( !path ) return base;
+        if( typeof path === 'string' && (
+            path.startsWith('http') || (
+                base.length > 0 && path.startsWith(base))) ) return path;
+
+        const parts = base ? [base].concat(
+            ( typeof path === 'string' ) ? [path] : path) :
+              (( typeof path === 'string' ) ? [path] : path);
+        var cleanParts = [];
+        var start, end;
+        for( var idx = 0; idx < parts.length; ++idx ) {
+            const part = parts[idx];
+            for( start = 0; start < part.length; ++start ) {
+                if( part[start] !== '/') {
+                    break;
+                }
+            }
+            for( end = part.length - 1; end >= 0; --end ) {
+                if( part[end] !== '/') {
+                    break;
+                }
+            }
+            if( start < end ) {
+                cleanParts.push(part.slice(start, end + 1));
+            } else {
+                cleanParts.push(part);
+            }
+        }
+
+        var cleanUrl = cleanParts[0];
+        for( idx = 1; idx < cleanParts.length; ++idx ) {
+            cleanUrl += '/' + cleanParts[idx];
+        }
+        // We need to keep the '/' suffix when dealing
+        // with djaodjin-rules API calls.
+        if( path.endsWith('/') ) cleanUrl += '/';
+
+        if( !cleanUrl.startsWith('http') && !cleanUrl.startsWith('/') ) {
+            cleanUrl = '/' + cleanUrl
+        }
+
+        return cleanUrl;
     },
 
     /** This method generates a GET HTTP request to `url` with a query
@@ -314,7 +374,7 @@ const djApi = {
         var self = this;
         const args = self._parseCallArguments(elem, url, arg, arg2, arg3);
         if( !args.url ) {
-            self.showErrorMessages(
+            showErrorMessages(
                 "Attempting GET request for component '" +
                     args.elem + "' but no url was set.");
         }
@@ -327,20 +387,24 @@ const djApi = {
             headers['Authorization'] = "Bearer " + authToken;
         }
 
-        const resp = fetch(self.apiBase + args.url, {
+        const qualifiedUrl = self._safeUrl(self.apiBase, args.url) + (
+            args.data ? '?' + (new URLSearchParams(args.data)).toString() : '');
+        fetch(qualifiedUrl, {
             method: "GET",
             headers: headers,
-            data: args.data,
             credentials: 'include',
             traditional: true,
-            cache: false,       // force requested pages not to be cached
-        }).then(function(resp) {
+        }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            }
-            const result = resp.json();
-            if( args.successCallback ) {
-                args.successCallback(result);
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
@@ -367,7 +431,7 @@ const djApi = {
         const self = this;
         const args = self._parseCallArguments(elem, url, arg, arg2, arg3);
         if( !args.url ) {
-            self.showErrorMessages(
+            showErrorMessages(
                 "Attempting POST request for component '" +
                     args.elem + "' but no url was set.");
         }
@@ -385,19 +449,23 @@ const djApi = {
             }
         }
 
-        fetch(self.apiBase + args.url, {
+        fetch(self._safeUrl(self.apiBase, args.url), {
             method: "POST",
             headers: headers,
             body: JSON.stringify(args.data),
             credentials: 'include',
             traditional: true,
-        }).then(function(resp) {
+        }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            }
-            const result = resp.json();
-            if( args.successCallback ) {
-                args.successCallback(result);
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
@@ -426,7 +494,7 @@ const djApi = {
         }
 
         let headers = {
-            "Content-Type": "application/json",
+//            "Content-Type": "application/json",
         };
         const authToken = self._getAuthToken();
         if( authToken ) {
@@ -438,21 +506,25 @@ const djApi = {
             }
         }
 
-        fetch(self.apiBase + args.url, {
+        fetch(self._safeUrl(self.apiBase, args.url), {
             method: "POST",
             headers: headers,
             contentType: false,
             processData: false,
-            body: form,
+            body: args.data,
             credentials: 'include',
             traditional: true,
-        }).then(function(resp) {
+        }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            }
-            const result = resp.json();
-            if( args.successCallback ) {
-                args.successCallback(result);
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
@@ -478,7 +550,7 @@ const djApi = {
         const self = this;
         const args = self._parseCallArguments(elem, url, arg, arg2, arg3);
         if( !args.url ) {
-            self.showErrorMessages(
+            showErrorMessages(
                 "Attempting PUT request for component '" +
                     args.elem + "' but no url was set.");
         }
@@ -496,20 +568,23 @@ const djApi = {
             }
         }
 
-        fetch(self.apiBase + args.url, {
+        fetch(self._safeUrl(self.apiBase, args.url), {
             method: "PUT",
             headers: headers,
             body: JSON.stringify(args.data),
             credentials: 'include',
             traditional: true,
         }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            } else {
-                const result = await resp.json();
-                if( args.successCallback ) {
-                    args.successCallback(result);
-                }
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
@@ -531,11 +606,11 @@ const djApi = {
         `successCallback` and `failureCallback` must be Javascript
         functions (i.e. instance of type `Function`).
     */
-    patch: function(elem, url, arg, arg2, arg3){
+    patch: function(elem, url, arg, arg2, arg3) {
         const self = this;
         const args = self._parseCallArguments(elem, url, arg, arg2, arg3);
         if( !args.url ) {
-            self.showErrorMessages(
+            showErrorMessages(
                 "Attempting PATCH request for component '" +
                     args.elem + "' but no url was set.");
         }
@@ -553,19 +628,23 @@ const djApi = {
             }
         }
 
-        fetch(self.apiBase + args.url, {
+        fetch(self._safeUrl(self.apiBase, args.url), {
             method: "PATCH",
             headers: headers,
             body: JSON.stringify(args.data),
             credentials: 'include',
             traditional: true,
-        }).then(function(resp) {
+        }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            }
-            const result = resp.json();
-            if( args.successCallback ) {
-                args.successCallback(result);
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
@@ -582,11 +661,11 @@ const djApi = {
         `successCallback` and `failureCallback` must be Javascript
         functions (i.e. instance of type `Function`).
     */
-    delete: function(elem, url, arg, arg2, arg3) {
+    delete: function(elem, url, arg, arg2) {
         const self = this;
-        const args = self._parseCallArguments(elem, url, arg, arg2, arg3);
+        const args = self._parseCallArguments(elem, url, arg, arg2);
         if( !args.url ) {
-            self.showErrorMessages(
+            showErrorMessages(
                 "Attempting DELETE request for component '" +
                     args.elem + "' but no url was set.");
         }
@@ -604,21 +683,86 @@ const djApi = {
             }
         }
 
-        fetch(self.apiBase + args.url, {
+        fetch(self._safeUrl(self.apiBase, args.url), {
             method: "DELETE",
             headers: headers,
             credentials: 'include',
             traditional: true,
-        }).then(function(resp) {
+        }).then(async function(resp) {
+            try {
+                resp.data = await resp.json();
+            } catch(err) {
+                // In case of error, we are not dealing with a nice
+                // JSON-formatted `ValidationError` here.
+            }
             if( !resp.ok ) {
                 args.failureCallback(resp)
-            }
-            const result = resp.json();
-            if( args.successCallback ) {
-                args.successCallback(result);
+            } else if( args.successCallback ) {
+                args.successCallback(resp.data, resp.statusText, resp);
             }
         });
     },
+
+    /** This method generates multiple queries, and execute
+        success/failure callbacks when all have completed.
+
+        It supports the following prototypes:
+
+        - reqMultiple(queryArray)
+        - reqMultiple(queryArray, successCallback)
+        - reqMultiple(queryArray, successCallback, failureCallback)
+
+        `successCallback` and `failureCallback` must be Javascript
+        functions (i.e. instance of type `Function`).
+    */
+    multiple: function(elem, queryArray, arg, arg2, arg3) {
+        const self = this;
+        const args = self._parseCallArguments(
+            elem, queryArray, arg, arg2, arg3);
+        if( !args.url ) {
+            showErrorMessages(
+                "Attempting multiple requests for component '" +
+                    args.elem + "' but no url was set.");
+        }
+
+        let headers = {
+            "Content-Type": "application/json",
+        };
+        const authToken = self._getAuthToken();
+        const csrfToken = self._getCSRFToken(args.elem);
+        if( authToken ) {
+            headers['Authorization'] = "Bearer " + authToken;
+        } else {
+            if( csrfToken ) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+        }
+
+        var ajaxCalls = [];
+        for(var idx = 0; idx < args.url.length; ++idx ) {
+            ajaxCalls.push(jQuery.ajax({
+                method: args.url[idx].method,
+                url: self._safeUrl(self.apiBase, args.url[idx].url),
+                data: JSON.stringify(args.url[idx].data),
+                beforeSend: function(xhr, settings) {
+                    if( authToken ) {
+                        xhr.setRequestHeader(
+                            "Authorization", "Bearer " + authToken);
+                    } else {
+                        if( !self._csrfSafeMethod(settings.type) ) {
+                            if( csrfToken ) {
+                                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+                            }
+                        }
+                    }
+                },
+                contentType: 'application/json',
+            }));
+        }
+        jQuery.when.apply(jQuery, ajaxCalls).done(args.successCallback).fail(
+            args.failureCallback);
+    }
+
 }
 
     // attach properties to the exports object to define
