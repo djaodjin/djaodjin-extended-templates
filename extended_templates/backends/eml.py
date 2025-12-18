@@ -204,6 +204,8 @@ class Template(object):
             attachments=attachments, headers=headers, connection=connection)
         if html_content:
             msg.attach_alternative(html_content, "text/html")
+        LOGGER.debug("From: %s\nTo: %s\nCc: %s\nBcc: %s\nSubject: %s\n\n%s\n",
+            from_email, ', '.join(recipients), cc, bcc, subject, plain_content)
         msg.send(fail_silently=fail_silently)
 
     #pylint: disable=invalid-name,too-many-arguments

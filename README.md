@@ -63,12 +63,11 @@ Release Notes
 Tested with
 
 - **Python:** 3.10, **Django:** 4.2  ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.12, **Django:** 5.1  (latest)
+- **Python:** 3.12, **Django:** 5.2  (latest)
 - **Python:** 3.9,  **Django:** 3.2  (legacy)
 
-0.4.11
+0.4.12
 
-  * adds media editor to upload images directly in page templates
-  * depractes use of hallo.js
+  * makes all API calls through djApi
 
 [previous release notes](changelog)
