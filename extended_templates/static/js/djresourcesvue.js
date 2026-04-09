@@ -3,48 +3,21 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['exports', 'jQuery'], factory);
+        define(['exports', 'djResources'], factory);
     } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
-        factory(exports, require('jQuery'));
+        factory(exports, require('djResources'));
     } else {
         // Browser true globals added to `window`.
-        factory(root, root.jQuery);
+        factory(root, root.djResources);
         // If we want to put the exports in a namespace, use the following line
         // instead.
-        // factory((root.djResources = {}), root.jQuery);
+        // factory((root.djResources = {}), root.djResources);
     }
-}(typeof self !== 'undefined' ? self : this, function (exports, jQuery) {
+}(typeof self !== 'undefined' ? self : this, function (exports, djResources) {
 
 
 const DESC_SORT_PRE = '-';
-
-
-/** Displays notification messages to the user
-
-     requires `jQuery`, showErrorMessages
-     optional toastr
- */
-var messagesMixin = {
-    data: function() {
-        return {
-            messagesElement: '#messages-content',
-            scrollToTopOnMessages: true,
-        }
-    },
-    methods: {
-
-        clearMessages: function() {
-            var vm = this;
-            vm.getMessagesElement().empty();
-        },
-
-        getMessagesElement: function() {
-            return jQuery(this.messagesElement);
-        },
-
-    }
-};
 
 
 /** compute outdated based on `params`.
@@ -111,7 +84,10 @@ var paramsMixin = {
     computed: {
         _start_at: {
             get: function() {
-                return this.asDateInputField(this.params.start_at);
+                if( this.params.start_at ) {
+                    return this.asDateInputField(this.params.start_at);
+                }
+                return null;
             },
             set: function(newVal) {
                 if( newVal ) {
@@ -135,7 +111,10 @@ var paramsMixin = {
                 //
                 // const dateValue = moment(this.params.ends_at).add(1,'days');
                 // return dateValue.isValid() ? dateValue.format("YYYY-MM-DD") : null;
-                return this.asDateInputField(this.params.ends_at);
+                if( this.params.ends_at ) {
+                    return this.asDateInputField(this.params.ends_at);
+                }
+                return null;
             },
             set: function(newVal) {
                 if( newVal ) {
@@ -179,14 +158,11 @@ var paramsMixin = {
 };
 
 
-/** A wrapper around jQuery ajax functions that adds authentication
-    parameters as necessary.
-
-    requires `jQuery`
+/** A wrapper around djApi functions included in most if not all Vue components
+    to fetch and update persistent data
 */
 var httpRequestMixin = {
     mixins: [
-        messagesMixin,
         paramsMixin
     ],
 // XXX conflitcs when params defined as props
@@ -195,7 +171,6 @@ var httpRequestMixin = {
 //            params: {}
 //        }
 //    },
-    // basically a wrapper around jQuery ajax functions
     methods: {
 
         _safeUrl: function(base, path) {
@@ -355,6 +330,7 @@ var itemMixin = {
         return {
             item: {},
             itemLoaded: false,
+            formFields: {}
         }
     },
     methods: {
@@ -378,20 +354,22 @@ var itemMixin = {
         validateForm: function(){
             var vm = this;
             var isEmpty = true;
-            var fields = jQuery(vm.$el).find('[name]').not(
-                '[name="csrfmiddlewaretoken"]');
+            const fields = vm.$el.querySelectorAll('[name]');
             for( var fieldIdx = 0; fieldIdx < fields.length; ++fieldIdx ) {
-                var field = jQuery(fields[fieldIdx]);
-                var fieldName = field.attr('name');
-                var fieldValue = field.attr('type') === 'checkbox' ?
-                    field.prop('checked') : field.val();
-                if( vm.formFields[fieldName] !== fieldValue ) {
-                    vm.formFields[fieldName] = fieldValue;
-                }
-                if( vm.formFields[fieldName] ) {
-                    // We have at least one piece of information
-                    // about the plan already available.
-                    isEmpty = false;
+                const field = fields[fieldIdx];
+                const fieldName = field.getAttribute('name');
+                if( fieldName !== 'csrfmiddlewaretoken' ) {
+                    const fieldValue =
+                          field.getAttribute('type') === 'checkbox' ?
+                          field.checked : field.value;
+                    if( vm.formFields[fieldName] !== fieldValue ) {
+                        vm.formFields[fieldName] = fieldValue;
+                    }
+                    if( vm.formFields[fieldName] ) {
+                        // We have at least one piece of information
+                        // about the plan already available.
+                        isEmpty = false;
+                    }
                 }
             }
             return !isEmpty;
@@ -750,6 +728,15 @@ var typeAheadMixin = {
             return newText;
         },
 
+        isExactMatch: function(key) {
+            var vm = this;
+            if( vm.isEmpty ) return true;
+            for( let idx = 0; idx < vm.items.length; ++idx ) {
+                if( vm.items[idx][key] === vm.query ) return true;
+            }
+            return false;
+        },
+
         cancel: function() {},
 
         clear: function() {
@@ -784,12 +771,14 @@ var typeAheadMixin = {
             vm.query = '';
             vm.$nextTick(function() {
                 var inputs = vm.$refs.input;
-                if( typeof inputs.length != 'undefined' ) {
-                    if( inputs.length > 0 ) {
-                        inputs[0].focus();
+                if( inputs ) {
+                    if( typeof inputs.length != 'undefined' ) {
+                        if( inputs.length > 0 ) {
+                            inputs[0].focus();
+                        }
+                    } else {
+                        inputs.focus();
                     }
-                } else {
-                    inputs.focus();
                 }
             });
             vm.$emit('typeaheadreset');
@@ -829,8 +818,14 @@ var typeAheadMixin = {
                 vm.loading = false;
                 vm.$nextTick(function() {
                     var inputs = vm.$refs.input;
-                    if( inputs.length > 0 ) {
-                        inputs[0].focus();
+                    if( inputs ) {
+                        if( typeof inputs.length != 'undefined' ) {
+                            if( inputs.length > 0 ) {
+                                inputs[0].focus();
+                            }
+                        } else {
+                            inputs.focus();
+                        }
                     }
                     if (vm.selectFirst) {
                         vm.down();
@@ -934,8 +929,11 @@ var accountDetailMixin = {
             const accounts = new Set();
             for( let idx = 0; idx < elements.length; ++idx ) {
                 const item = elements[idx];
-                accounts.add((fieldName && item[fieldName]) ?
-                    item[fieldName] : item);
+                const slug = (fieldName && item[fieldName]) ?
+                      item[fieldName] : item;
+                if( !vm.accountsBySlug[slug] ) {
+                    accounts.add(slug);
+                }
             }
             if( accounts.size ) {
                 let queryParams = "?q_f==slug&q=";
@@ -1046,7 +1044,6 @@ var userDetailMixin = {
     exports.httpRequestMixin = httpRequestMixin;
     exports.itemListMixin = itemListMixin;
     exports.itemMixin = itemMixin;
-    exports.messagesMixin = messagesMixin;
     exports.paramsMixin = paramsMixin;
     exports.typeAheadMixin = typeAheadMixin;
     exports.accountDetailMixin = accountDetailMixin;
