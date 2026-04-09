@@ -57,15 +57,18 @@ class ReplaceIdVisitor(object):
         self.element_id = element_id
         self.template_path = template_path
         self.element_text = element_text
+        self.found = False
 
     def update_block(self, block_text):
         #pylint:disable=too-many-arguments
-        LOGGER.debug("%sreplaces element id='%s' by '%s' in '%s'",
-            "(%s) " % self.template_path if self.template_path else "",
-            self.element_id, self.element_text, block_text)
         soup = BeautifulSoup(block_text, 'html5lib')
         editable = soup.find(id=self.element_id)
+        LOGGER.debug("%sreplaces element id='%s' (%sfound) by '%s' in '%s'",
+            "(%s) " % self.template_path if self.template_path else "",
+            self.element_id, "" if editable else "not ",
+            self.element_text, block_text)
         if editable:
+            self.found = True
             if editable.name in ['img', 'video']:
                 editable['src'] = self.element_text
             else:
@@ -159,14 +162,12 @@ class SourceEditAPIView(ThemePackageMixin, generics.GenericAPIView):
                 resp_status = status.HTTP_200_OK
 
             LOGGER.info("searching for %s in %s ...", element_id, template_path)
-            template_string = process_template(
-                ReplaceIdVisitor(dest, element_id, element_text,
-                    template_path=template_path),
+            visitor = ReplaceIdVisitor(dest, element_id, element_text,
+                template_path=template_path)
+            template_string = process_template(visitor,
                 template_path=template_path)
 
-            # We are going to return a 404 when we are updating an element
-            # with the exact same text or 'src' attribute.
-
+            found = visitor.found
             dest = dest.getvalue()
             if dest and dest != template_string:
                 block_text = dest
@@ -184,6 +185,7 @@ class SourceEditAPIView(ThemePackageMixin, generics.GenericAPIView):
                     except subprocess.CalledProcessError:
                         pass
                 found = True
+            if found:
                 break
         if not found:
             raise Http404()
