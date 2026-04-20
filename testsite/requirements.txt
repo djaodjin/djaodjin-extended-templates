@@ -11,7 +11,7 @@ djaodjin-deployutils==0.14.1
 Jinja2==3.1.6                     # 3.1.2 compatibles with Py3.10
 premailer==3.10.0
 requests==2.32.4
-WeasyPrint==56.1
+WeasyPrint==68.0
 
 # testsite-only
 coverage==6.4.4
