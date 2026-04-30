@@ -1,3 +1,10 @@
+0.5.0
+
+  * uses djgallery in different UIs
+  * returns 200 if HTML id found even when no modifications
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 30 Apr 2026 16:25:00 -0700
+
 0.4.12
 
   * makes all API calls through djApi

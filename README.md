@@ -66,8 +66,9 @@ Tested with
 - **Python:** 3.12, **Django:** 5.2  (latest)
 - **Python:** 3.9,  **Django:** 3.2  (legacy)
 
-0.4.12
+0.5.0
 
-  * makes all API calls through djApi
+  * uses djgallery in different UIs
+  * returns 200 if HTML id found even when no modifications
 
 [previous release notes](changelog)
