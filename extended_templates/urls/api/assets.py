@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,26 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+'''API URLs for the uploaded static assets'''
 
-from ... import settings
-from ...compat import re_path
-from ...api.upload_media import MediaListAPIView
-from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
-from ...api.sitecss import SiteCssAPIView
+from ...compat import path
+from ...api.assets import ListUploadAssetAPIView
 
 
 urlpatterns = [
-    re_path(r'^assets/(?P<path>%s)$' % settings.PATH_RE,
-        MediaListAPIView.as_view(),
-        name='extended_templates_api_uploaded_media_elements'),
-    re_path(r'^sitecss/variables/(?P<name>[\w-]+)/',
-        LessVariableDetail.as_view(),
-        name='extended_templates_api_less_override'),
-    re_path(r'^sitecss/variables/',
-        LessVariableListAPIView.as_view(),
-        name='extended_templates_api_less_overrides'),
-    re_path(r'^sitecss',
-        SiteCssAPIView.as_view(),
-        name='extended_templates_api_edit_sitecss'),
+    path('assets', ListUploadAssetAPIView.as_view(),
+         name='extended_templates_api_assets'),
 ]

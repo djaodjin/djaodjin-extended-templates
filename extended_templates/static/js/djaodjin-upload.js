@@ -89,8 +89,7 @@
             if( self.options.uploadUrl.indexOf("/api/auth/") >= 0 ) {
                 $.ajax({
                     method: "GET",
-                    url: self.options.uploadUrl +
-                        (self.options.acl === "public-read" ? "?public=1" : ""),
+                    url: self.options.uploadUrl,
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(data) {
@@ -180,7 +179,7 @@
                                 self.options.securityToken);
                             formData.append(
                                 "x-amz-signature", self.options.signature);
-                            if( self.options.acl ) {
+                            if( self.options.acl ) { // XXX or api/realms ends with ?public=1
                                 formData.append("acl", self.options.acl);
                             } else {
                                 formData.append("acl", "private");

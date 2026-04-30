@@ -71,8 +71,10 @@ class AssetSerializer(NoModelSerializer):
         help_text=_("URL where the asset content is stored."))
     updated_at = serializers.DateTimeField(required=False,
         help_text=_("Last date/time the asset content was updated."))
-    tags = serializers.CharField(required=False, allow_blank=True,
+    tags = serializers.ListField(
+        child=serializers.CharField(allow_blank=True), required=False,
         help_text=_("Tags associated to the asset."))
+
 
 class MediaItemListSerializer(NoModelSerializer):
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,17 +24,28 @@
 
 '''API URLs for the editing the theme templates'''
 
+from rest_framework.generics import RetrieveAPIView
 from ...import settings
-from ...compat import re_path
+from ...compat import path, re_path
+from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
 from ...api.sources import (SourceEditAPIView, SourceEditBaseAPIView,
     SourceDetailAPIView)
 
 
 urlpatterns = [
+    path('sitecss/variables/<slug:name>',
+        LessVariableDetail.as_view(),
+        name='extended_templates_api_less_override'),
+    path('sitecss/variables',
+        LessVariableListAPIView.as_view(),
+        name='extended_templates_api_less_overrides'),
+    path('sitecss',
+        RetrieveAPIView.as_view(),
+        name='extended_templates_api_edit_sitecss'),
     re_path(r'^sources/editables/(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         SourceEditAPIView.as_view(),
         name='extended_templates_api_edit_template'),
-    re_path(r'^sources/editables$',
+    path('sources/editables',
         SourceEditBaseAPIView.as_view(),
         name='extended_templates_api_edit_template_base'),
     re_path(r'^sources/(?P<page>\S+)?',

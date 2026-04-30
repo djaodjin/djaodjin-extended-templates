@@ -1,4 +1,4 @@
-# Copyright (c) 2024, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 validate_title = RegexValidator(#pylint: disable=invalid-name
-    r'^[a-zA-Z0-9- ]+$',
+    r'^[a-zA-Z0-9_\- ]+$',
     _("Enter a valid title consisting of letters, "
         "numbers, space, underscores or hyphens."),
         'invalid'
@@ -94,7 +94,7 @@ def get_default_storage(request, account=None, **kwargs):
     """
     Returns the default storage for an account.
     """
-    account = None
+    account = None # We XXX force account to None here!!
     if settings.DEFAULT_STORAGE_CALLABLE:
         storage = import_string(settings.DEFAULT_STORAGE_CALLABLE)(
             request, account=account, **kwargs)
@@ -147,12 +147,15 @@ def _get_file_system_storage(account=None):
     location = settings.MEDIA_ROOT
     base_url = settings.MEDIA_URL
     prefix = _get_media_prefix(account)
-    parts = location.split(os.sep)
-    if prefix and prefix != parts[-1]:
-        location = os.sep.join(parts[:-1] + [prefix, parts[-1]])
-        if base_url.startswith('/'):
-            base_url = base_url[1:]
-        base_url = urljoin("/%s/" % prefix, base_url)
+    if prefix:
+        location = os.path.join(location, prefix)
+        #base_url = urljoin("/%s/" % prefix, base_url.lstrip('/'))
+        base_url = urljoin(base_url, "%s/" % prefix)
+        if django_settings.DEBUG:
+            base_url = urljoin("/%s/" % prefix, base_url.lstrip('/'))
+    LOGGER.debug("[_get_file_system_storage(account=%s)]"\
+        " returns FileSystemStorage(location=%s, base_url=%s)",
+        account, location, base_url)
     return FileSystemStorage(location=location, base_url=base_url)
 
 

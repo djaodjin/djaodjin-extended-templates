@@ -1,4 +1,4 @@
-# Copyright (c) 2025, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from django.template.response import TemplateResponse
 from ..compat import csrf, render_template, reverse
 from ..thread_locals import (enable_instrumentation,
     _add_editable_styles_context, get_edition_tools_context_data)
-from ..mixins import AccountMixin, UploadedImageMixin
+from ..mixins import AccountMixin
 from ..models import get_show_edit_tools
 
 
@@ -58,9 +58,8 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_sources': reverse('extended_templates_api_sources'),
                 'api_page_element_base': reverse(
                     'extended_templates_api_edit_template_base'),
-                'api_medias': reverse(
-                    'extended_templates_api_uploaded_media_elements',
-                    kwargs={'path':''})}}})
+                'api_medias': reverse('extended_templates_api_assets')
+        }}})
     context.update(csrf(request))
     soup = None
     if body_top_template_name:
@@ -134,7 +133,7 @@ class PageMixin(object):
         return response
 
 
-class PageView(PageMixin, AccountMixin, UploadedImageMixin, TemplateView):
+class PageView(PageMixin, AccountMixin, TemplateView):
 
     http_method_names = ['get']
 
@@ -166,8 +165,7 @@ class EditView(AccountMixin, TemplateView):
                     'extended_templates_api_sources'),
                 'api_page_element_base': reverse(
                     'extended_templates_api_edit_template_base'),
-                'api_medias': reverse(
-                    'extended_templates_api_uploaded_media_elements',
-                    kwargs={'path':''})}})
+                'api_medias': reverse('extended_templates_api_assets')
+            }})
         context = _add_editable_styles_context(context=context)
         return context

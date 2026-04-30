@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 import logging, os, tempfile, shutil, subprocess, sys, zipfile
 
 import jinja2, requests
+from django.conf import settings as django_settings
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
 from django.template.base import Parser, NodeList
@@ -34,6 +35,7 @@ from django.template.backends.jinja2 import get_exception_info
 from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.loader import _engine_list, get_template
+from django.template.utils import EngineHandler
 from django.utils._os import safe_join
 from rest_framework.exceptions import ValidationError
 
@@ -117,7 +119,31 @@ def check_template(template_source, using=None):
     Raises TemplateDoesNotExist if no such template exists.
     """
     errs = None
-    engines = _engine_list(using)
+    found = None
+    engines_config = django_settings.TEMPLATES
+    for engine in django_settings.TEMPLATES:
+        engine_name = engine.get('NAME')
+        backend = engine.get('BACKEND')
+        if (engine_name == 'html' and
+            backend == 'django.template.backends.jinja2.Jinja2'):
+            found = engine
+            break
+    if not found:
+        found = {
+            'NAME': 'html',
+            'BACKEND': 'django.template.backends.jinja2.Jinja2',
+            'DIRS': django_settings.TEMPLATES_DIRS,
+        }
+    engines_handler = EngineHandler(templates=[found])
+    engines = [engines_handler['html']]
+
+    # Jinja2's engine `from_string` will not just check the template
+    # source code, but will also go through loading the `extends` and `include`
+    # templates, using the search path in the loader defined in
+    # `django_settings.TEMPLATES`. That's a problem, though it might only
+    # be happening when `DEBUG=0`. I couldn't reproduce the error, even
+    # with missing template files.
+
     # We should find at least one engine that does not raise an error.
     for engine in engines:
         try:

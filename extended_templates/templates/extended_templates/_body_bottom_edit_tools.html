@@ -104,7 +104,7 @@ jQuery(document).ready(function($) {
   <script type="text/javascript">
 jQuery(document).ready(function($) {
   $(".dj-gallery").djgallery({
-    url: "{{urls.edit.api_medias}}",
+    url: "{{urls.edit.api_medias}}?public=1",
     csrfToken: "{{csrf_token}}",
     {% if templates %}hints: {{templates|safe}},{% endif %}
     mediaPrefix: "{{media_prefix}}",

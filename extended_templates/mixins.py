@@ -1,4 +1,4 @@
-# Copyright (c) 2025 DjaoDjin inc.
+# Copyright (c) 2026 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,7 @@
 import logging
 
 from . import settings
-from .compat import urlsplit
-from .models import MediaTag, get_active_theme
+from .models import get_active_theme
 from .extras import AccountMixinBase
 
 
@@ -35,71 +34,6 @@ LOGGER = logging.getLogger(__name__)
 
 class AccountMixin(AccountMixinBase, settings.EXTRA_MIXIN):
     pass
-
-
-class UploadedImageMixin(object):
-
-    def build_filter_list(self, validated_data):
-        items = validated_data.get('items')
-        filter_list = []
-        if items:
-            for item in items:
-                location = item['location']
-                parts = urlsplit(location)
-                if parts.netloc == self.request.get_host():
-                    location = parts.path
-                filter_list += [location]
-        return filter_list
-
-    def list_media(self, storage, filter_list, prefix='.'):
-        """
-        Return a list of media from default storage
-        """
-        #pylint:disable=too-many-locals
-        results = []
-        total_count = 0
-        if prefix.startswith('/'):
-            prefix = prefix[1:]
-        try:
-            dirs, files = storage.listdir(prefix)
-            for media in files:
-                if prefix and prefix != '.':
-                    media = prefix + '/' + media
-                if not media.endswith('/') and media != "":
-                    total_count += 1
-                    location = storage.url(media)
-                    try:
-                        updated_at = storage.get_modified_time(media)
-                    except AttributeError: # Django<2.0
-                        updated_at = storage.modified_time(media)
-                    normalized_location = location.split('?')[0]
-                    if (filter_list is None
-                        or normalized_location in filter_list):
-                        tags = ",".join(list(MediaTag.objects.filter(
-                            location=normalized_location).values_list(
-                            'tag', flat=True)))
-                        results += [
-                            {'location': location,
-                            'tags': tags,
-                            'updated_at': updated_at
-                            }]
-            for asset_dir in dirs:
-                dir_results, dir_total_count = self.list_media(
-                    storage, filter_list, prefix=prefix + '/' + asset_dir)
-                results += dir_results
-                total_count += dir_total_count
-        except OSError:
-            if storage.exists('.'):
-                LOGGER.exception(
-                    "Unable to list objects in %s.", storage.__class__.__name__)
-        except storage.connection_response_error:
-            LOGGER.exception(
-                "Unable to list objects in 's3://%s/%s/%s'.",
-                storage.bucket_name, storage.location, prefix)
-
-        # sort results by updated_at to sort by created_at.
-        # Media are not updated, so updated_at = created_at
-        return results, total_count
 
 
 class ThemePackageMixin(AccountMixin):

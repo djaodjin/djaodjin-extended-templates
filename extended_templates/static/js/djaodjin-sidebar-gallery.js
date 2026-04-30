@@ -235,7 +235,7 @@
             var parser = document.createElement('a');
             parser.href = url;
             var result = parser.pathname;
-            if( parser.host != location.hostname ) {
+            if( parser.host != location.host ) {
                 result = parser.host + result;
                 if( parser.protocol ) {
                     result = parser.protocol + "//" + result;
@@ -275,56 +275,62 @@
             });
         },
 
-        addMediaItem: function(file, index, init){
+        replaceOrCreateMediaItem: function(id, location, tags) {
             var self = this;
-            var mediaItem = null;
-            var tags = file.tags;
-            if (typeof tags === "undefined"){
-                tags = "";
+            if( typeof tags === "undefined" ) {
+                tags = [];
             }
+            if( !tags || !tags.length ) tags = [id];
             var ext = null;
             var parser = document.createElement('a');
-            parser.href = file.location;
+            parser.href = location;
             var filename = parser.pathname.toLowerCase();
             var extIdx = filename.lastIndexOf('.');
             if( extIdx > 0 ) {
                 ext = filename.substr(extIdx);
             }
+            var itemTemplate = self.options.itemTemplateUnknown;
+            if( ext ) {
+                if( self.options.acceptedVideos.some(function(v) {
+                    return ext.toLowerCase().indexOf(v) >= 0; })) {
+                    itemTemplate = self.options.itemTemplateVideo;
+                } else if( self.options.acceptedImages.some(function(v) {
+                    return ext.toLowerCase().indexOf(v) >= 0; })) {
+                    itemTemplate = self.options.itemTemplateImg;
+                }
+            }
+            var mediaItem = itemTemplate.replaceAll(
+                '${id}', id).replaceAll(
+                '${location}', location).replaceAll(
+                '${tags}', tags);
+            var $mediaItem = $(mediaItem);
+            $mediaItem.on('dragstart', function(event) {
+                event.originalEvent.dataTransfer.setData('text/plain',
+                    self.getMediaLocationFromItem($(this)));
+            });
+
+            const prev = $(".dj-gallery-items").find('#' + id);
+            if( prev.length > 0 ) {
+                prev.replaceWith($mediaItem);
+            } else {
+                $(".dj-gallery-items").prepend($mediaItem);
+            }
+
+            return $mediaItem;
+        },
+
+        addMediaItem: function(file, index, init){
+            var self = this;
+            var tags = file.tags;
             var location = file.location;
             if( self.options.acl === "public-read" ) {
                 location = self._mediaLocation(location);
             }
-            if( ext ) {
-                if( self.options.acceptedVideos.some(function(v) {
-                    return ext.toLowerCase().indexOf(v) >= 0; })) {
-                    mediaItem = self.options.itemTemplateVideo.replace(
-                        '${index}', index).replace(
-                        '${location}', location).replace(
-                        '${tags}', tags);
-                } else if( self.options.acceptedImages.some(function(v) {
-                    return ext.toLowerCase().indexOf(v) >= 0; })) {
-                    mediaItem = self.options.itemTemplateImg.replace(
-                        '${index}', index).replace(
-                        '${location}', location).replace(
-                        '${tags}', tags);
-                }
-            }
-            if( !mediaItem ) {
-                mediaItem = self.options.itemTemplateUnknown.replace(
-                    '${index}', index).replace(
-                    '${location}', location).replace(
-                    '${tags}', tags);
-            }
-            if( mediaItem ) {
-                var $mediaItem = $(mediaItem);
-                $(".dj-gallery-items").prepend($mediaItem);
-                $mediaItem.on('dragstart', function(event) {
-                    event.originalEvent.dataTransfer.setData('text/plain',
-                        self.getMediaLocationFromItem($(this)));
-                });
-                if( !init ) {
-                    self.selectMedia($mediaItem);
-                }
+            const id = self.options.idPrefix + index.toString();
+            var $mediaItem = self.replaceOrCreateMediaItem(
+                id, location, tags);
+            if( !init ) {
+                self.selectMedia($mediaItem);
             }
         },
 
@@ -382,19 +388,19 @@
             self.selectedMedia = item;
             item.addClass(self.options.selectedMediaClass);
 
+            const location = self.getMediaLocationFromItem(item);
+            const tags = item.find("[data-tags]").data("tags");
+
             // Prepares the preview UI element
-            var content = item.children().clone();
+            var content = "<iframe src=\"" +
+                location + "\" style=\"width:100%;height:50vh;\"></iframe>";
             $elem.find('.dj-gallery-info-preview').empty();
             $elem.find('.dj-gallery-info-preview').append(content);
 
             // Populates contextual information for the selected item
             // set the input fields in the contextual information
-            const location = self.getMediaLocationFromItem(item);
             $elem.find(".dj-gallery-location-input").val(location);
-            const tags = item.find("[data-tags]").data("tags");
-            if( tags ) {
-                $elem.find(".dj-gallery-tag-input").val(tags);
-            }
+            $elem.find(".dj-gallery-tag-input").val(tags ? tags : "");
 
             // Display contextual information for the selected item
             $(".dj-gallery-info-item-selected").show();
@@ -410,9 +416,10 @@
             event.preventDefault();
             var deletedMedia = self.selectedMedia;
             const location = self.getMediaLocationFromItem(deletedMedia);
+            const sep = self.options.url.indexOf('?') > 0 ? '&' : '?';
             $.ajax({
                 method: "DELETE",
-                url: self.options.url + "?location=" + location,
+                url: self.options.url + sep + "location=" + location,
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
@@ -439,7 +446,7 @@
                 tags[idx] = $.trim(tags[idx]);
             }
 
-            var tagged = self.selectedMedia.find('[data-tags]');
+            const id = self.selectedMedia.attr('id');
             const location = self.getMediaLocationFromItem(
                 self.selectedMedia);
             $.ajax({
@@ -456,9 +463,9 @@
                     xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
                 },
                 success: function(resp){
-                    if( tagged.length > 0 ) {
-                        tagged.data('tags', tags);
-                    }
+                    var $mediaItem = self.replaceOrCreateMediaItem(
+                        id, location, tags);
+                    self.selectMedia($mediaItem);
                 },
                 error: function(resp) {
                     self.galleryMessage(resp, 'error');
@@ -501,14 +508,14 @@
                    // undefined.
 
         // default options that can be overridden
-
         csrfToken: null,  // csrfToken passed back to the API
+        idPrefix: "image_",
 
         selectedMediaClass: "dj-gallery-active-item",
 
-        itemTemplateVideo: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><video class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></video></div>',
-        itemTemplateImg: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></div>',
-        itemTemplateUnknown: '<div id="image_${index}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}"></div>',
+        itemTemplateVideo: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><video class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></video></div>',
+        itemTemplateImg: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></div>',
+        itemTemplateUnknown: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}"></div>',
 
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
