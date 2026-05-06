@@ -198,11 +198,7 @@
                     }
                 },
                 uploadError: function(file, resp){
-                    var message = resp;
-                    if( typeof resp.detail !== "undefined" ) {
-                        message = resp.detail;
-                    }
-                    self.galleryMessage(message, "error");
+                    self.galleryErrorMessage(resp);
                 },
                 uploadProgress: function(file, progress) {
                     var djGalleryUploadProgress = self.$el.find(
@@ -270,7 +266,7 @@
                     });
                 },
                 error: function(resp) {
-                    self.galleryMessage(resp, 'error');
+                    self.galleryErrorMessage(resp);
                 }
             });
         },
@@ -352,10 +348,25 @@
             } else {
                 $elem.removeClass('text-danger');
             }
-            setTimeout(function() {
-                $elem.text("");
-            }, 2000);
+            // Disables timeout so we have a chance to see error messages.
+            if( false ) {
+                setTimeout(function() {
+                    $elem.text("");
+                }, 2000);
+            }
             return self.options.galleryMessage(message);
+        },
+
+        galleryErrorMessage: function(resp) {
+            var self = this;
+            var message = resp;
+            if( typeof message.responseJSON !== "undefined" ) {
+                message = message.responseJSON;
+            }
+            if( typeof message.detail !== "undefined" ) {
+                message = message.detail;
+            }
+            self.galleryMessage(message, 'error');
         },
 
         /** Returns the URL location for the media asset shown in `item`.
@@ -431,7 +442,7 @@
                     self.galleryMessage(resp.detail);
                 },
                 error: function(resp) {
-                    self.galleryMessage(resp, 'error');
+                    self.galleryErrorMessage(resp);
                 }
             });
         },
@@ -468,7 +479,7 @@
                     self.selectMedia($mediaItem);
                 },
                 error: function(resp) {
-                    self.galleryMessage(resp, 'error');
+                    self.galleryErrorMessage(resp);
                 }
             });
         },

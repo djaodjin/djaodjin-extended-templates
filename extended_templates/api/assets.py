@@ -26,6 +26,7 @@
 import hashlib, logging, os
 
 import boto3
+import botocore.exceptions
 from django.db import transaction
 from rest_framework import parsers, status
 from rest_framework.exceptions import ValidationError
@@ -120,7 +121,8 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
             raise ValidationError({
                 'detail': _("cannot access assets storage.")})
 
-        except storage.connection_response_error:
+        except (botocore.exceptions.ClientError,
+                botocore.exceptions.LoginRefreshRequired) as err:
             LOGGER.exception(
                 "Unable to list objects in 's3://%s/%s/%s'.",
                 storage.bucket_name, storage.location, prefix)
