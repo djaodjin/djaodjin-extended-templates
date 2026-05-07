@@ -94,17 +94,21 @@ def get_default_storage(request, account=None, **kwargs):
     """
     Returns the default storage for an account.
     """
-    account = None # We XXX force account to None here!!
+    storage = None
     if settings.DEFAULT_STORAGE_CALLABLE:
         storage = import_string(settings.DEFAULT_STORAGE_CALLABLE)(
             request, account=account, **kwargs)
-        LOGGER.debug("get_default_storage('%s')=%s", account, storage)
-        return storage
-    return get_default_storage_base(request, account=account, **kwargs)
+    if not storage:
+        storage = get_default_storage_base(request, account=account, **kwargs)
+
+    LOGGER.debug("get_default_storage(account=%s, kwargs=%s) returns %s",
+        account, kwargs, storage)
+    return storage
 
 
 def get_default_storage_base(request, account=None, public=False, **kwargs):
     # default implementation
+    storage = None
     storage_class = get_storage_class()
     if storage_class.__name__.endswith('3Storage'):
         # Hacky way to test for `storages.backends.s3.S3Storage`
@@ -125,10 +129,13 @@ def get_default_storage_base(request, account=None, public=False, **kwargs):
             **storage_kwargs)
         if 'security_token' in request.session:
             storage.security_token = request.session['security_token']
-        return storage
-    LOGGER.debug("``%s`` does not contain ``3Storage`` in its name,"\
-        " default to FileSystemStorage.", storage_class)
-    return _get_file_system_storage(account)
+
+    if not storage:
+        storage = _get_file_system_storage(account, public=public, **kwargs)
+
+    LOGGER.debug("[get_default_storage_base(account=%s, public=%s, kwargs=%s)]"\
+        " returns %s", account, public, kwargs, storage.__class__)
+    return storage
 
 
 def _get_bucket_name(account=None):
@@ -143,23 +150,33 @@ def _get_bucket_name(account=None):
     return settings.AWS_STORAGE_BUCKET_NAME
 
 
-def _get_file_system_storage(account=None):
+def _get_file_system_storage(account=None, public=False, base_url=None,
+                             **kwargs):
     location = settings.MEDIA_ROOT
-    base_url = settings.MEDIA_URL
-    prefix = _get_media_prefix(account)
+
+    storage_base_url = base_url
+    if not storage_base_url:
+        storage_base_url = settings.MEDIA_URL
+        if not public and django_settings.DEBUG:
+            app_name = getattr(django_settings, 'APP_NAME')
+            if account and app_name and account != app_name:
+                storage_base_url = urljoin(
+                    "/%s/" % app_name, storage_base_url.lstrip('/'))
+
+    prefix = _get_media_prefix(account).lstrip('/')
     if prefix:
         location = os.path.join(location, prefix)
-        #base_url = urljoin("/%s/" % prefix, base_url.lstrip('/'))
-        base_url = urljoin(base_url, "%s/" % prefix)
-        if django_settings.DEBUG:
-            base_url = urljoin("/%s/" % prefix, base_url.lstrip('/'))
-    LOGGER.debug("[_get_file_system_storage(account=%s)]"\
-        " returns FileSystemStorage(location=%s, base_url=%s)",
-        account, location, base_url)
-    return FileSystemStorage(location=location, base_url=base_url)
+        storage_base_url = urljoin(storage_base_url, "%s/" % prefix)
+
+    LOGGER.debug("[_get_file_system_storage(account=%s, public=%s,"\
+        " base_url=%s)] returns FileSystemStorage(location=%s, base_url=%s)",
+        account, public, base_url, location, storage_base_url)
+    return FileSystemStorage(location=location, base_url=storage_base_url)
 
 
 def _get_media_prefix(account=None):
+    LOGGER.debug("_get_media_prefix(account=%s[%s])...",
+        account, account.__class__)
     media_prefix = settings.MEDIA_PREFIX
     if account:
         try:
@@ -167,6 +184,5 @@ def _get_media_prefix(account=None):
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
                 " field.", account.__class__)
-        if not media_prefix:
-            media_prefix = str(account)
-    return media_prefix
+            media_prefix = "%s/%s" % (media_prefix.rstrip('/'), str(account))
+    return media_prefix.strip('/')

@@ -34,7 +34,7 @@ from django.template.base import Parser, NodeList
 from django.template.backends.jinja2 import get_exception_info
 from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-from django.template.loader import _engine_list, get_template
+from django.template.loader import get_template
 from django.template.utils import EngineHandler
 from django.utils._os import safe_join
 from rest_framework.exceptions import ValidationError
@@ -120,7 +120,6 @@ def check_template(template_source, using=None):
     """
     errs = None
     found = None
-    engines_config = django_settings.TEMPLATES
     for engine in django_settings.TEMPLATES:
         engine_name = engine.get('NAME')
         backend = engine.get('BACKEND')

@@ -231,11 +231,9 @@
             var parser = document.createElement('a');
             parser.href = url;
             var result = parser.pathname;
-            if( parser.host != location.host ) {
-                result = parser.host + result;
-                if( parser.protocol ) {
-                    result = parser.protocol + "//" + result;
-                }
+            result = parser.host + result;
+            if( parser.protocol ) {
+                result = parser.protocol + "//" + result;
             }
             return result;
         },
@@ -295,10 +293,11 @@
                     itemTemplate = self.options.itemTemplateImg;
                 }
             }
+            const tagsStr = tags.join(', ')
             var mediaItem = itemTemplate.replaceAll(
                 '${id}', id).replaceAll(
                 '${location}', location).replaceAll(
-                '${tags}', tags);
+                '${tags}', tagsStr);
             var $mediaItem = $(mediaItem);
             $mediaItem.on('dragstart', function(event) {
                 event.originalEvent.dataTransfer.setData('text/plain',
@@ -345,11 +344,10 @@
             $elem.text(message);
             if( type == 'error' ) {
                 $elem.addClass('text-danger');
+                // Error messages do not dissapear so we have a chance
+                // to see them.
             } else {
                 $elem.removeClass('text-danger');
-            }
-            // Disables timeout so we have a chance to see error messages.
-            if( false ) {
                 setTimeout(function() {
                     $elem.text("");
                 }, 2000);
@@ -360,8 +358,11 @@
         galleryErrorMessage: function(resp) {
             var self = this;
             var message = resp;
-            if( typeof message.responseJSON !== "undefined" ) {
-                message = message.responseJSON;
+            if( typeof resp.status !== "undefined" ) {
+                message = "Error: " + resp.status + " " + resp.statusText;
+            }
+            if( typeof resp.responseJSON !== "undefined" ) {
+                message = resp.responseJSON;
             }
             if( typeof message.detail !== "undefined" ) {
                 message = message.detail;
@@ -379,6 +380,20 @@
                 self._mediaLocation(item.find("[src]").attr("src"));
             return location;
         },
+
+        /** Returns the tags for the media asset shown in `item`.
+         */
+        getMediaTagsFromItem: function(item) {
+            var self = this;
+            const refElem = item.find("[data-tags]");
+            const tagsArray = refElem.length > 0 ?
+                  refElem.data("tags").split(",") : [];
+            for( let idx = 0; idx < tagsArray.length; ++idx ) {
+                tagsArray[idx] = $.trim(tagsArray[idx]);
+            }
+            return tagsArray;
+        },
+
 
         /**
            Highlights the selected item in the media gallery.
@@ -403,8 +418,24 @@
             const tags = item.find("[data-tags]").data("tags");
 
             // Prepares the preview UI element
-            var content = "<iframe src=\"" +
-                location + "\" style=\"width:100%;height:50vh;\"></iframe>";
+            var content = "<p>This document cannot be previewed.</p>"
+
+            var ext = null;
+            var parser = document.createElement('a');
+            parser.href = location;
+            var filename = parser.pathname.toLowerCase();
+            var extIdx = filename.lastIndexOf('.');
+            if( extIdx > 0 ) {
+                ext = filename.substr(extIdx);
+            }
+            if( ext ) {
+                if( self.options.acceptedPreview.some(function(v) {
+                    return ext.toLowerCase().indexOf(v) >= 0; })) {
+                    content = "<iframe src=\"" + location +
+                        "\" style=\"width:100%;height:50vh;\"></iframe>";
+                }
+            }
+
             $elem.find('.dj-gallery-info-preview').empty();
             $elem.find('.dj-gallery-info-preview').append(content);
 
@@ -458,30 +489,42 @@
             }
 
             const id = self.selectedMedia.attr('id');
-            const location = self.getMediaLocationFromItem(
-                self.selectedMedia);
-            $.ajax({
-                type: "PUT",
-                url: self.options.url,
-                data: JSON.stringify({
-                    "items": [{
-                        "location": location
-                    }],
-                    "tags": tags}),
-                datatype: "json",
-                contentType: "application/json; charset=utf-8",
-                beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
-                },
-                success: function(resp){
-                    var $mediaItem = self.replaceOrCreateMediaItem(
-                        id, location, tags);
-                    self.selectMedia($mediaItem);
-                },
-                error: function(resp) {
-                    self.galleryErrorMessage(resp);
+            const prevTags = self.getMediaTagsFromItem(self.selectedMedia);
+            var tagsUpdated = ( prevTags.length != tags.length );
+            if( prevTags.length == tags.length ) {
+                for( var idx = 0; idx < tags.length; ++idx ) {
+                    if( prevTags[idx] != tags[idx] ) {
+                        tagsUpdated = true;
+                        break
+                    }
                 }
-            });
+            }
+            if( tagsUpdated ) {
+                const location = self.getMediaLocationFromItem(
+                    self.selectedMedia);
+                $.ajax({
+                    type: "PUT",
+                    url: self.options.url,
+                    data: JSON.stringify({
+                        "items": [{
+                            "location": location
+                        }],
+                        "tags": tags}),
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
+                    beforeSend: function(xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", self._csrfToken());
+                    },
+                    success: function(resp){
+                        var $mediaItem = self.replaceOrCreateMediaItem(
+                            id, location, tags);
+                        self.selectMedia($mediaItem);
+                    },
+                    error: function(resp) {
+                        self.galleryErrorMessage(resp);
+                    }
+                });
+            }
         },
 
         hideGallery: function(speed, easing, callback) {
@@ -528,6 +571,7 @@
         itemTemplateImg: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></div>',
         itemTemplateUnknown: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}"></div>',
 
+        acceptedPreview: [".jpg", ".png", ".gif", ".mp4", ".pdf"],
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
         maxFilesizeUpload: 256,

@@ -83,6 +83,9 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
         parsers.MultiPartParser, parsers.FileUploadParser)
 
     def resolve_asset_location(self, location):
+        if not (location.startswith('https://') or
+                location.startswith('http://')):
+            location = self.request.build_absolute_uri(location)
         return location
 
 
@@ -118,11 +121,11 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
             if storage.exists('.'):
                 LOGGER.exception(
                     "Unable to list objects in %s.", storage.__class__.__name__)
-            raise ValidationError({
-                'detail': _("cannot access assets storage.")})
+                raise ValidationError({
+                    'detail': _("cannot access assets storage.")})
 
         except (botocore.exceptions.ClientError,
-                botocore.exceptions.LoginRefreshRequired) as err:
+                botocore.exceptions.LoginRefreshRequired):
             LOGGER.exception(
                 "Unable to list objects in 's3://%s/%s/%s'.",
                 storage.bucket_name, storage.location, prefix)
@@ -208,22 +211,31 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
 
         """
         #pylint: disable=unused-variable,unused-argument,too-many-locals
-        storage = get_default_storage(request, self.account)
+        storage = get_default_storage(request, self.account,
+            base_url=self.request.build_absolute_uri(settings.MEDIA_URL))
         assets = self.list_media(storage,
             includes=[request.query_params.get('location')])
         if not assets:
             return HttpResponse({}, status=status.HTTP_404_NOT_FOUND)
 
-        base = storage.url('')
+        base_url_pat = self.resolve_asset_location('')
+        parts = urlparse(storage.url(''))
+        base_storage_pat = urlunparse(
+            (parts.scheme, parts.netloc, parts.path, None, None, None))
+        last_storage_part = parts.path.strip(URL_PATH_SEP).split(
+            URL_PATH_SEP)[-1]
+        resp_status = status.HTTP_200_OK
         for item in assets:
-            parts = urlparse(item['location'])
-            permanent_location = urlunparse(
-                (parts.scheme, parts.netloc, parts.path, None, None, None))
-            if permanent_location.startswith(base):
-                storage.delete(permanent_location[len(base):])
+            # convert `/api/{profile}/assets/{path}` to a URL on S3.
+            permanent_location = resolve_permanent_location(item['location'],
+                storage, base_url_pat=base_url_pat)
+            if permanent_location.startswith(base_storage_pat):
+                storage.delete(permanent_location[len(base_storage_pat):])
+            else:
+                resp_status = status.HTTP_404_NOT_FOUND
             MediaTag.objects.filter(location=permanent_location).delete()
         return HttpResponse({'detail': _('Media correctly deleted.')},
-            status=status.HTTP_200_OK)
+            status=resp_status)
 
     @extend_schema(responses={
       200: OpenApiResponse(AssetSerializer(many=True))})
@@ -279,16 +291,9 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
         base_url_pat = self.resolve_asset_location('')
         tags = [tag for tag in serializer.validated_data.get('tags') if tag]
         for item in assets:
-            permanent_location = item['location']
-            if base_url_pat and permanent_location.startswith(base_url_pat):
-                key_name = permanent_location[len(base_url_pat):].lstrip(
-                    URL_PATH_SEP)
-                # we remove leading '/' otherwise S3 copy triggers a 404
-                # because it creates an URL with '//'.
-                permanent_location = storage.url(key_name)
-                parts = urlparse(permanent_location)
-                permanent_location = urlunparse(
-                    (parts.scheme, parts.netloc, parts.path, None, None, None))
+            # convert `/api/{profile}/assets/{path}` to a URL on S3.
+            permanent_location = resolve_permanent_location(item['location'],
+                storage, base_url_pat=base_url_pat)
             with transaction.atomic():
                 media_tags = MediaTag.objects.filter(
                     location=permanent_location)
@@ -373,11 +378,10 @@ def process_upload(request, storage=None, account=None, is_public_asset=None,
         storage_key_name = sha_filename if store_hash else filename
         if not is_public_asset:
             assert account is not None
-            storage_key_name = '/'.join([str(account), storage_key_name])
 
         LOGGER.info("upload %s to %s", filename, storage_key_name)
         if storage.exists(storage_key_name) and replace_stored:
-                storage.delete(storage_key_name)
+            storage.delete(storage_key_name)
         if not storage.exists(storage_key_name):
             storage.save(storage_key_name, uploaded_file)
             response_status = status.HTTP_201_CREATED
@@ -390,3 +394,34 @@ def process_upload(request, storage=None, account=None, is_public_asset=None,
         'location': storage.url(storage_key_name),
         'updated_at': storage.get_modified_time(storage_key_name)
     }, response_status)
+
+
+def resolve_permanent_location(location, storage, base_url_pat=None):
+    """
+    Convert `/api/{profile}/assets/{path}` to a URL on S3.
+    """
+    key_name = None
+    permanent_location = location
+    if base_url_pat and permanent_location.startswith(base_url_pat):
+        key_name = permanent_location[len(base_url_pat):].lstrip(
+            URL_PATH_SEP)
+    elif not (location.startswith('https://') or
+                 location.startswith('http://')):
+        key_name = location
+    if key_name:
+        parts = urlparse(storage.url(''))
+        prefix_parts = parts.path.strip(URL_PATH_SEP).split(URL_PATH_SEP)
+        if prefix_parts:
+            for idx in range(0, len(prefix_parts) - 1):
+                last_storage_part = URL_PATH_SEP.join(prefix_parts[idx:])
+                if key_name.startswith(last_storage_part):
+                    key_name = key_name[len(last_storage_part):].lstrip(
+                        URL_PATH_SEP)
+                    break
+        # we remove leading '/' otherwise S3 copy triggers a 404
+        # because it creates an URL with '//'.
+        permanent_location = storage.url(key_name)
+        parts = urlparse(permanent_location)
+        permanent_location = urlunparse(
+            (parts.scheme, parts.netloc, parts.path, None, None, None))
+    return permanent_location

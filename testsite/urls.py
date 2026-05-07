@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.static import serve
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from extended_templates.compat import include, path, re_path
@@ -32,12 +32,16 @@ from extended_templates.views.pages import PageView, EditView
 from .views import PdfView
 
 if settings.DEBUG:
-    urlpatterns = staticfiles_urlpatterns() \
-        + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns = staticfiles_urlpatterns() + [
+        re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
+            xframe_options_sameorigin(serve),
+            kwargs={'document_root': settings.MEDIA_ROOT})
+    ]
 else:
     urlpatterns = [
         re_path(r'^%s(?P<path>.*)$' % settings.STATIC_URL.lstrip('/'),
-            serve, kwargs={'document_root': settings.STATIC_ROOT}),
+            xframe_options_sameorigin(serve),
+            kwargs={'document_root': settings.STATIC_ROOT}),
         re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
             serve, kwargs={'document_root': settings.MEDIA_ROOT})
     ]
