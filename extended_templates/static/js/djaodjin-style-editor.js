@@ -141,7 +141,7 @@
                 var $input = $(this);
                 $input.wrap('<div>');
                 $input.parent().addClass('input-group')
-                var $button = $('<span class="input-group-btn"><a href="#" class="btn btn-default" id="cp4"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a></span>');
+                var $button = $('<span class="input-group-btn"><a href="#" class="btn btn-default" id="cp4" aria-label="Pick color"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a></span>');
                 $input.after($button);
                 $button.colorpicker({
                     customClass: 'color-picker-widget'
