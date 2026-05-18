@@ -1,3 +1,10 @@
+0.5.2
+
+  * fixes permanent_location for S3 and FileSystem storages
+  * supports accessiblity in djaodjin-style-editor
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon, 18 May 2026 14:40:00 -0700
+
 0.5.1
 
   * supports tags on S3 and FileSystem storages permanent_location

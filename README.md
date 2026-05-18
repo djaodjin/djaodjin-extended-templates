@@ -67,10 +67,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.5.1
+0.5.2
 
-  * supports tags on S3 and FileSystem storages permanent_location
-  * shows error messages in sidebar gallery UI component
-  * prevents reloading asset when tags are updated
+  * fixes permanent_location for S3 and FileSystem storages
+  * supports accessiblity in djaodjin-style-editor
 
 [previous release notes](changelog)
