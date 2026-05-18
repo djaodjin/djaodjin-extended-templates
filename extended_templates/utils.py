@@ -106,7 +106,8 @@ def get_default_storage(request, account=None, **kwargs):
     return storage
 
 
-def get_default_storage_base(request, account=None, public=False, **kwargs):
+def get_default_storage_base(request, account=None, public=False,
+                             base_url=None, **kwargs):
     # default implementation
     storage = None
     storage_class = get_storage_class()
@@ -131,7 +132,8 @@ def get_default_storage_base(request, account=None, public=False, **kwargs):
             storage.security_token = request.session['security_token']
 
     if not storage:
-        storage = _get_file_system_storage(account, public=public, **kwargs)
+        storage = _get_file_system_storage(
+            account, public=public, base_url=base_url, **kwargs)
 
     LOGGER.debug("[get_default_storage_base(account=%s, public=%s, kwargs=%s)]"\
         " returns %s", account, public, kwargs, storage.__class__)

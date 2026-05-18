@@ -412,7 +412,7 @@ def resolve_permanent_location(location, storage, base_url_pat=None):
         parts = urlparse(storage.url(''))
         prefix_parts = parts.path.strip(URL_PATH_SEP).split(URL_PATH_SEP)
         if prefix_parts:
-            for idx in range(0, len(prefix_parts) - 1):
+            for idx in range(0, len(prefix_parts)):
                 last_storage_part = URL_PATH_SEP.join(prefix_parts[idx:])
                 if key_name.startswith(last_storage_part):
                     key_name = key_name[len(last_storage_part):].lstrip(

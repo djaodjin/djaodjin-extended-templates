@@ -274,15 +274,12 @@
             if( typeof tags === "undefined" ) {
                 tags = [];
             }
-            if( !tags || !tags.length ) tags = [id];
-            var ext = null;
             var parser = document.createElement('a');
             parser.href = location;
-            var filename = parser.pathname.toLowerCase();
-            var extIdx = filename.lastIndexOf('.');
-            if( extIdx > 0 ) {
-                ext = filename.substr(extIdx);
-            }
+            var idx = parser.pathname.lastIndexOf('/');
+            const filename = ( idx > 0 ) ? parser.pathname.substr(idx + 1) : id;
+            var idx = filename.lastIndexOf('.');
+            const ext = ( idx > 0 ) ? filename.substr(idx) : null;
             var itemTemplate = self.options.itemTemplateUnknown;
             if( ext ) {
                 if( self.options.acceptedVideos.some(function(v) {
@@ -297,6 +294,7 @@
             var mediaItem = itemTemplate.replaceAll(
                 '${id}', id).replaceAll(
                 '${location}', location).replaceAll(
+                '${filename}', filename).replaceAll(
                 '${tags}', tagsStr);
             var $mediaItem = $(mediaItem);
             $mediaItem.on('dragstart', function(event) {
@@ -442,6 +440,7 @@
             // Populates contextual information for the selected item
             // set the input fields in the contextual information
             $elem.find(".dj-gallery-location-input").val(location);
+            $elem.find(".dj-gallery-location-link").attr('href', location);
             $elem.find(".dj-gallery-tag-input").val(tags ? tags : "");
 
             // Display contextual information for the selected item
