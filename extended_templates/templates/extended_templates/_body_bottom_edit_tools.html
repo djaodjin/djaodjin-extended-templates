@@ -24,7 +24,9 @@ jQuery(document).ready(function($) {
 </script>
 
 <!-- Media gallery panel -->
-<div id="media-gallery" class="dj-gallery custom-gallery" style="display:none;">
+<div id="media-gallery" class="dj-gallery custom-gallery"
+     role="dialog" aria-label="Media gallery"
+     style="display:none;">
   <div>
     <div>
       <h4>Media gallery</h4>
@@ -39,7 +41,10 @@ jQuery(document).ready(function($) {
         <em>Drag'n'drop or click here</em>
       </div>
       <div class="dj-gallery-upload-progress progress" style="display:none;">
-        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+        <div class="progress-bar" role="progressbar"
+             aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Upload progress"
+             style="width: 0%;">
           <span class="progress-bar-info"></span>
         </div>
       </div>
@@ -54,8 +59,13 @@ jQuery(document).ready(function($) {
       </div>
       <div class="dj-gallery-info-item-selected" style="display: none;">
         <div class="input-group">
-          <input class="dj-gallery-location-input form-control" type="text" readonly />
-          <button class="dj-gallery-copy-location btn btn-secondary" type="button">
+          <input class="dj-gallery-location-input form-control"
+                 type="text" readonly
+                 aria-label="Media location"
+                 />
+          <button class="dj-gallery-copy-location btn btn-secondary"
+                  type="button"
+                  aria-label="Copy location">
               <span>Copy</span>
           </button>
         </div>
@@ -91,8 +101,13 @@ jQuery(document).ready(function($) {
         </div>
         <div class="modal-footer">
           <div class="input-group">
-            <input class="dj-gallery-location-input form-control" type="text" readonly />
-            <button class="dj-gallery-copy-location btn btn-secondary" type="button">
+            <input class="dj-gallery-location-input form-control"
+                   type="text" readonly
+                   aria-label="Media location"
+                   />
+            <button class="dj-gallery-copy-location btn btn-secondary"
+                    type="button"
+                    aria-label="Copy location">
               <span>Copy</span>
             </button>
           </div>
@@ -123,7 +138,9 @@ jQuery(document).ready(function($) {
 </div>
 
 <!-- Template editor panel -->
-<div id="code-editor" class="custom-gallery" style="display:none;">
+<div id="code-editor" class="custom-gallery"
+     role="dialog" aria-label="Template editor"
+     style="display:none;">
   <div>
     <h4>Template editor</h4>
     <button type="button" class="dj-close btn-close" aria-label="Close">Close</button>
@@ -151,7 +168,9 @@ jQuery(document).ready(function($) {
 </div>
 
 <!-- style editor -->
-<div id="style-editor" class="custom-gallery" style="width:800px;right:-800px;">
+<div id="style-editor" class="custom-gallery"
+     role="complementary" aria-label="Style editor"
+     style="width:800px;right:-800px;">
   <h2>Styles</h2>
   <button class="refresh-styles btn btn-primary">Reload</button>
   <form id="editable-styles-form" class="form-horizontal content">
@@ -199,7 +218,9 @@ jQuery(document).ready(function($) {
 </div>
 
 <!-- Buttons to open/close the sliding edit panels -->
-<div style="top:200px;position:fixed;right:-1px;z-index:10000" class="btn-group-vertical btn-group-sm btn-tools" role="group" aria-label="...">
+<div class="btn-group-vertical btn-group-sm btn-tools"
+     role="complementary" aria-label="Edit tools"
+     style="top:200px;position:fixed;right:-1px;z-index:10000">
   <button class="btn btn-primary" style="opacity:0.9;" id="toggle-media-gallery" data-target="#media-gallery" data-default-width="300" data-intro="Image gallery" data-position="left" title="Image Gallery"><i>G</i></button>
   <button id="toggle-code-editor" class="btn btn-primary" style="opacity:0.9;" data-target="#code-editor" data-default-width="800" data-intro="Code Editor" data-position="left" title="Code"><i>C</i></button>
   <button id="toggle-style-editor" class="btn btn-primary" style="opacity:0.9;" data-target="#style-editor" data-default-width="800" data-intro="Style Editor" data-position="left" title="Styles"><i>S</i></button>

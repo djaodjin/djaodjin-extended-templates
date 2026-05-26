@@ -132,6 +132,7 @@
             try {
                 self.tagify = new Tagify(
                     self.$el.find(".dj-gallery-tag-input")[0]);
+                self.tagify.DOM.input.setAttribute('aria-label', 'Tags');
                 self.tagify.on('blur', function(event) {
                     var tagString = "";
                     var sep = "";
@@ -567,8 +568,8 @@
         selectedMediaClass: "dj-gallery-active-item",
 
         itemTemplateVideo: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><video class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></video></div>',
-        itemTemplateImg: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}"></div>',
-        itemTemplateUnknown: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}"></div>',
+        itemTemplateImg: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="${location}" data-tags="${tags}" alt="Gallery image"></div>',
+        itemTemplateUnknown: '<div id="${id}" class="dj-gallery-item-container card thumbnail-gallery" draggable="true"><img class="image dj-gallery-item image_media img-thumbnail" src="/assets/img/generic-document.png" data-location="${location}" data-tags="${tags}" alt="Gallery image"></div>',
 
         acceptedPreview: [".jpg", ".png", ".gif", ".mp4", ".pdf"],
         acceptedImages: [".jpg", ".png", ".gif"],
