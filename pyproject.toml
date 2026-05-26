@@ -26,10 +26,11 @@ dependencies = [
   "djangorestframework>=3.3.1",
   "django-storages>=1.14",           # for `get_package_file_from_s3`
   "djaodjin-deployutils>=0.14.1",    # for `package_theme`
+  "html5lib>=1.1",
   "Jinja2>=2.8",
   "premailer>=2.9.2",
   "requests>=2.22.0",                # to install theme from remote location
-  "WeasyPrint>=0.42"
+  "WeasyPrint>=56.1"
 ]
 
 [project.urls]
