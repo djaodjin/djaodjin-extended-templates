@@ -14,7 +14,7 @@
 </head>
 <body>
   {% block menubar %}
-  <div>
+  <header>
     <a href="/">Home</a>
     {% if request.user.is_authenticated %}
     | <a id="authenticated-user" href="/users/">{{request.user.username}}</a>
@@ -22,32 +22,34 @@
     {% else %}
     | <a id="login" href="/login/">Sign In</a>
     {% endif %}
-  </div>
+  </header>
   {% endblock %}
-  <div id="messages">
-    <div id="messages-content">
-      {% for message in request|messages %}
-      <div class="alert{% if message.tags %} alert-{{message.tags}}{% endif %}">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <div>{{message|safe}}</div>
-      </div>
-      {% endfor %}
-      {% if form %}
-      {% for message in form|messages %}
-      <div class="alert alert-danger">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <div>{{message}}</div>
-      </div>
-      {% endfor %}
-      {% endif %}
-      <script type="text/javascript">
-        var _showErrorMessagesProviderNotified = "We have been notified"
+  <main>
+    <div id="messages">
+      <div id="messages-content">
+        {% for message in request|messages %}
+        <div class="alert{% if message.tags %} alert-{{message.tags}}{% endif %}">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <div>{{message|safe}}</div>
+        </div>
+        {% endfor %}
+        {% if form %}
+        {% for message in form|messages %}
+        <div class="alert alert-danger">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <div>{{message}}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+        <script type="text/javascript">
+          var _showErrorMessagesProviderNotified = "We have been notified"
             + " and have started on fixing the error. We apologize for the"
             + " inconvinience.";
-      </script>
+        </script>
+      </div>
     </div>
-  </div>
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
   {% block bodyscripts %}
 <script type="text/javascript" src="/static/vendor/jquery.js"></script>
 <script type="text/javascript" src="/static/vendor/bootstrap.js"></script>
