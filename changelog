@@ -1,3 +1,9 @@
+0.5.3
+
+  * passes Web accessibility tests
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed, 27 May 2026 13:55:00 -0700
+
 0.5.2
 
   * fixes permanent_location for S3 and FileSystem storages

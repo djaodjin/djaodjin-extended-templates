@@ -67,9 +67,8 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.5.2
+0.5.3
 
-  * fixes permanent_location for S3 and FileSystem storages
-  * supports accessiblity in djaodjin-style-editor
+  * passes Web accessibility tests
 
 [previous release notes](changelog)
