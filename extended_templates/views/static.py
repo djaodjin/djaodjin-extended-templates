@@ -1,4 +1,4 @@
-# Copyright (c) 2025, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,11 +24,11 @@
 
 import glob, logging, os, subprocess
 
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.utils._os import safe_join
 from django.views.generic import View
-#from django.views.static import serve as django_static_serve
-from django.contrib.staticfiles.views import serve as django_static_serve
+from django.views.static import serve as django_static_serve
+from django.contrib.staticfiles.views import serve as contrib_static_serve
 
 from .. import settings
 from ..utils import get_assets_dirs
@@ -51,7 +51,7 @@ class AssetView(View):
         rel_path = self.kwargs.get('path')
 
         source = assets_map.get(rel_path)
-        LOGGER.info("checks if %s needs to be rebuilt from sources %s",
+        LOGGER.debug("checks if %s needs to be rebuilt from sources %s",
             rel_path, source)
         if source:
             cache_root = None
@@ -105,12 +105,18 @@ class AssetView(View):
             else:
                 LOGGER.debug("no rebuild of %s", str(rel_path))
 
-        document_root = kwargs.get('document_root')
+        document_root = kwargs.get('document_root',
+            os.path.dirname(django_settings.STATIC_ROOT))
         show_indexes = kwargs.get('show_indexes', False)
-        resp = django_static_serve(request, rel_path,
-            # Unless we import `django.views.static.serve`, we cannot define:
-            #document_root=document_root,
-            show_indexes=show_indexes)
+        if True: # XXX Force use of `contrib_static_serve`.
+            # `document_root` is only available in `django.static`,
+            # not `django.contrib.staticfiles`
+            resp = contrib_static_serve(request, rel_path,
+                insecure=True, show_indexes=show_indexes)
+        else:
+            resp = django_static_serve(request, rel_path,
+                document_root=document_root,
+                show_indexes=show_indexes)
         if source:
             resp['Cache-Control'] = 'no-cache'
         return resp
