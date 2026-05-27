@@ -147,7 +147,7 @@
             var self = this;
 
             function addPanel(element, name, beforeElem) {
-                var tabsContainer = element.find("[role='tablist']");
+                var tabsContainer = element.find('[role="navigation"]>ul');
                 var contentsContainer = element.find(".tab-content");
                 var idx = tabsContainer.find(">li").length;
                 var tab = $("<li class=\"nav-item\"><a class=\"nav-link" + (idx === 0 ? " active" : "") + "\" href=\"#tab-" + idx + "\" data-bs-toggle=\"tab\">" + name + "</a></li>");
@@ -176,7 +176,7 @@
                     addPanel(self.$element, templates[idx].name);
                 }
             }
-            self.$element.find("[role='tablist']").append("<li id=\"new-source-btn\" class=\"nav-item\"><a class=\"nav-link\" href=\"#new-source\" data-bs-toggle=\"modal\" data-bs-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
+            self.$element.find('[role="navigation"]>ul').append("<li id=\"new-source-btn\" class=\"nav-item\"><a class=\"nav-link\" href=\"#new-source\" data-bs-toggle=\"modal\" data-bs-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
             self.$element.find("#new-source-submit").click(function(event) {
                 event.preventDefault();
                 var name = self.$element.find("#new-source [name='name']").val();
