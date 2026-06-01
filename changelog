@@ -1,3 +1,9 @@
+0.5.4
+
+  * passes Web accessibility tests (additional tests popped up 1 error)
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon,  1 June 2026 11:15:00 -0700
+
 0.5.3
 
   * passes Web accessibility tests

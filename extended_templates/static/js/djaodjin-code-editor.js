@@ -48,6 +48,8 @@
                 enableSnippets: true,
                 enableLiveAutocompletion: false
             });
+            self.editor.textInput.getElement().setAttribute(
+                "aria-label", "Code Editor");
         },
 
         _csrfToken: function() {

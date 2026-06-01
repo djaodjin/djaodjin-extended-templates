@@ -67,7 +67,7 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.5.3
+0.5.4
 
   * passes Web accessibility tests
 
