@@ -14,7 +14,7 @@ premailer==3.10.0
 requests==2.32.5 ; python_version < "3.12"
 requests==2.34.2 ; python_version >= "3.12"
 WeasyPrint==66.0 ; python_version < "3.12"
-WeasyPrint==68.1 ; python_version >= "3.12"
+WeasyPrint==70.0 ; python_version >= "3.12"
 
 # testsite-only
 coverage==6.4.4
