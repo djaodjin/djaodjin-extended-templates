@@ -28,6 +28,7 @@ import hashlib, logging, os
 import boto3
 import botocore.exceptions
 from django.db import transaction
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import parsers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListCreateAPIView
@@ -81,6 +82,8 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
     pagination_class = PageNumberPagination
     parser_classes = (parsers.JSONParser, parsers.FormParser,
         parsers.MultiPartParser, parsers.FileUploadParser)
+
+    search_field_param = 'q'
 
     def resolve_asset_location(self, location):
         if not (location.startswith('https://') or
@@ -140,13 +143,24 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
             return MediaItemListSerializer
         return super(ListUploadAssetAPIView, self).get_serializer_class()
 
+
+    def get_search_terms(self, request):
+        search_terms = request.query_params.get(self.search_field_param)
+        if search_terms:
+            try:
+                validate_title(search_terms)
+            except DjangoValidationError as err:
+                raise ValidationError({"detail": err.message})
+        return search_terms
+
+
+    @extend_schema(operation_id='api_assets_index')
     def get(self, request, *args, **kwargs):
         #pylint:disable=unused-argument,unused-variable
         locations = None
-        search = request.GET.get('q')
-        if search:
-            validate_title(search)
-            locations = MediaTag.objects.filter(tag__icontains=search)\
+        search_terms = self.get_search_terms(request)
+        if search_terms:
+            locations = MediaTag.objects.filter(tag__icontains=search_terms)\
                 .values_list('location', flat=True)
         assets = self.list_media(
             get_default_storage(request, self.account), includes=locations)
@@ -167,6 +181,7 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
             'results': sorted(data, key=lambda x: x['updated_at'])
         })
 
+    @extend_schema(operation_id='api_assets_index_create')
     def post(self, request, *args, **kwargs):
         """
         Uploads a static asset file
@@ -199,6 +214,7 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
             AssetSerializer().to_representation(response_data),
             status=response_status)
 
+    @extend_schema(operation_id='api_assets_index_destroy')
     def delete(self, request, *args, **kwargs):
         """
         Deletes static assets file
@@ -237,8 +253,9 @@ class ListUploadAssetAPIView(AccountMixin, ListCreateAPIView):
         return HttpResponse({'detail': _('Media correctly deleted.')},
             status=resp_status)
 
-    @extend_schema(responses={
-      200: OpenApiResponse(AssetSerializer(many=True))})
+
+    @extend_schema(operation_id='api_assets_index_update',
+        responses={200: OpenApiResponse(AssetSerializer(many=True))})
     def put(self, request, *args, **kwargs):
         """
         Updates meta tags on assets
