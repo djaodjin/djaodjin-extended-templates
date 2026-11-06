@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ from django.template.backends.jinja2 import Jinja2 as Jinja2Templates
 from django.template.loader import _engine_list
 from django.utils._os import safe_join
 from jinja2.lexer import Lexer
-from rest_framework import status, generics
+from rest_framework import status, generics, mixins
 from rest_framework.response import Response
 
 from .serializers import SourceCodeSerializer, SourceElementSerializer
@@ -212,8 +212,9 @@ class SourceEditBaseAPIView(SourceEditAPIView):
 
 
 
-class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
-                          generics.CreateAPIView):
+class SourceDetailAPIView(ThemePackageMixin,
+                          mixins.CreateModelMixin,
+                          generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieves a template source file
 
@@ -258,7 +259,8 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
              }
         """
         #pylint:disable=useless-super-delegation
-        return super(SourceDetailAPIView, self).post(request, *args, **kwargs)
+        return self.create(request, *args, **kwargs)
+
 
     def put(self, request, *args, **kwargs):
         """
@@ -287,6 +289,30 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
         #pylint:disable=useless-super-delegation
         return super(SourceDetailAPIView, self).put(request, *args, **kwargs)
 
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Deletes a template source file
+
+        **Examples
+
+        .. code-block:: http
+
+            DELETE /api/themes/sources/index.html HTTP/1.1
+        """
+        #pylint:disable=useless-super-delegation
+        return super(SourceDetailAPIView, self).delete(request, *args, **kwargs)
+
+
+    def destroy(self, request, *args, **kwargs):
+        relative_path = self.kwargs.get('page')
+        theme_base = get_theme_dir(self.theme)
+        template_path = safe_join(theme_base, 'templates', relative_path)
+        LOGGER.info("remove source template '%s'", template_path)
+        os.remove(template_path)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
     def retrieve(self, request, *args, **kwargs):
         relative_path = self.kwargs.get('page')
         with open(get_template_path(
@@ -295,6 +321,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
             if six.PY2 and hasattr(source_content, 'decode'):
                 source_content = source_content.decode('utf-8')
         return Response({'path': relative_path, 'text': source_content})
+
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -324,6 +351,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
             LOGGER.debug("%s", err, extra={'request': request})
             return self.retrieve(request, *args, **kwargs)
         return Response(serializer.data, status=resp_status)
+
 
     def perform_create(self, serializer): #pylint:disable=unused-argument
         relative_path = self.kwargs.get('page')
