@@ -1,3 +1,10 @@
+0.5.5
+
+  * adds API to remove template file from theme
+  * fixes 500 error because `RegexValidator` returns a Django `ValidationError`
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed, 24 Nov 2026 13:15:00 -0700
+
 0.5.4
 
   * passes Web accessibility tests (additional tests popped up 1 error)

@@ -63,12 +63,13 @@ Release Notes
 Tested with
 
 - **Python:** 3.12, **Django:** 5.2 ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.14, **Django:** 6.0 (next)
+- **Python:** 3.14, **Django:** 6.1 (next)
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.5.4
+0.5.5
 
-  * passes Web accessibility tests
+  * adds API to remove template file from theme
+  * fixes 500 error because `RegexValidator` returns a Django `ValidationError`
 
 [previous release notes](changelog)
